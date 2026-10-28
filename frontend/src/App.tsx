@@ -1,42 +1,34 @@
-import { useState } from 'react'
+import {BrowserRouter, Route, Routes, NavLink} from "react-router-dom";
 
-import footballField from './assets/football-field.svg'
 import './styles/App.css'
+import Home from './Home.tsx'
+import Login from './Login.tsx'
+import Profile from './Profile.tsx'
 
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <section></section>
-      <section id="spacer-top"></section>
-      <div className="ticks"></div>
+    <div>
+      <BrowserRouter>
+        <NavigationBar/>
 
-      <section id="center">
-        <div className="hero">
-          <img src={footballField} width={200} alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Run <code>bun dev</code> to start the server and edit <code>src/App.tsx</code> to see some changes
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          tabIndex={0}
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/login" element={<Login />} />
+        </Routes>
+      </BrowserRouter>
+    </div>
+  )
+}
 
-
-      <div className="ticks"></div>
-      <section id="spacer-bottom"></section>
-    </>
+function NavigationBar() {
+  return (
+    <div className="navigation-bar">
+      <NavLink className="navigation-bar-button" to="/">Home</NavLink>
+      <NavLink className="navigation-bar-button" to="/profile">Profile</NavLink>
+      <NavLink className="navigation-bar-button" to="/login">Login</NavLink>
+    </div>
   )
 }
 
