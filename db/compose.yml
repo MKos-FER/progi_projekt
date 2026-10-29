@@ -1,0 +1,96 @@
+services:
+  db:
+    image: docker.io/library/postgres:18
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:5432:5432"
+
+    env_file:
+      - .env
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_ADMIN_USER:?Set POSTGRES_ADMIN_USER}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Set POSTGRES_ADMIN_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale-provider=icu --icu-locale=hr-HR"
+      TZ: Europe/Zagreb
+      PGTZ: Europe/Zagreb
+
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./init-db:/docker-entrypoint-initdb.d:ro
+
+    networks:
+      - backend
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'pg_isready -h 127.0.0.1 -p 5432 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+    security_opt:
+      - no-new-privileges:true
+
+    shm_size: 256mb
+
+    command:
+      - postgres
+      - -c
+      - timezone=Europe/Zagreb
+      - -c
+      - log_timezone=Europe/Zagreb
+      - -c
+      - max_connections=100
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - effective_cache_size=768MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=128MB
+      - -c
+      - statement_timeout=60s
+      - -c
+      - lock_timeout=10s
+      - -c
+      - idle_in_transaction_session_timeout=60s
+      - -c
+      - log_min_duration_statement=1000
+      - -c
+      - password_encryption=scram-sha-256
+
+  migrate:
+    image: docker.io/flyway/flyway:13
+    restart: "no"
+
+    command: -connectRetries=60 migrate
+
+    environment:
+      FLYWAY_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      FLYWAY_USER: ${POSTGRES_ADMIN_USER:?Set POSTGRES_ADMIN_USER}
+      FLYWAY_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Set POSTGRES_ADMIN_PASSWORD}
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+      FLYWAY_VALIDATE_MIGRATION_NAMING: "true"
+
+    volumes:
+      - ./migrations:/flyway/sql:ro
+
+    networks:
+      - backend
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  postgres_data:
