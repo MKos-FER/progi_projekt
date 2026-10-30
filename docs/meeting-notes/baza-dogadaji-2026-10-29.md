@@ -20,11 +20,12 @@ Dogovoreno s Mateom na Discordu i provedeno u PR-u `feature/db-events-schema` (m
 
 ## 2. Provjera proširivosti
 
-Skica tablica za terene, prijave netočnosti i komentare ([`db/drafts/skica_V3_prosirenje.sql`](../../db/drafts/skica_V3_prosirenje.sql)) primijenjena je na V2 s oglednim podacima i prolazi bez izmjene V2. Nalazi:
+Skica tablica za terene, prijave netočnosti i komentare ([`db_drafts/skica_V3_prosirenje.sql`](../../db_drafts/skica_V3_prosirenje.sql)) primijenjena je na V2 s oglednim podacima i prolazi bez izmjene V2. Nalazi:
 
 **Tereni**
 
 - Dodaju se novi stupci na `venues` i tablice `venue_sports`, `venue_photos`, `venue_reports` i `sif_report_status`.
+- **Pregled prijava netočnosti:** `sif_report_status` sadrži statuse `pending`, `resolved` i `dismissed`; status `in_review` nije predviđen. Reviewer se evidentira zasebnim poljem, odvojeno od statusa prijave, prema dogovoru iz reviewa. U SQL skici `resolved_by_id` označava korisnika koji je zaključio prijavu; to polje samo po sebi ne označava preuzimanje prijave na pregled. Naziv polja za reviewera i njegovo povezivanje sa skicom treba uskladiti pri implementaciji.
 - Novi `NOT NULL` stupac na tablici koja već ima podatke mora imati `DEFAULT` (npr. `is_free`).
 - F-017 traži početnu fotografiju, ali baza to ne može jednostavno provjeriti, jer se fotografija upisuje nakon terena. Provjera ide u backend, a teren i fotografija upisuju se u istoj transakciji.
 
