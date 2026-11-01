@@ -1,20 +1,32 @@
 import './styles/Home.css'
-import {useState} from "react";
+
+import { Separator } from "@/components/ui/separator";
+
+import {EventCard, Filters} from "@/Events.tsx";
 
 
-export default function Home() {
-  const [count, setCount] = useState(0);
-
-  let buttonText = "A clicky button";
-  if (count > 0) {
-    buttonText = `A clicky button you pressed ${count} times`;
-  }
-
+function WelcomeMessage({ username }: { username: string }) {
   return (
-    <>
-      <div>Main page</div>
-      <br/>
-      <button className="counter" onClick={() => {setCount(count + 1)}}>{buttonText}</button>
-    </>
-  )
+    <section className="space-y-2">
+      <p className="text-lg text-muted-foreground">
+        Welcome {username}
+      </p>
+      <Separator />
+    </section>
+  );
+}
+
+
+export default function HomeFeed() {
+  return (
+    <div className="mx-auto flex flex-col gap-8">
+
+      <WelcomeMessage username="username" />
+
+      <Filters />
+
+      <EventCard />
+      <EventCard />
+    </div>
+  );
 }
