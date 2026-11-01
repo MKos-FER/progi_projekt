@@ -1,0 +1,371 @@
+@startuml
+title Let's Do Sports - ER Dijagram v5
+
+' =========================
+' GLOBAL LAYOUT
+' =========================
+
+hide circle
+hide methods
+hide stereotypes
+
+skinparam linetype ortho
+skinparam shadowing false
+skinparam nodesep 65
+skinparam ranksep 75
+skinparam packageStyle rectangle
+
+skinparam entity {
+    BackgroundColor #F5F5F5
+    BorderColor #555555
+    FontColor #222222
+}
+
+left to right direction
+
+' =========================
+'          USERS
+' =========================
+
+package "Users" {
+
+    entity "users" as users #E5D9F2 {
+        * id : bigint <<PK, IDENTITY>>
+        --
+        username : text <<UNIQUE, NOT NULL>>
+        name : text <<NOT NULL>>
+        profile_photo_url : text
+        gender : text
+        date_of_birth : date
+        city_id : smallint <<FK>>
+        app_role_id : text <<FK>>
+        created_at : timestamptz
+    }
+
+    entity "oauth_accounts" as oauth_accounts #E5D9F2 {
+        * id : bigint <<PK, IDENTITY>>
+        --
+        user_id : bigint <<FK>>
+        provider : text
+        provider_user_id : text
+        email : text
+        linked_at : timestamptz
+        --
+        <<UNIQUE(provider, provider_user_id)>>
+    }
+
+    entity "user_sports" as user_sports #E5D9F2 {
+        * id : bigint <<PK, IDENTITY>>
+        --
+        user_id : bigint <<FK>>
+        sport_id : smallint <<FK>>
+        skill_level_id : smallint <<FK>>
+        --
+        <<UNIQUE(user_id, sport_id)>>
+    }
+}
+
+' =========================
+'          EVENTS
+' =========================
+
+package "Events" {
+
+    together {
+        entity "events" as events #D6E5F5 {
+            * id : bigint <<PK, IDENTITY>>
+            --
+            sport_id : smallint <<FK>>
+            venue_id : bigint <<FK>>
+            created_by_id : bigint <<FK>>
+            name : text <<NOT NULL>>
+            description : text
+            scheduled_at : timestamptz
+            expected_duration_min : integer
+            max_participants : integer
+            min_age : smallint
+            max_age : smallint
+            min_skill_level_id : smallint <<FK>>
+            cancelled_at : timestamptz
+            created_at : timestamptz
+        }
+
+        entity "event_members" as event_members #D6E5F5 {
+            * id : bigint <<PK, IDENTITY>>
+            --
+            event_id : bigint <<FK>>
+            user_id : bigint <<FK>>
+            joined_at : timestamptz
+            last_read_message_at : timestamptz
+            --
+            <<UNIQUE(event_id, user_id)>>
+        }
+    }
+
+    entity "events_with_status" as events_with_status <<VIEW>> #D6E5F5 {
+        * id : bigint
+        --
+        sport_id : smallint
+        venue_id : bigint
+        created_by_id : bigint
+        name : text
+        description : text
+        scheduled_at : timestamptz
+        expected_duration_min : integer
+        max_participants : integer
+        min_age : smallint
+        max_age : smallint
+        min_skill_level_id : smallint
+        cancelled_at : timestamptz
+        created_at : timestamptz
+        --
+        participant_count : bigint
+        status : text
+    }
+
+    entity "messages" as messages #D6E5F5 {
+        * id : bigint <<PK, IDENTITY>>
+        --
+        event_id : bigint <<FK>>
+        sender_id : bigint <<FK>>
+        reply_to_id : bigint <<FK>>
+        content : text
+        sent_at : timestamptz
+        edited_at : timestamptz
+        deleted_at : timestamptz
+    }
+}
+
+' =========================
+'          VENUES
+' =========================
+
+package "Venues" {
+
+    together {
+        entity "venues" as venues #D9EEDC {
+            * id : bigint <<PK, IDENTITY>>
+            --
+            created_by_id : bigint <<FK>>
+            name : text
+            city_id : smallint <<FK>>
+            address : text
+            latitude : numeric(9,6)
+            longitude : numeric(9,6)
+            created_at : timestamptz
+            --
+            description : text
+            is_free : boolean
+            supports_booking : boolean
+            external_booking_url : text
+            cover_photo_id : bigint <<FK>>
+        }
+
+        entity "venue_sports" as venue_sports #D9EEDC {
+            * venue_id : bigint <<PK, FK>>
+            * sport_id : smallint <<PK, FK>>
+        }
+
+        entity "venue_photos" as venue_photos #D9EEDC {
+            * id : bigint <<PK, IDENTITY>>
+            --
+            venue_id : bigint <<FK>>
+            uploaded_by_id : bigint <<FK>>
+            photo_url : text
+            caption : text
+            uploaded_at : timestamptz
+        }
+
+        entity "venue_reports" as venue_reports #D9EEDC {
+            * id : bigint <<PK, IDENTITY>>
+            --
+            venue_id : bigint <<FK>>
+            reported_by_id : bigint <<FK>>
+            description : text
+            status_id : smallint <<FK>>
+            resolution_note : text
+            resolved_by_id : bigint <<FK>>
+            resolved_at : timestamptz
+            created_at : timestamptz
+        }
+    }
+}
+
+' =========================
+'       LOOKUP TABLES
+' =========================
+
+package "Šifrarnici" {
+
+    entity "sif_city" as sif_city {
+        * id : smallint <<PK, IDENTITY>>
+        --
+        name : text <<UNIQUE>>
+    }
+
+    entity "sif_skill_level" as sif_skill_level {
+        * id : smallint <<PK>>
+        --
+        name : text <<UNIQUE>>
+        rank : smallint <<UNIQUE>>
+    }
+
+    entity "sports" as sports #F5E2C9 {
+        * id : smallint <<PK, IDENTITY>>
+        --
+        name : text <<UNIQUE>>
+        description : text
+    }
+
+    entity "sif_report_status" as sif_report_status {
+        * id : smallint <<PK>>
+        --
+        name : text <<UNIQUE>>
+        action_description : text
+    }
+
+    entity "sif_app_role" as sif_app_role {
+        * id : text <<PK>>
+    }
+
+    entity "sif_permissions" as sif_permissions {
+        * id : text <<PK>>
+        --
+        description : text
+    }
+
+    entity "app_role_has_permissions" as app_role_has_permissions {
+        * app_role_id : text <<PK, FK>>
+        * permission_id : text <<PK, FK>>
+    }
+}
+
+' =========================
+'      ADVERTISEMENTS
+' =========================
+
+
+
+entity "advertisements" as advertisements #F5E2C9 {
+    * id : bigint <<PK, IDENTITY>>
+    --
+    title : text
+    image_url : text
+    target_url : text
+    target_venue_id : bigint <<FK>>
+    active_from : timestamptz
+    active_to : timestamptz
+}
+
+
+' =========================
+'      LAYOUT HINTS
+' =========================
+
+' Users -> Events -> Lookups
+users -[hidden]right-> events
+events -[hidden]right-> sports
+sports -[hidden]down-> sif_skill_level
+sif_skill_level -[hidden]down-> sif_city
+sif_city -[hidden]down-> sif_report_status
+
+' Keep event components together
+events -[hidden]down-> event_members
+event_members -[hidden]down-> messages
+messages -[hidden]down-> events_with_status
+
+' Keep venue components together
+venues -[hidden]right-> venue_sports
+venue_sports -[hidden]down-> venue_photos
+venue_photos -[hidden]down-> venue_reports
+
+' Keep user components together
+users -[hidden]down-> oauth_accounts
+oauth_accounts -[hidden]down-> user_sports
+
+' Keep permission components together
+sif_app_role -[hidden]down-> sif_permissions
+sif_permissions -[hidden]down-> app_role_has_permissions
+
+' Advertisements
+sports -[hidden]right-> advertisements
+
+' =========================
+'      RELATIONSHIPS
+' =========================
+
+' Users
+users ||-[#A78BCB]--o{ events : created_by_id
+users ||-[#A78BCB]--o{ event_members : user_id
+users |o-[#A78BCB]--o{ venues : created_by_id
+users |o-[#A78BCB]--o{ venue_photos : uploaded_by_id
+users |o-[#A78BCB]--o{ venue_reports : reported_by_id
+users |o-[#A78BCB]--o{ venue_reports : resolved_by_id
+users |o-[#A78BCB]--o{ messages : sender_id
+users ||-[#A78BCB]--o{ oauth_accounts : user_id
+users ||-[#A78BCB]--o{ user_sports : user_id
+
+' Events
+events ||-[#789AC5]--o{ event_members : event_id
+events ||-[#789AC5]--o{ messages : event_id
+messages |o--o{ messages : reply_to_id
+
+' Sports and skills
+sports ||--o{ events : sport_id
+sports ||--o{ venue_sports : sport_id
+sports ||--o{ user_sports : sport_id
+sif_skill_level |o--o{ events : min_skill_level_id
+sif_skill_level ||--o{ user_sports : skill_level_id
+
+' Venues
+venues ||-[#78A985]--o{ events : venue_id
+venues ||-[#78A985]--o{ venue_sports : venue_id
+venues ||-[#78A985]--o{ venue_photos : venue_id
+venues ||-[#78A985]--o{ venue_reports : venue_id
+venue_photos |o--o| venues : cover_photo_id
+
+' Lookups
+sif_city ||--o{ users : city_id
+sif_city ||--o{ venues : city_id
+sif_report_status ||--o{ venue_reports : status_id
+
+' Roles and permissions
+sif_app_role ||--o{ users : app_role_id
+sif_app_role ||--o{ app_role_has_permissions : app_role_id
+sif_permissions ||--o{ app_role_has_permissions : permission_id
+
+' Advertisements
+venues |o-[#78A985]--o{ advertisements : target_venue_id
+
+' =========================
+'          NOTES
+' =========================
+
+note bottom of events_with_status
+    VIEW: events_with_status
+
+    Mogući statusi:
+    1. cancelled
+    2. finished
+    3. in_progress
+    4. full
+    5. open
+
+    participant_count = COUNT(event_members.id)
+end note
+
+note bottom of event_members
+    Organizer je također member
+    i ubraja se u max_participants.
+end note
+
+note bottom of sif_skill_level
+    Primjer:
+    Amateur (1)
+    Average (2)
+    Pro (3)
+
+    rank se koristi za numeričku usporedbu sposobnosti.
+end note
+
+@enduml
