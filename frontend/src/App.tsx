@@ -1,10 +1,11 @@
-import {BrowserRouter, Route, Routes, NavLink, Link} from "react-router-dom";
+import {BrowserRouter, Route, Routes, NavLink, Link, useNavigate} from "react-router-dom";
 
 import './styles/App.css'
-import Home from './Home.tsx'
+import Home from './HomePage.tsx'
 import Login from './Login.tsx'
-import Profile from './Profile.tsx'
-import MyEvents from './Events.tsx'
+import ReportsPage from './ReportsPage.tsx'
+import MyEvents from './MyEventsPage.tsx'
+import EventPage from './EventPage.tsx'
 
 import {Button} from "@/components/ui/button.tsx";
 import {
@@ -37,9 +38,10 @@ function App() {
 
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/reports" element={<Profile />} />
+          <Route path="/reports" element={<ReportsPage />} />
           <Route path="/events" element={<MyEvents />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/events/:eventId" element={<EventPage />} />
+          <Route path="/profile" element={<ReportsPage />} />
           <Route path="/login" element={<Login />} />
         </Routes>
       </BrowserRouter>
@@ -57,6 +59,7 @@ function NavigationBar() {
     {url:"/events", name:"Moji događaji"},
     {url:"/reports", name:"Moje prijave"}
   ];
+  const navigate = useNavigate();
   return (
     <header className="flex flex-wrap items-center gap-4">
 
@@ -72,8 +75,8 @@ function NavigationBar() {
       <PcNavMenu navLinks={navLinks} />
       <PhoneNavMenu navLinks={navLinks} />
 
-      <Button className="py-5">
-        <NavLink to="/login">PRIJAVA</NavLink>
+      <Button className="py-5" onClick={() => void navigate("/login")}>
+        PRIJAVA
       </Button>
 
     </header>
