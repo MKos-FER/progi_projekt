@@ -18,36 +18,38 @@ import {Item, ItemActions, ItemContent} from "@/components/ui/item.tsx";
 
 export default function MyEvents() {
   const {data: events, isLoading, error} = useMyEvents();
+  const navigate = useNavigate();
 
   let displayEvents: JSX.Element[] = [];
+
+  if (error) {
+    return (
+      <div className="my-4 mx-auto flex flex-col gap-8">
+        <Alert className="text-destructive *:[svg]:text-current bg-destructive-foreground">
+          <CircleX/>
+          <AlertTitle>Dogodila se greška prilikom dohvata novih događaja</AlertTitle>
+          <AlertDescription>
+            Prilikom dohvata novih događaja u vašoj okolini došlo je do pogreške na serverskoj strani,
+            ostanite strpljivi i pokušajte ponovno kasnije.
+            <Separator className={"my-3"}/>
+            Error info: {error.message}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (events) {
+    displayEvents = events.map(event => (
+      <EventCard key={event.id} eventId={event.id}/>
+    ))
+  }
 
   if (isLoading) {
     displayEvents.push(<SkeletonEventCard key={0}/>);
     displayEvents.push(<SkeletonEventCard key={1}/>);
     displayEvents.push(<SkeletonEventCard key={2}/>);
-  }
-
-  if (!isLoading && !error) {
-    displayEvents = events!.map(event => (
-      <EventCard key={event.id} eventId={event.id}/>
-    ))
-  } else if (error) {
-    displayEvents = [
-      <Alert key="alert" className="text-destructive *:[svg]:text-current bg-destructive-foreground">
-        <CircleX/>
-        <AlertTitle>Dogodila se greška prilikom dohvata novih događaja</AlertTitle>
-        <AlertDescription>
-          Prilikom dohvata novih događaja u vašoj okolini došlo je do pogreške na serverskoj strani,
-          ostanite strpljivi i pokušajte ponovno kasnije.
-          <Separator className={"my-3"}/>
-          Error info: {error.message}
-        </AlertDescription>
-      </Alert>
-    ]
-  }
-
-  const navigate = useNavigate();
-  if (!events || displayEvents.length === 0) {
+  } else if (!events || displayEvents.length === 0) {
     displayEvents = [
       <Item key="alert" variant="outline" className="w-1/3 min-w-100 self-center">
         <ItemContent>
@@ -61,6 +63,8 @@ export default function MyEvents() {
       </Item>
     ]
   }
+
+
 
   return (
     <div className="my-4 mx-auto flex flex-col gap-8">
