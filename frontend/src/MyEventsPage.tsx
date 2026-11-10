@@ -246,9 +246,11 @@ export function EventCard({eventId}: { eventId: number }) {
             {event.name}
           </h2>
 
-          <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground [grid-area:desc]">
-            {event.description}
-          </p>
+          <div className="rounded-md bg-muted p-3 [grid-area:desc]">
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {event.description}
+            </p>
+          </div>
 
         </div>
       </CardContent>
