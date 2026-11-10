@@ -32,6 +32,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar"
+import { Progress } from "@/components/ui/progress"
 
 export default function EventPage() {
   const { eventId } = useParams();
@@ -139,11 +140,15 @@ function PeopleInfo({ event }: { event: EventDetails }) {
 }
 
 function ShowMembersButton({event}: {event: EventDetails}) {
-  const [open, setOpen] = useState(false)
-  // const [clickedMemberId, setClickedMemberId] = useState(0)
+  const [openMemberInfo, setOpenMemberInfo] = useState(false)
+  const [clickedMemberIdx, setClickedMemberIdx] = useState(-1)
   const isMobile = useIsMobile()
 
   const {data: memberList, isLoading, error} = useEventMembers(event.id)
+  const swipeDirection = isMobile ? "down" : "right";
+
+  const clickedMember = memberList?.[clickedMemberIdx] ?? null;
+
 
   if (error) {
     return
@@ -157,16 +162,15 @@ function ShowMembersButton({event}: {event: EventDetails}) {
     return;
   }
 
-  function handleConfirm() {
-    setOpen(false)
+  function handleClickUser(memberListIdx: number) {
+    setClickedMemberIdx(memberListIdx);
+    setOpenMemberInfo(true);
   }
 
   return (
     <Drawer
-      open={open}
-      onOpenChange={setOpen}
       showSwipeHandle={isMobile}
-      swipeDirection={isMobile ? "down" : "right"}
+      swipeDirection={swipeDirection}
     >
       <DrawerTrigger render={<Button variant="secondary">Sudionici</Button>} />
       <DrawerContent>
@@ -177,8 +181,8 @@ function ShowMembersButton({event}: {event: EventDetails}) {
           </DrawerDescription>
         </DrawerHeader>
         <div className="flex-1 scroll-fade overflow-y-auto p-4">
-          {memberList.map((member) => (
-            <FieldLabel key={member.id} className="mb-2">
+          {memberList.map((member, memberListIdx) => (
+            <FieldLabel key={member.id} className="mb-2" onClick={() => handleClickUser(memberListIdx)}>
               <Field orientation="horizontal">
                 <Avatar className="self-center">
                   <AvatarImage
@@ -201,6 +205,53 @@ function ShowMembersButton({event}: {event: EventDetails}) {
           ))}
         </div>
         <DrawerFooter>
+
+          {/* Prikaz info jednog sudionika */}
+          <Drawer
+            open={openMemberInfo}
+            onOpenChange={setOpenMemberInfo}
+            showSwipeHandle={isMobile}
+            swipeDirection={swipeDirection}
+          >
+            <DrawerContent>
+              <DrawerHeader>
+                <DrawerTitle>Informacije o sudioniku</DrawerTitle>
+              </DrawerHeader>
+              {clickedMember && (
+              <div className="flex-1 scroll-fade overflow-y-auto p-4">
+
+                <div className="flex min-h-32 w-full items-center justify-center
+                  rounded-md border bg-muted">
+                  <span className="text-sm text-muted-foreground">
+                    slika sudionika
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 mb-6 pr-1">
+                  <div className="text-2xl">
+                    {clickedMember.name}
+                  </div>
+                  <div className="text-lg text-right self-center text-muted-foreground">
+                    {clickedMember.username}
+                  </div>
+                </div>
+
+                Skills:
+                {clickedMember.user_sports?.map((sport) =>
+                  <div key={sport.id} className="flex justify-between mb-2">
+                    {sport.sportName}
+                    <Progress value={sport.skill_level_id/2*100} className="w-[50%] inline-block self-center" />
+                  </div>
+                )}
+              </div>
+              )}
+              <DrawerFooter>
+                <DrawerClose render={<Button variant="outline"><ChevronLeft /> Natrag na popis sudionika</Button>} />
+              </DrawerFooter>
+            </DrawerContent>
+          </Drawer>
+
+
           <DrawerClose render={<Button variant="outline"><ChevronLeft /> Natrag na stranicu događaja</Button>} />
         </DrawerFooter>
       </DrawerContent>
