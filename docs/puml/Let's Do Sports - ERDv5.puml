@@ -30,36 +30,41 @@ left to right direction
 package "Users" {
 
     entity "users" as users #E5D9F2 {
-        * id : bigint <<PK, IDENTITY>>
+        * id : bigint <<PK, GENERATED ALWAYS AS IDENTITY>>
         --
         username : text <<UNIQUE, NOT NULL>>
         name : text <<NOT NULL>>
         profile_photo_url : text
-        gender : text
-        date_of_birth : date
-        city_id : smallint <<FK>>
-        app_role_id : text <<FK>>
-        created_at : timestamptz
+        gender : text <<NOT NULL>>
+        date_of_birth : date <<NOT NULL>>
+        city_id : smallint <<FK, NOT NULL>>
+        app_role_id : text <<FK, NOT NULL, DEFAULT 'USER'>>
+        created_at : timestamptz <<NOT NULL, DEFAULT now()>>
+        --
+        CHECK (username ~ '[^[:space:]]')
+        CHECK (name ~ '[^[:space:]]')
     }
 
     entity "oauth_accounts" as oauth_accounts #E5D9F2 {
-        * id : bigint <<PK, IDENTITY>>
+        * id : bigint <<PK, GENERATED ALWAYS AS IDENTITY>>
         --
-        user_id : bigint <<FK>>
-        provider : text
-        provider_user_id : text
+        user_id : bigint <<FK, NOT NULL, UNIQUE, ON DELETE CASCADE>>
+        provider : text <<NOT NULL>>
+        provider_user_id : text <<NOT NULL>>
         email : text
-        linked_at : timestamptz
+        linked_at : timestamptz <<NOT NULL, DEFAULT now()>>
         --
         <<UNIQUE(provider, provider_user_id)>>
+        CHECK (provider ~ '[^[:space:]]')
+        CHECK (provider_user_id ~ '[^[:space:]]')
     }
 
     entity "user_sports" as user_sports #E5D9F2 {
-        * id : bigint <<PK, IDENTITY>>
+        * id : bigint <<PK, GENERATED ALWAYS AS IDENTITY>>
         --
-        user_id : bigint <<FK>>
-        sport_id : smallint <<FK>>
-        skill_level_id : smallint <<FK>>
+        user_id : bigint <<FK, NOT NULL, ON DELETE CASCADE>>
+        sport_id : smallint <<FK, NOT NULL>>
+        skill_level_id : smallint <<FK, NOT NULL>>
         --
         <<UNIQUE(user_id, sport_id)>>
     }
@@ -200,20 +205,20 @@ package "Šifrarnici" {
     entity "sif_city" as sif_city {
         * id : smallint <<PK, IDENTITY>>
         --
-        name : text <<UNIQUE>>
+        name : text <<UNIQUE, NOT NULL>>
     }
 
     entity "sif_skill_level" as sif_skill_level {
         * id : smallint <<PK>>
         --
-        name : text <<UNIQUE>>
-        rank : smallint <<UNIQUE>>
+        name : text <<UNIQUE, NOT NULL>>
+        rank : smallint <<UNIQUE, NOT NULL>>
     }
 
     entity "sports" as sports #F5E2C9 {
         * id : smallint <<PK, IDENTITY>>
         --
-        name : text <<UNIQUE>>
+        name : text <<UNIQUE, NOT NULL>>
         description : text
     }
 
@@ -231,7 +236,7 @@ package "Šifrarnici" {
     entity "sif_permissions" as sif_permissions {
         * id : text <<PK>>
         --
-        description : text
+        description : text <<NOT NULL>>
     }
 
     entity "app_role_has_permissions" as app_role_has_permissions {
@@ -302,8 +307,8 @@ users |o-[#A78BCB]--o{ venue_photos : uploaded_by_id
 users |o-[#A78BCB]--o{ venue_reports : reported_by_id
 users |o-[#A78BCB]--o{ venue_reports : resolved_by_id
 users |o-[#A78BCB]--o{ messages : sender_id
-users ||-[#A78BCB]--o{ oauth_accounts : user_id
-users ||-[#A78BCB]--o{ user_sports : user_id
+users ||-[#A78BCB]--|| oauth_accounts : user_id
+users ||-[#A78BCB]--|{ user_sports : user_id
 
 ' Events
 events ||-[#789AC5]--o{ event_members : event_id
@@ -366,6 +371,11 @@ note bottom of sif_skill_level
     Pro (3)
 
     rank se koristi za numeričku usporedbu sposobnosti.
+end note
+
+note bottom of users
+    Lokalni račun nastaje tek nakon svih obaveznih podataka.
+    Fotografija je opcionalna.
 end note
 
 @enduml
