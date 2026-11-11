@@ -9,6 +9,7 @@ DELETE FROM events;
 DELETE FROM venue_sports;
 DELETE FROM user_sports;
 DELETE FROM venues;
+DELETE FROM oauth_accounts;
 DELETE FROM users;
 
 INSERT INTO users (username, name, date_of_birth, city_id) VALUES
