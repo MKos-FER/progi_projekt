@@ -1,1 +1,15 @@
+# IntelliJ IDEA
 .idea/
+*.iml
+*.iws
+*.ipr
+.ai/
+
+# Local environment configuration
+.env
+.env.*
+!.env.example
+
+# Operating system files
+.DS_Store
+Thumbs.db
