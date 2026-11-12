@@ -1,60 +1,59 @@
 package hr.fer.letsdosports.event;
 
+import hr.fer.letsdosports.auth.CurrentUserId;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @RestController
 @RequestMapping("/events")
 public class EventController {
-
     private final EventService service;
+    public EventController(EventService service) { this.service = service; }
 
-    public EventController(EventService service) {
-        this.service = service;
+    @GetMapping   // Public
+    public List<EventResponse> getAll(
+            @RequestParam(required = false) Short sportId,
+            @RequestParam(required = false) String city,
+            @RequestParam(name = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
+            @RequestParam(name = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
+            @RequestParam(required = false) String status) {
+        return service.search(sportId, city, from, to, status);
     }
 
-    @GetMapping
-    public List<Event> getAll() {
-        return service.findAll();
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Event> getOne(@PathVariable Long id) {
-        return service.findById(id)
-                .map(ResponseEntity::ok)
+    @GetMapping("/{id}")   // Public
+    public ResponseEntity<EventResponse> getOne(@PathVariable Long id) {
+        return service.findDetailById(id).map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Event create(@Valid @RequestBody CreateEventRequest req) {
-        return service.create(req);
+    @PostMapping   // Authenticated
+    public ResponseEntity<EventResponse> create(@
+                                                            CurrentUserId Long userId,
+                                                @Valid @RequestBody CreateEventRequest req) {
+        Event e = service.create(req, userId);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}").buildAndExpand(e.getId()).toUri();
+        return ResponseEntity.created(location).body(service.findDetailById(e.getId()).orElseThrow());
     }
 
-    @GetMapping("/me")
-    public List<Event> mine(@RequestHeader("X-User-Id") Long userId) {
-        return service.findJoinedBy(userId);
+    @PatchMapping("/{eventId}")   // Organizer
+    public EventResponse update(@PathVariable Long eventId, @CurrentUserId Long userId,
+                                @Valid @RequestBody UpdateEventRequest req) {
+        service.update(eventId, req, userId);
+        return service.findDetailById(eventId).orElseThrow();
     }
 
-    @PatchMapping("/{eventId}")
-    public Event update(@PathVariable Long eventId, @Valid @RequestBody UpdateEventRequest req) {
-        return service.update(eventId, req, null);
-    }
-
-    @PatchMapping("/me/{eventId}")
-    public Event updateOwn(@PathVariable Long eventId,
-                           @RequestHeader("X-User-Id") Long userId,
-                           @Valid @RequestBody UpdateEventRequest req) {
-        return service.update(eventId, req, userId);
-    }
-
-    @DeleteMapping("/{eventId}/cancel")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void cancel(@PathVariable Long eventId) {
-        service.cancel(eventId);
+    @PostMapping("/{eventId}/cancel")   // Organizer
+    public EventResponse cancel(@PathVariable Long eventId, @CurrentUserId Long userId) {
+        service.cancel(eventId, userId);
+        return service.findDetailById(eventId).orElseThrow();
     }
 }

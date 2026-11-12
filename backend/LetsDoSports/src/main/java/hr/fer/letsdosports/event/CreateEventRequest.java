@@ -22,8 +22,7 @@ public record CreateEventRequest(
         @Min(value = 13, message = "Dob ne smije biti ispod minimalne dobi aplikacije (13).")
         Short minAge,
         Short maxAge,
-        Short minSkillLevelId,
-        @NotNull Long createdById
+        Short minSkillLevelId
 ) {
     public CreateEventRequest {
         if (name != null) name = name.trim();

@@ -47,4 +47,24 @@ public class EventMemberRepository {
                 ORDER BY m.joined_at, m.id""")
                 .param("e", eventId).query(EventMemberResponse.class).list();
     }
+
+    public Optional<Integer> findAgeYears(Long userId) {
+        return jdbc.sql("""
+            SELECT CAST(date_part('year', age(current_date, date_of_birth)) AS integer)
+            FROM users WHERE id = :u AND date_of_birth IS NOT NULL""")
+                .param("u", userId).query(Integer.class).optional();
+    }
+
+    public Optional<Integer> findUserSkillRank(Long userId, Short sportId) {
+        return jdbc.sql("""
+            SELECT sl.rank FROM user_sports us
+            JOIN sif_skill_level sl ON sl.id = us.skill_level_id
+            WHERE us.user_id = :u AND us.sport_id = :s""")
+                .param("u", userId).param("s", sportId).query(Integer.class).optional();
+    }
+
+    public Optional<Integer> findSkillRank(Short skillLevelId) {
+        return jdbc.sql("SELECT rank FROM sif_skill_level WHERE id = :id")
+                .param("id", skillLevelId).query(Integer.class).optional();
+    }
 }

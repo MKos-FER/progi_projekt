@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,36 +27,8 @@ public class EventService {
         this.jdbc = jdbc;
     }
 
-    public List<Event> findAll() {
-        return events.findAll();
-    }
-
     public Optional<Event> findById(Long id) {
         return events.findById(id);
-    }
-
-    @Transactional
-    public Event create(CreateEventRequest req) {
-        requireUser(req.createdById());
-        validateReferences(req.sportId(), req.venueId(), req.minAge(), req.maxAge(), req.minSkillLevelId());
-
-        Event e = new Event();
-        e.setName(req.name());
-        e.setDescription(req.description());
-        e.setSportId(req.sportId());
-        e.setVenueId(req.venueId());
-        e.setCreatedById(req.createdById());
-        e.setScheduledAt(req.scheduledAt());
-        e.setExpectedDurationMin(req.expectedDurationMin());
-        e.setMaxParticipants(req.maxParticipants());
-        e.setMinAge(req.minAge());
-        e.setMaxAge(req.maxAge());
-        e.setMinSkillLevelId(req.minSkillLevelId());
-        e = events.insert(e);
-
-        members.insert(e.getId(), req.createdById());
-
-        return e;
     }
 
     private void validateReferences(Short sportId, Long venueId, Short minAge, Short maxAge, Short minSkillLevelId) {
@@ -84,10 +57,9 @@ public class EventService {
     }
 
     private boolean venueSupportsSport(long venueId, long sportId) {
-        return true;
-/*        return jdbc.sql("SELECT EXISTS(SELECT 1 FROM venue_sports WHERE venue_id = ? AND sport_id = ?)")
+        return jdbc.sql("SELECT EXISTS(SELECT 1 FROM venue_sports WHERE venue_id = ? AND sport_id = ?)")
                 .param(venueId).param(sportId)
-                .query(Boolean.class).single();*/
+                .query(Boolean.class).single();
     }
 
     private boolean exists(String sql, Object id) {
@@ -117,27 +89,12 @@ public class EventService {
         return new ResponseStatusException(HttpStatus.CONFLICT, msg);
     }
 
-
-    public List<Event> findJoinedBy(Long userId) { return events.findJoinedBy(userId); }
-
     @Transactional
-    public void cancel(Long eventId) {
+    public Event update(Long eventId, UpdateEventRequest req, Long currentUserId) {
         lockEvent(eventId);
-        String status = statusOf(eventId);
-        if (status.equals("cancelled")) throw conflict("Događaj je već otkazan.");
-        if (status.equals("finished"))  throw conflict("Događaj je već završio.");
-        events.cancel(eventId);
-    }
-
-
-    @Transactional
-    public Event update(Long eventId, UpdateEventRequest req, Long requiredOwnerId) {
-        lockEvent(eventId);
+        requireOrganizer(eventId, currentUserId);
         Event e = events.findById(eventId).orElseThrow();
 
-        if (requiredOwnerId != null && !requiredOwnerId.equals(e.getCreatedById())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Samo organizator može uređivati događaj.");
-        }
         String status = statusOf(eventId);
         if (status.equals("cancelled") || status.equals("finished")) {
             throw conflict("Otkazani ili završeni događaj se ne može uređivati.");
@@ -163,4 +120,48 @@ public class EventService {
         }
         return events.update(e);
     }
+
+
+    @Transactional
+    public Event create(CreateEventRequest req, Long currentUserId) {
+        validateReferences(req.sportId(), req.venueId(), req.minAge(), req.maxAge(), req.minSkillLevelId());
+        Event e = new Event();
+        e.setName(req.name());
+        e.setDescription(req.description());
+        e.setSportId(req.sportId());
+        e.setVenueId(req.venueId());
+        e.setCreatedById(currentUserId);
+        e.setScheduledAt(req.scheduledAt());
+        e.setExpectedDurationMin(req.expectedDurationMin());
+        e.setMaxParticipants(req.maxParticipants());
+        e.setMinAge(req.minAge());
+        e.setMaxAge(req.maxAge());
+        e.setMinSkillLevelId(req.minSkillLevelId());
+        e = events.insert(e);
+        members.insert(e.getId(), currentUserId);
+        return e;
+    }
+
+    public void requireOrganizer(Long eventId, Long userId) {
+        if (!events.findCreatedById(eventId).equals(userId))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Samo organizator može izvršiti ovu radnju.");
+    }
+
+    @Transactional
+    public void cancel(Long eventId, Long currentUserId) {
+        lockEvent(eventId);
+        requireOrganizer(eventId, currentUserId);   // new
+        String status = statusOf(eventId);
+        if (status.equals("cancelled")) throw conflict("Događaj je već otkazan.");
+        if (status.equals("finished"))  throw conflict("Događaj je već završio.");
+        events.cancel(eventId);
+    }
+
+    private static String norm(String s) { return s == null || s.isBlank() ? null : s.toLowerCase(); }
+
+    public List<EventResponse> search(Short sportId, String city, OffsetDateTime from, OffsetDateTime to, String status) {
+        return events.search(sportId, city, from, to, norm(status));
+    }
+    public Optional<EventResponse> findDetailById(Long id) { return events.findDetailById(id); }
+    public List<EventResponse> findJoinedBy(Long userId, String status) { return events.findJoinedBy(userId, norm(status)); }
 }
