@@ -1,4 +1,7 @@
-# Let's Do Sports - prijedlog REST API-ja
+---
+date_modified: 2026-11-12T09:48:55+01:00
+---
+# Let's Do Sports - REST API ugovor
 
 **Prijedlog ugovora između React frontenda i Spring Boot backenda**
 
@@ -41,15 +44,98 @@ Nakon uspješnog vanjskog logina backend mora provjeriti identitet, dohvatiti po
 
 ## 3. Korisnici i profili (F-004, F-005)
 
-| Metoda | Putanja           | Opis                                            | Podaci koji se šalju                                                                                              | Permission    | Zahtjev |
-| ------ | ----------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------- | ------- |
-| GET    | `/users/me`       | Dohvat vlastitog profila (i stanja dovršenosti) | -                                                                                                                 | Authenticated | F-004   |
-| PATCH  | `/users/me`       | Prvi unos ili naknadno uređivanje profila       | Body: `name`, `username`, `gender`, `birthDate`, `city`, `sports: [{sportId, skillLevel}]` (samo mijenjana polja) | Authenticated | F-004   |
-| PUT    | `/users/me/photo` | Postavljanje/zamjena profilne fotografije       | Multipart: `file`                                                                                                 | Authenticated | F-004   |
-| GET    | `/users`          | Pretraga i filtriranje igrača                   | Query: `sportId`, `city`, `ageMin`, `ageMax`, `skillLevel`                                                        | Authenticated | F-005   |
-| GET    | `/users/{userId}` | Pregled profila odabranog igrača                | Path: `userId`                                                                                                    | Authenticated | F-005   |
+| Metoda | Putanja           | Opis                                      | Podaci koji se šalju                                                                                                  | Permission    | Zahtjev |
+| ------ | ----------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------- | ------- |
+| GET    | `/users/me`       | Dohvat vlastitog profila                  | -                                                                                                                     | Authenticated | F-004   |
+| PATCH  | `/users/me`       | Uređivanje postojećeg profila             | Body: `name`, `username`, `gender`, `birthDate`, `cityId`, `sports: [{sportId, skillLevelId}]` (samo mijenjana polja) | Authenticated | F-004   |
+| PUT    | `/users/me/photo` | Postavljanje/zamjena profilne fotografije | Multipart: `file`                                                                                                     | Authenticated | F-004   |
+| GET    | `/users`          | Pretraga i filtriranje igrača             | Query: `sportId`, `cityId`, `ageMin`, `ageMax`, `skillLevelId`                                                        | Authenticated | F-005   |
+| GET    | `/users/{userId}` | Pregled profila odabranog igrača          | Path: `userId`                                                                                                        | Authenticated | F-005   |
 
-**Prijedlog podatkovnog modela:** `sports` u profilu je popis parova `{sportId, skillLevel}` (razina iskustva ovisi o sportu). Točan model i dopuštene vrijednosti za `skillLevel` treba dogovoriti. `username` služi prikazu, ne prijavi.
+Sve putanje iz ove tablice imaju prefiks `/api/v1`. Za F-005 rute pregleda drugih igrača i pretraživanja još nisu implementirane.
+
+**Pravila filtriranja igrača (F-005):** svi filtri su opcionalni, a poslani filtri primjenjuju se zajedno. Izostavljeni filtri ne ograničavaju rezultate. ID-evi se preuzimaju iz šifrarnika.
+
+| Filtar         | Značenje                                                                |
+| -------------- | ----------------------------------------------------------------------- |
+| `cityId`       | Igrači čiji profil ima odabrani grad.                                   |
+| `sportId`      | Igrači koji imaju odabrani sport.                                       |
+| `skillLevelId` | Igrači s točno odabranom razinom iskustva za sport naveden u `sportId`. |
+
+`skillLevelId` zahtijeva `sportId`; ako se pošalje bez njega, backend vraća `400 Bad Request`. Razina se uspoređuje za isti odabrani sport, a ne za neki drugi sport u profilu.
+
+Primjer: `GET /api/v1/users?cityId=1&sportId=2&skillLevelId=1` vraća igrače iz grada `1` koji imaju sport `2` s točno razinom `1`. Vrijednosti su ilustrativne.
+
+### 3.1 JSON model i pravila za F-004
+
+| Polje              | Tip i značenje                                                                                                                                                                    |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`, `username` | Neprazni tekstovi; username je jedinstven uz razlikovanje velikih i malih slova i služi prikazu.                                                                                  |
+| `gender`           | Obavezan neprazan tekst.                                                                                                                                                          |
+| `birthDate`        | Obavezan datum oblika `YYYY-MM-DD`; budući datum nije dopušten.                                                                                                                   |
+| `cityId`           | Obavezan pozitivan cjelobrojni ID postojećeg grada (1–32767).                                                                                                                     |
+| `sports`           | Neprazan popis `{sportId, skillLevelId}`; oba ID-a moraju postojati i biti cijeli brojevi 1–32767. Svaki element sadrži točno ta dva polja. Svaki sport navodi se najviše jednom. |
+| `profilePhotoUrl`  | Samo u odgovoru; URL koji vraća adapter za pohranu fotografije. Ne prima se kroz `PATCH`.                                                                                         |
+
+`GET` i uspješan `PATCH`/`PUT` vraćaju isti flat JSON model:
+
+```json
+{
+  "id": 1,
+  "name": "Ana Horvat",
+  "username": "ana",
+  "profilePhotoUrl": null,
+  "gender": "žensko",
+  "birthDate": "2002-03-14",
+  "age": 24,
+  "cityId": 1,
+  "appRoleId": "USER",
+  "sports": [{"sportId": 1, "skillLevelId": 2}]
+}
+```
+
+Vrijednosti su ilustrativne. `age` se računa prema trenutačnom datumu u zoni `Europe/Zagreb`. Datum rođenja je obavezan. ID-eve gradova, sportova i iskustva treba preuzeti iz šifrarnika.
+
+**Svaki spremljeni profil** ima ime, username, neprazan spol, datum rođenja, grad i barem jedan sport s iskustvom. Fotografija je opcionalna. Nepotpun profil se ne sprema; `sports: []` vraća `400`.
+
+`PATCH` mijenja samo poslana polja; izostavljena ostaju nepromijenjena. `null` za obavezna polja, prazan spol i prazan ili `null` popis sportova vraćaju `400`. Ako je `sports` naveden, zamjenjuje cijeli popis. Nepoznata polja, uključujući `userId` i `appRoleId`, odbijaju se s `400`. Spajanje i spremanje izvršavaju se u jednoj transakciji. Početna registracija nije `PATCH /users/me`; OAuth sloj prvo dovršava obrazac i poziva `createWithOAuth`. Ta registracijska integracija još nije implementirana.
+
+### 3.2 Odgovor za pregled igrača (F-005)
+
+`GET /api/v1/users` vraća JSON popis igrača, a `GET /api/v1/users/{userId}` jedan objekt igrača. Svaki element popisa i pojedinačni profil imaju isti skup polja. Obje rute dostupne su samo prijavljenim korisnicima; zahtjev bez prijave vraća `401`. Rute još nisu implementirane.
+
+| Polje             | Značenje                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| `id`              | Identifikator igrača za otvaranje profila.                                                                    |
+| `username`        | Korisničko ime za prikaz.                                                                                     |
+| `name`            | Ime koje je korisnik unio.                                                                                    |
+| `profilePhotoUrl` | URL fotografije ili `null`; bez fotografije sučelje prikazuje zamjensku sliku.                                |
+| `age`             | Dob izračunata prema trenutačnom datumu u zoni `Europe/Zagreb`.                                               |
+| `city`            | Grad kao `{id, name}`.                                                                                        |
+| `sports`          | Odabrani sportovi i iskustvo; svaki element sadrži `sportId`, `sportName`, `skillLevelId` i `skillLevelName`. |
+
+Primjer jednog igrača (vrijednosti su ilustrativne):
+
+```json
+{
+  "id": 12,
+  "username": "ana",
+  "name": "Ana",
+  "profilePhotoUrl": null,
+  "age": 24,
+  "city": {"id": 1, "name": "Zagreb"},
+  "sports": [
+    {
+      "sportId": 1,
+      "sportName": "Nogomet",
+      "skillLevelId": 2,
+      "skillLevelName": "Average"
+    }
+  ]
+}
+```
+
+Odgovori za pregled drugih igrača ne sadrže datum rođenja, spol, e-poštu, OAuth podatke ni aplikacijsku ulogu. Nazivi grada, sportova i iskustva vraćaju se uz ID-eve radi izravnog prikaza u sučelju. Prazan rezultat pretrage vraća `200` i `[]`.
 
 ## 4. Sportovi (pomoćni podaci za F-004, F-005, F-006, F-007, F-016, F-017)
 
@@ -130,4 +216,4 @@ Kod Spring Boota `POST /venues` može koristiti `@RequestPart("data") VenueCreat
 1. **Ovlasti na backendu:** `Authenticated` se može zaštititi Spring Securityjem, dok `Organizer`, `Participant`, `Own` i `Own/Admin` trebaju provjeru identiteta nad konkretnim zapisom u servisu.
 2. **Integritet prijava:** broj mjesta i unikatan par `(eventId, userId)` moraju se štititi u transakciji/bazi, ne samo frontend provjerom.
 3. **HTTP statusi:** nakon `POST` kreiranja vratiti `201 Created` i identifikator/URI resursa. Neuspjeh validacije `400`, nedostatak prijave `401`, neovlašteno uređivanje `403`, nepostojeći zapis `404`, puni događaj i dvostruko članstvo `409`.
-4. **Lokacija i privatnost:** korisničku trenutačnu GPS lokaciju nije potrebno pohranjivati; za teren treba spremiti odabrane koordinate. Precizan datum rođenja nije nužno prikazivati drugim korisnicima.
+4. **Lokacija i privatnost:** korisničku trenutačnu GPS lokaciju nije potrebno pohranjivati; za teren treba spremiti odabrane koordinate. Pri pregledu drugih igrača vraća se dob, a datum rođenja, spol, e-pošta, OAuth podaci i aplikacijska uloga izostavljaju se iz odgovora (F-005).
