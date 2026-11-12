@@ -1,5 +1,6 @@
-package hr.fer.letsdosports.event;
+package hr.fer.letsdosports.eventmember;
 
+import hr.fer.letsdosports.event.EventService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,9 +10,9 @@ import java.util.List;
 @RequestMapping("/events/{eventId}/members")
 public class EventMemberController {
 
-    private final EventService service;
+    private final EventMemberService service;
 
-    public EventMemberController(EventService service) {
+    public EventMemberController(EventMemberService service) {
         this.service = service;
     }
 

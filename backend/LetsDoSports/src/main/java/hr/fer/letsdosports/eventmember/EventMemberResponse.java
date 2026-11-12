@@ -1,4 +1,4 @@
-package hr.fer.letsdosports.event;
+package hr.fer.letsdosports.eventmember;
 
 import java.time.OffsetDateTime;
 

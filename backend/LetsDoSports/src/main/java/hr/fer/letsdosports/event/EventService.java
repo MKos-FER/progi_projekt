@@ -1,5 +1,7 @@
 package hr.fer.letsdosports.event;
 
+
+import hr.fer.letsdosports.eventmember.EventMemberRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
@@ -49,12 +51,9 @@ public class EventService {
         e.setMinAge(req.minAge());
         e.setMaxAge(req.maxAge());
         e.setMinSkillLevelId(req.minSkillLevelId());
-        e = events.save(e);
+        e = events.insert(e);
 
-        EventMember organizer = new EventMember();
-        organizer.setEventId(e.getId());
-        organizer.setUserId(req.createdById());
-        members.save(organizer);
+        members.insert(e.getId(), req.createdById());
 
         return e;
     }
@@ -95,29 +94,7 @@ public class EventService {
         return jdbc.sql(sql).param(id).query(Boolean.class).single();
     }
 
-    public List<EventMemberResponse> listMembers(Long eventId) {
-        if (!events.existsById(eventId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Event " + eventId + " not found.");
-        }
-
-        return jdbc.sql("""
-            SELECT u.id          AS user_id,
-                   u.username    AS username,
-                   u.name        AS name,
-                   m.joined_at   AS joined_at,
-                   (u.id = e.created_by_id) AS organizer
-            FROM event_members m
-            JOIN users  u ON u.id = m.user_id
-            JOIN events e ON e.id = m.event_id
-            WHERE m.event_id = ?
-            ORDER BY m.joined_at, m.id
-            """)
-                .param(eventId)
-                .query(EventMemberResponse.class)
-                .list();
-    }
-
-    private void lockEvent(Long eventId) {
+    public void lockEvent(Long eventId) {
         boolean found = jdbc.sql("SELECT id FROM events WHERE id = :id FOR UPDATE")
                 .param("id", eventId).query(Long.class).optional().isPresent();
         if (!found) {
@@ -125,18 +102,18 @@ public class EventService {
         }
     }
 
-    private String statusOf(Long eventId) {
+    public String statusOf(Long eventId) {
         return jdbc.sql("SELECT status FROM events_with_status WHERE id = :id")
                 .param("id", eventId).query(String.class).single();
     }
 
-    private void requireUser(Long userId) {
+    public void requireUser(Long userId) {
         if (!exists("SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)", userId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik ne postoji.");
         }
     }
 
-    private ResponseStatusException conflict(String msg) {
+    public ResponseStatusException conflict(String msg) {
         return new ResponseStatusException(HttpStatus.CONFLICT, msg);
     }
 
@@ -149,7 +126,7 @@ public class EventService {
         String status = statusOf(eventId);
         if (status.equals("cancelled")) throw conflict("Događaj je već otkazan.");
         if (status.equals("finished"))  throw conflict("Događaj je već završio.");
-        jdbc.sql("UPDATE events SET cancelled_at = now() WHERE id = :id").param("id", eventId).update();
+        events.cancel(eventId);
     }
 
 
@@ -184,59 +161,6 @@ public class EventService {
         if (req.maxParticipants() != null && req.maxParticipants() < members.countByEventId(eventId)) {
             throw new ApiValidationException(Map.of("maxParticipants", "Kapacitet ne može biti manji od broja sudionika."));
         }
-        return events.save(e);
-    }
-
-
-
-    @Transactional
-    public void join(Long eventId, Long userId) {
-        lockEvent(eventId);
-        requireUser(userId);
-
-        if (members.existsByEventIdAndUserId(eventId, userId)) throw conflict("Već si prijavljen na ovaj događaj.");
-
-        String status = statusOf(eventId);
-        switch (status) {
-            case "open" -> { }
-            case "full" -> throw conflict("Događaj je popunjen.");
-            case "cancelled" -> throw conflict("Događaj je otkazan.");
-            default -> throw conflict("Događaj je već počeo ili završio.");
-        }
-
-        EventMember m = new EventMember();
-        m.setEventId(eventId);
-        m.setUserId(userId);
-        members.save(m);
-    }
-
-
-    @Transactional
-    public void removeMember(Long eventId, Long userId) {
-        lockEvent(eventId);
-
-        if (!statusOf(eventId).matches("open|full")) {
-            throw conflict("Događaj je već počeo, završio ili je otkazan.");
-        }
-
-        long deleted = members.deleteByEventIdAndUserId(eventId, userId);
-        if (deleted == 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik nije član događaja.");
-        }
-        members.flush();
-
-        Long ownerId = jdbc.sql("SELECT created_by_id FROM events WHERE id = :id")
-                .param("id", eventId).query(Long.class).single();
-        if (ownerId.equals(userId)) {
-            Optional<Long> next = jdbc.sql(
-                            "SELECT user_id FROM event_members WHERE event_id = :id ORDER BY joined_at, id LIMIT 1")
-                    .param("id", eventId).query(Long.class).optional();
-            if (next.isPresent()) {
-                jdbc.sql("UPDATE events SET created_by_id = :u WHERE id = :id")
-                        .param("u", next.get()).param("id", eventId).update();
-            } else {
-                jdbc.sql("UPDATE events SET cancelled_at = now() WHERE id = :id").param("id", eventId).update();
-            }
-        }
+        return events.update(e);
     }
 }
