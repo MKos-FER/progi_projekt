@@ -40,7 +40,7 @@ public class EventMemberService {
             case "cancelled" -> throw eventService.conflict("Događaj je otkazan.");
             default -> throw eventService.conflict("Događaj je već počeo ili završio.");
         }
-        requireEligible(eventId, userId);   // new
+        requireEligible(eventId, userId);
         members.insert(eventId, userId);
     }
 

@@ -150,7 +150,7 @@ public class EventService {
     @Transactional
     public void cancel(Long eventId, Long currentUserId) {
         lockEvent(eventId);
-        requireOrganizer(eventId, currentUserId);   // new
+        requireOrganizer(eventId, currentUserId);   
         String status = statusOf(eventId);
         if (status.equals("cancelled")) throw conflict("Događaj je već otkazan.");
         if (status.equals("finished"))  throw conflict("Događaj je već završio.");
