@@ -32,7 +32,6 @@ ALTER TABLE users
     ADD CONSTRAINT users_gender_options CHECK (gender IN ('Male', 'Female', 'Other')
 
 CREATE INDEX ON users (city_id);
-CREATE INDEX ON users (app_role_id);
 
 CREATE TABLE oauth_accounts (
     id               bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
