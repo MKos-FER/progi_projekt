@@ -6,6 +6,7 @@ import Login from './Login.tsx'
 import ReportsPage from './ReportsPage.tsx'
 import MyEvents from './MyEventsPage.tsx'
 import EventPage from './EventPage.tsx'
+import { CookiePolicy, PrivacyPolicy } from './LegalStuff.tsx'
 
 import {Button} from "@/components/ui/button.tsx";
 import {
@@ -38,6 +39,8 @@ function App() {
 
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/legal/cookie_policy" element={<CookiePolicy />} />
+          <Route path="/legal/privacy_policy" element={<PrivacyPolicy />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/events" element={<MyEvents />} />
           <Route path="/events/:eventId" element={<EventPage />} />
