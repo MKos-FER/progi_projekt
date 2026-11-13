@@ -37,13 +37,16 @@ Sljedeće naredbe izvršavati iz direktorija **`db/`**, nakon pripreme `.env` pr
 ```bash
 docker compose up -d db
 docker compose run --rm migrate info
-docker compose run --rm migrate validate
 docker compose run --rm migrate
+docker compose run --rm migrate validate
 ```
 
-- `info` prikazuje primijenjene migracije i one koje čekaju izvršavanje.
-- `validate` provjerava usklađenost SQL datoteka s poviješću migracija; ne provjerava može li se novi SQL uspješno izvršiti.
-- Posljednja naredba izvršava migracije i ispisuje rezultat u terminal.
+- `up -d db` pokreće bazu podataka u pozadini.
+- `info` prikazuje već izvršene migracije i one koje čekaju izvršavanje.
+- `migrate` automatski validira postojeće migracije, izvršava nove i ispisuje rezultat u terminal.
+- `validate` provjerava usklađenost SQL datoteka s poviješću migracija nakon izvršavanja.
+
+**Napomena:** Naredbe izvršavati redom. Ako neka naredba prijavi grešku, potrebno ju je riješiti prije nastavka. `validate` ne provjerava funkcionalnu ispravnost SQL-a.
 
 ## Što ne pripada ovom direktoriju
 

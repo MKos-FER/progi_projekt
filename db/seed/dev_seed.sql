@@ -9,13 +9,18 @@ DELETE FROM events;
 DELETE FROM venue_sports;
 DELETE FROM user_sports;
 DELETE FROM venues;
+DELETE FROM oauth_accounts;
 DELETE FROM users;
 
-INSERT INTO users (username, name, date_of_birth, city_id) VALUES
-    ('ana',   'Ana Horvat',   '2002-03-14', (SELECT id FROM sif_city WHERE name = 'Zagreb')),
-    ('ivan',  'Ivan Kovač',   '1999-11-02', (SELECT id FROM sif_city WHERE name = 'Zagreb')),
-    ('petra', 'Petra Babić',  '2001-06-21', (SELECT id FROM sif_city WHERE name = 'Zagreb')),
-    ('marko', 'Marko Jurić',  '2004-01-30', (SELECT id FROM sif_city WHERE name = 'Split'));
+INSERT INTO users (username, name, gender, date_of_birth, city_id) VALUES
+    ('ana',   'Ana Horvat',  'žensko',   '2002-03-14', (SELECT id FROM sif_city WHERE name = 'Zagreb')),
+    ('ivan',  'Ivan Kovač',  'muško',    '1999-11-02', (SELECT id FROM sif_city WHERE name = 'Zagreb')),
+    ('petra', 'Petra Babić', 'žensko',   '2001-06-21', (SELECT id FROM sif_city WHERE name = 'Zagreb')),
+    ('marko', 'Marko Jurić', 'muško',    '2004-01-30', (SELECT id FROM sif_city WHERE name = 'Split'));
+
+-- Sintetički Google identiteti samo za razvoj; ne predstavljaju stvarne Google račune.
+INSERT INTO oauth_accounts (user_id, provider, provider_user_id)
+SELECT id, 'google', 'dev-seed-' || username FROM users;
 
 INSERT INTO user_sports (user_id, sport_id, skill_level_id)
 SELECT u.id, s.id, l.id
