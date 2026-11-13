@@ -150,7 +150,19 @@ docker compose run --rm migrate
 ### Ogledni podaci
 
 Skripta `seed/dev_seed.sql` sadrži ogledne podatke za lokalni razvoj. Nije dio Flyway migracija i pokreće se ručno, nakon migracija, kao aplikacijski korisnik `lds_app`.
-**Prije unosa briše sve postojeće retke iz tablica `event_members`, `events`, `venues` i `users`**, a ne samo prethodne ogledne podatke. Ne koristiti je na produkcijskoj bazi.
+**Prije unosa briše sve postojeće retke iz tablica `event_members`, `events`, `venue_sports`, `user_sports`, `venues`, `oauth_accounts` i `users`**, a ne samo prethodne ogledne podatke. Ne koristiti je na produkcijskoj bazi.
+
+### Nadogradnja lokalne baze s V3 na noviju verziju
+
+V5 postavlja spol, datum rođenja i grad korisnika kao obavezne. Korisnici iz oglednih podataka za V3 nemaju spol, pa se na takvoj bazi V5 zaustavlja s pogreškom `column "gender" of relation "users" contains null values`. Postupak za lokalnu bazu:
+
+```bash
+docker compose run --rm migrate migrate -target=4
+docker compose exec -T db psql -v ON_ERROR_STOP=1 -U lds_app -d lets_do_sports < seed/dev_seed.sql
+docker compose run --rm migrate
+```
+
+Prva naredba primjenjuje migracije samo do V4. Riječ `migrate` piše se dvaput: prva je naziv servisa, a druga Flywayeva naredba. Seed zatim zamjenjuje stare ogledne korisnike potpunima, a zadnja naredba primjenjuje sve preostale migracije. Druga je mogućnost brisanje baze ([naredba](#6-brisanje-baze)).
 
 ## 8. Produkcija
 

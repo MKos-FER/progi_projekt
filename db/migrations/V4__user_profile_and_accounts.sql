@@ -28,8 +28,8 @@ ALTER TABLE users
     ADD COLUMN gender text,
     ADD COLUMN app_role_id text NOT NULL DEFAULT 'USER' REFERENCES sif_app_role (id),
     ADD CONSTRAINT users_username_not_blank CHECK (username ~ '[^[:space:]]'),
-    ADD CONSTRAINT users_name_not_blank CHECK (name ~ '[^[:space:]]');
-    ADD CONSTRAINT users_gender_options CHECK (gender IN ('Male', 'Female', 'Other')
+    ADD CONSTRAINT users_name_not_blank CHECK (name ~ '[^[:space:]]'),
+    ADD CONSTRAINT users_gender_options CHECK (gender IN ('Male', 'Female', 'Other'));
 
 CREATE INDEX ON users (city_id);
 
