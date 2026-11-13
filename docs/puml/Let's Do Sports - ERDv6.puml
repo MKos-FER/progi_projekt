@@ -1,0 +1,178 @@
+@startuml
+title Let's Do Sports - ER Dijagram v6 (stanje nakon V3)
+
+hide circle
+hide methods
+skinparam linetype ortho
+skinparam shadowing false
+skinparam nodesep 55
+skinparam ranksep 65
+left to right direction
+
+legend top left
+  PK = primarni ključ; FK = strani ključ; UQ = jedinstvenost.
+  NN = NOT NULL; stupci bez NN/PK dopuštaju NULL.
+  IDENTITY = GENERATED ALWAYS AS IDENTITY.
+  Prikazane su aplikacijske tablice i pogled nakon V1–V3.
+  Flywayova interna evidencija nije dio domenskog ERD-a.
+  V4 i ostali planirani entiteti nisu implementirani u ovom stanju.
+endlegend
+
+package "Korisnici" {
+  entity "users" as users #E5D9F2 {
+    * id : bigint <<PK, IDENTITY>>
+    --
+    username : text <<NN, UQ>>
+    name : text <<NN>>
+    date_of_birth : date
+    city_id : smallint <<FK>>
+    created_at : timestamptz <<NN>> = now()
+  }
+  entity "user_sports" as user_sports #E5D9F2 {
+    * id : bigint <<PK, IDENTITY>>
+    --
+    user_id : bigint <<FK, NN>>
+    sport_id : smallint <<FK, NN>>
+    skill_level_id : smallint <<FK, NN>>
+    --
+    UQ(user_id, sport_id)
+  }
+}
+
+package "Događaji" {
+  entity "events" as events #D6E5F5 {
+    * id : bigint <<PK, IDENTITY>>
+    --
+    sport_id : smallint <<FK, NN>>
+    venue_id : bigint <<FK, NN>>
+    created_by_id : bigint <<FK, NN>>
+    name : text <<NN>>
+    description : text
+    scheduled_at : timestamptz <<NN>>
+    expected_duration_min : integer
+    max_participants : integer <<NN>>
+    min_age : smallint
+    max_age : smallint
+    min_skill_level_id : smallint <<FK>>
+    cancelled_at : timestamptz
+    created_at : timestamptz <<NN>> = now()
+  }
+  entity "event_members" as event_members #D6E5F5 {
+    * id : bigint <<PK, IDENTITY>>
+    --
+    event_id : bigint <<FK, NN>>
+    user_id : bigint <<FK, NN>>
+    joined_at : timestamptz <<NN>> = now()
+    last_read_message_at : timestamptz
+    --
+    UQ(event_id, user_id)
+  }
+  entity "events_with_status" as events_with_status <<VIEW>> #D6E5F5 {
+    events.* : svi stupci događaja
+    --
+    participant_count : bigint
+    status : text
+  }
+}
+
+package "Tereni" {
+  entity "venues" as venues #D9EEDC {
+    * id : bigint <<PK, IDENTITY>>
+    --
+    created_by_id : bigint <<FK>>
+    name : text <<NN>>
+    city_id : smallint <<FK, NN>>
+    address : text
+    latitude : numeric(9,6) <<NN>>
+    longitude : numeric(9,6) <<NN>>
+    created_at : timestamptz <<NN>> = now()
+    description : text
+    is_paid : boolean <<NN>> = false
+    supports_booking : boolean <<NN>> = false
+    external_booking_url : text
+  }
+  entity "venue_sports" as venue_sports #D9EEDC {
+    * venue_id : bigint <<PK, FK>>
+    * sport_id : smallint <<PK, FK>>
+    --
+    PK(venue_id, sport_id)
+  }
+}
+
+package "Šifrarnici i sportovi" {
+  entity "sif_city" as sif_city {
+    * id : smallint <<PK, IDENTITY>>
+    --
+    name : text <<NN, UQ>>
+  }
+  entity "sif_skill_level" as sif_skill_level {
+    * id : smallint <<PK>>
+    --
+    name : text <<NN, UQ>>
+    rank : smallint <<NN, UQ>>
+  }
+  entity "sports" as sports #F5E2C9 {
+    * id : smallint <<PK, IDENTITY>>
+    --
+    name : text <<NN, UQ>>
+    description : text
+  }
+}
+
+' Kardinalnosti odgovaraju nullable/NOT NULL stranim ključevima.
+users ||--o{ events : created_by_id
+users ||--o{ event_members : user_id / DELETE CASCADE
+users |o--o{ venues : created_by_id / DELETE SET NULL
+users ||--o{ user_sports : user_id / DELETE CASCADE
+events ||--o{ event_members : event_id / DELETE CASCADE
+venues ||--o{ events : venue_id
+venues ||--o{ venue_sports : venue_id / DELETE CASCADE
+sports ||--o{ events : sport_id
+sports ||--o{ user_sports : sport_id
+sports ||--o{ venue_sports : sport_id
+sif_skill_level |o--o{ events : min_skill_level_id
+sif_skill_level ||--o{ user_sports : skill_level_id
+sif_city |o--o{ users : city_id
+sif_city ||--o{ venues : city_id
+
+' Ovisnosti pogleda nisu dodatni strani ključevi.
+events_with_status ..> events : čita
+events_with_status ..> event_members : prebrojava
+
+note bottom of events
+  CHECK: btrim(name) nije prazan.
+  max_participants >= 1.
+  Kada su zadani: expected_duration_min > 0,
+  min_age >= 0, max_age >= 0.
+  Kada su obje granice zadane: min_age <= max_age.
+  NULL u dobi ili minimalnoj razini znači da uvjeta nema.
+end note
+
+note bottom of venues
+  latitude BETWEEN -90 AND 90.
+  longitude BETWEEN -180 AND 180.
+  external_booking_url IS NULL OR supports_booking.
+  is_paid = true znači da se korištenje naplaćuje.
+end note
+
+note bottom of event_members
+  Poslovno pravilo: organizator je prvi sudionik
+  i ulazi u max_participants. Sam FK to ne jamči;
+  backend upisuje događaj i članstvo u transakciji.
+end note
+
+note bottom of events_with_status
+  participant_count = COUNT(event_members.id).
+  Status, redom prioriteta: cancelled, finished,
+  in_progress, full, open.
+  Završetak = scheduled_at + trajanje;
+  NULL trajanje računa se kao 0 minuta.
+  Pogled nema zaseban PK ni FK.
+end note
+
+note bottom of sif_skill_level
+  Amateur (rank 1), Average (rank 2), Pro (rank 3).
+  rank određuje poredak razina.
+end note
+
+@enduml
