@@ -23,3 +23,9 @@ U dijagram su dodane bilješke o kapacitetu, dobnim granicama, trajanju, koordin
 Pravilo da je organizator prvi sudionik označeno je kao poslovno pravilo koje se provodi transakcijskim upisom događaja i članstva. Sam strani ključ ne jamči taj upis.
 
 Pregled i usklađivanje ERD-a nisu mijenjali aplikacijski kod ni postojeće SQL migracije.
+
+## Sljedeći koraci nakon V4
+
+Nakon što se dovrši migracija V4, ERD ću uskladiti s novim poljima, tablicama i odnosima. Ponovno ću provjeriti primarne i strane ključeve, obaveznost veza i ograničenja.
+
+Zatim ću provjeriti izvršavanje migracija V1–V4 na zasebnoj praznoj testnoj bazi te nadogradnju postojeće V3 baze s podacima na V4. Rezultate provjera ću dopisati u ovaj dokument.
