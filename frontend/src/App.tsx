@@ -7,6 +7,8 @@ import ReportsPage from './ReportsPage.tsx'
 import MyEvents from './MyEventsPage.tsx'
 import EventPage from './EventPage.tsx'
 import { CookiePolicy, PrivacyPolicy } from './LegalStuff.tsx'
+import EditProfile from './EditProfilePage.tsx'
+
 
 import {Button} from "@/components/ui/button.tsx";
 import {
@@ -44,8 +46,8 @@ function App() {
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/events" element={<MyEvents />} />
           <Route path="/events/:eventId" element={<EventPage />} />
-          <Route path="/profile" element={<ReportsPage />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/profile/edit" element={<EditProfile/>}/>
         </Routes>
       </BrowserRouter>
     </div>

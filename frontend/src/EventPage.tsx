@@ -5,8 +5,12 @@ import type { EventDetails } from "@/types/event";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, ChevronLeft } from "lucide-react";
-import { ChevronsLeft } from "lucide-react";
+import { Users, ChevronLeft, ChevronDown, ChevronUp } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton"
+import { Textarea } from "@/components/ui/textarea"
+import { Link } from "react-router-dom";
+
+
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import {
@@ -36,6 +40,7 @@ import { Progress } from "@/components/ui/progress"
 export default function EventPage() {
   const { eventId } = useParams();
   const id = Number(eventId);
+  const [onboarded, setOnboarded] = useState(false)
 
   const { data: event, isLoading, error } = useEventDetails(id);
 
@@ -55,19 +60,24 @@ export default function EventPage() {
   }
 
   if (isLoading) {
-    return <p>Učitavanje...</p>;
+    return(
+      <>
+      <div className="mt-7">
+      <SkeletonEventInfo/>
+      </div>
+      </>
+    );
   } else if (error || !event) {
     return <p>Greška pri učitavanju eventa.</p>;
   } else {
     // TODO: DELETE THE DELETE BUTTON
     return (
       <>
-        event: {eventId}
         <Button onClick={() => deleteEvent(id)} >DELETE EVENT</Button>
         <EventDescription event={event} />
         <PeopleInfo event={event} />
         <ChatBox />
-        <TextingBox />
+        <TextingBox onboarded={ onboarded }/>
       </>
     )
   }
@@ -90,6 +100,7 @@ function EventDescription({ event }: { event: EventDetails }) {
       : description.slice(0, maxLength) + "...";
 
   return (
+    //TODO: promijeniti boje ikonica ChevronUp i ChevronDown u skladu s paletom stranice s text-boja-value
 
     <Card>
       <CardContent className="flex min-w-0 flex-col gap-3 p-3 md:flex-row" >
@@ -103,10 +114,10 @@ function EventDescription({ event }: { event: EventDetails }) {
 
             {isLong && (
               <button
-                onClick={() => setExpanded(!expanded)}
-                className="mt-2 text-blue-500 hover:underline"
-              >
-                {expanded ? "Prikaži manje" : "Prikaži više"}
+                onClick={() => setExpanded(!expanded)} className="mt-2 text-blue-500 hover:underline">
+
+                  {expanded ? <ChevronUp className=""/> : <ChevronDown />}
+                  
               </button>
             )}
           </CardDescription>
@@ -121,17 +132,15 @@ function EventDescription({ event }: { event: EventDetails }) {
 function PeopleInfo({ event }: { event: EventDetails }) {
   return (
     <>
-      <div>
-        <Badge>
-          <ChevronsLeft />
-        </Badge>
-
-        <Badge variant="outline">
-          <Users className="mr-1 h-3 w-3" />
+      <div className=" mt-4 mb-4 flex  w-full items-center justify-between ">
+        
+        <Badge className="" variant="outline">
+          <Users className="h-3 w-3" />
           {event.participants.length} / {event.max_participants}
         </Badge>
-
+        <div>
         <ShowMembersButton event={event}/>
+        </div>
       </div>
 
     </>
@@ -273,14 +282,31 @@ function ChatBox() {
 
   );
 }
-function TextingBox() {
-  return (
+function TextingBox({ onboarded }: { onboarded: boolean }) {
+  
+  if(!onboarded){
+    return (
     <>
+    <Link to="/login">
+      <Button className="mt-3" variant="outline">PRIDRUŽI SE</Button>
+      </Link>
+    </>
 
-      <Button variant="outline">PRIDRUŽI SE</Button>
+    );
+  } else {
+    return (
+    <>
+      <div className="relative mt-4">
+  <Textarea placeholder="Napiši poruku..."/>
+
+  <Button className="absolute bottom-3 right-3">
+    Send
+  </Button>
+</div>
     </>
 
   );
+  }
 }
 
 function EventImage() {
@@ -291,5 +317,42 @@ function EventImage() {
         slika eventa
       </span>
     </div>
+  );
+}
+
+function SkeletonEventInfo () {
+  return (
+    <>
+    <Card>
+      <CardContent className="flex flex-col gap-3 p-3 md:flex-row">
+
+        <Skeleton className="flex min-h-40 w-full items-center justify-center
+                    rounded-md border bg-muted md:h-52 md:w-60 md:shrink-0"/>
+
+        <div className="
+          grid
+          w-full
+          grid-cols-[1fr_1fr]
+          grid-rows-[auto_auto_auto]
+          [grid-template-areas:'sport_loc'_'name_dist'_'desc_desc']
+          md:[grid-template-areas:'name'_'desc']
+          min-w-0
+          gap-3
+        ">
+
+          <div className="flex flex-wrap items-center [grid-area:name]">
+
+            <Badge variant="secondary">
+              <Skeleton className="w-22"/>
+            </Badge>
+
+          </div>
+
+          <Skeleton className="rounded-md bg-muted p-3 text-sm text-muted-foreground [grid-area:desc]"/>
+
+        </div>
+      </CardContent>
+    </Card>
+    </>
   );
 }
