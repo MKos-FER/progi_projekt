@@ -8,6 +8,7 @@ import * as api from "@/api/api_v1";
 
 // TODO: Napraviti hooks za users
 import type { CreateEventInfo } from "@/types/event";
+import type { UserCreateDetails } from "@/types/user";
 
 export function useMyUserProfile() {
   return useQuery({
@@ -23,10 +24,18 @@ export function useUserProfile() {
   });
 }
 
-export function useEventDetails(id: number) {
-  return useQuery({
-    queryKey: ["events", id],
-    queryFn: () => api.getEventDetails(id),
+export function useEditUserProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UserCreateDetails) => api.editUserProfile(data),
+
+    onSuccess: () => {
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
+        queryClient.invalidateQueries({ queryKey: ["users"] }),
+      ]);
+    },
   });
 }
 
