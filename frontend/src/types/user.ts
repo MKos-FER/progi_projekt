@@ -21,6 +21,8 @@ export interface UserDetails {
   user_sports: UserSportDetails[];
 }
 
+export type UserCreateDetails = Omit<UserDetails, "id | profile_photo_url | created_at | cityName | app_role_id">
+
 
 export interface PublicUserInfo {
     id: number;

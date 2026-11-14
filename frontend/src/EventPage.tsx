@@ -2,7 +2,6 @@ import { useParams } from "react-router-dom";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { useCancelEvent, useEventDetails, useEventMembers } from "@/apiStore/useEvents.ts";
 import type { EventDetails } from "@/types/event";
-import type { PublicUserInfo } from "@/types/user";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -57,7 +56,7 @@ export default function EventPage() {
 
   if (isLoading) {
     return <p>Učitavanje...</p>;
-  } else if (error) {
+  } else if (error || !event) {
     return <p>Greška pri učitavanju eventa.</p>;
   } else {
     // TODO: DELETE THE DELETE BUTTON
@@ -186,7 +185,7 @@ function ShowMembersButton({event}: {event: EventDetails}) {
               <Field orientation="horizontal">
                 <Avatar className="self-center">
                   <AvatarImage
-                    src={member.profile_photo_url}
+                    src={member.profile_photo_url??""}
                     alt={`@${member.username}`}
                   />
                   <AvatarFallback>{member.name[0]}</AvatarFallback>

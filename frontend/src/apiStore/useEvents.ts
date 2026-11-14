@@ -4,7 +4,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
-import * as api from "@/api/events";
+import * as api from "@/api/api_v1";
 
 import type { CreateEventInfo } from "@/types/event.ts";
 

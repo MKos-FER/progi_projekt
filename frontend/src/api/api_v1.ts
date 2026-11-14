@@ -1,7 +1,8 @@
 import { dummyEvents, dummyUsers, currentUserId, preferedUserLocation } from "@/dummy_data/simple_dummy_data.ts";
 import type {EventCardInfo, CreateEventInfo, EventDetails} from "@/types/event.ts";
-import type {PublicUserInfo} from "@/types/user.ts";
+import type {PublicUserInfo, UserDetails, UserCreateDetails} from "@/types/user.ts";
 import {calculateDistanceKm, getUserLocation, type UserLocation} from "@/lib/geolocation.ts";
+import { getDefaultAvatar } from "@/lib/utils";
 
 // const USE_DUMMY_DATA = import.meta.env.APP_USE_DUMMY_DATA === "true";
 const USE_DUMMY_DATA = true;
@@ -38,6 +39,11 @@ function roundSometimes(x: number) {
   if (x < 1) return Math.round(x * 10) / 10;
   else return Math.round(x);
 }
+
+/*
+ *  Event api
+ *  /event/*
+ */
 
 export async function getEvents(): Promise<EventCardInfo[]> {
   if (USE_DUMMY_DATA) {
@@ -192,21 +198,6 @@ export async function joinEvent(eventId: number): Promise<void> {
 export async function leaveEvent(eventId: number): Promise<void> {
   if (USE_DUMMY_DATA) {
     throw new Error("NOT IMPLEMENTED");
-    const event = dummyEvents.find(e => e.id === eventId);
-
-    if (!event) throw new Error("Event not found");
-
-    if (event.participants.includes(currentUserId)) {
-      throw new Error("Already joined");
-    }
-
-    if (event.participants.length >= event.max_participants) {
-      throw new Error("Event is full");
-    }
-
-    event.participants.push(currentUserId);
-
-    return;
   }
 
   const response = await fetch(`${API_PREFIX}/events/${eventId}/members/me`, {
@@ -231,8 +222,161 @@ export async function getEventMembers(eventId: number): Promise<PublicUserInfo[]
       }
 
       return user;
-    });
+    }) as PublicUserInfo[];
   }
 
   return fetchData<PublicUserInfo[]>(`/events/${eventId}/members`);
+}
+
+
+
+/*
+ *  User api
+ *  /user/*
+ */
+
+
+export async function getUserProfile(): Promise<UserDetails> {
+  if (USE_DUMMY_DATA) {
+    const user = dummyUsers.find(u => u.id === currentUserId);
+
+    if (!user) {
+      throw new Error("User profile not found!")
+    }
+
+    return user;
+  }
+
+  return fetchData<UserDetails>(`/users/me`);
+}
+
+
+export async function editUserProfile(newUserInfo: UserCreateDetails): Promise<void> {
+  if (USE_DUMMY_DATA) {
+    const userIdx = dummyUsers.findIndex(u => u.id === currentUserId);
+
+    if (userIdx === -1) {
+      throw new Error("User profile not found!")
+    }
+
+    dummyUsers[userIdx] = newUserInfo;
+
+    return;
+  }
+
+
+  const response = await fetch(`${API_PREFIX}/users/me`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newUserInfo)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Cannot edit user profile: ${response.status}`)
+  }
+}
+
+export async function uploadUserProfilePhoto(url: string): Promise<void> {
+  if (USE_DUMMY_DATA) {
+    const userIdx = dummyUsers.findIndex(u => u.id === currentUserId);
+
+    if (userIdx === -1) {
+      throw new Error("User profile not found!")
+    }
+
+    dummyUsers[userIdx].profile_photo_url = getDefaultAvatar(url);
+
+    return;
+  }
+
+  const response = await fetch(`${API_PREFIX}/users/me/photo`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "Multipart: file", // Otkriti kako ovo treba izgledati
+    },
+    body: "TODO: image data"
+  });
+
+  if (!response.ok) {
+    throw new Error(`Cannot edit user profile: ${response.status}`)
+  }
+}
+
+export async function getUsers(sportId: number | null, cityId: number | null, ageMin: number | null, ageMax: number | null, skillLevelId: number | null ): Promise<PublicUserInfo[]> {
+  if (USE_DUMMY_DATA) {
+    function calculateAge(dateOfBirth: string): number {
+      const birthDate = new Date(dateOfBirth);
+      const today = new Date();
+
+      let age = today.getFullYear() - birthDate.getFullYear();
+
+      const birthdayNotReached =
+        today.getMonth() < birthDate.getMonth() ||
+        (today.getMonth() === birthDate.getMonth() &&
+          today.getDate() < birthDate.getDate());
+
+      if (birthdayNotReached) age--;
+
+      return age;
+    }
+
+    const users = dummyUsers.filter(u =>
+      (!sportId || u.user_sports.map(s => s.sport_id).includes(sportId))
+      && (!cityId || u.city_id === cityId)
+      && (!ageMin || u.date_of_birth && calculateAge(u.date_of_birth) >= ageMin)
+      && (!ageMax || u.date_of_birth && calculateAge(u.date_of_birth) <= ageMax)
+      && ((!sportId || !skillLevelId) || u.user_sports.filter(s => s.sport_id === sportId && s.skill_level_id >= skillLevelId).length > 0)
+    );
+
+    if (!users) {
+      throw new Error("User profile not found!")
+    }
+
+    return users;
+  }
+
+
+  function keyVal(key: string, value: number | null, cond: number | null = value): string {
+    if (cond) {
+      return key + "=" + value + ","
+    } else {
+      return ""
+    }
+  }
+
+
+  let filter = `?`
+    + `${keyVal("sportId", sportId)}`
+    + `${keyVal("cityId", cityId)}`
+    + `${keyVal("ageMin", ageMin)}`
+    + `${keyVal("ageMax",ageMax)}`
+    + `${keyVal("skillLevelId", skillLevelId, sportId && skillLevelId)}`;
+
+  if (filter.endsWith(',')) {
+    filter = filter.slice(0, filter.length - 1)
+  }
+
+  // Ako je samo '?'
+  if (filter.length === 1) {
+    filter = ""
+  }
+
+  return fetchData<PublicUserInfo[]>(`/users${filter}`);
+}
+
+
+export async function getUserInfo(userId: number): Promise<UserDetails> {
+  if (USE_DUMMY_DATA) {
+    const user = dummyUsers.find(u => u.id === userId);
+
+    if (!user) {
+      throw new Error("User profile not found!")
+    }
+
+    return user;
+  }
+
+  return fetchData<UserDetails>(`/users/${userId}`);
 }

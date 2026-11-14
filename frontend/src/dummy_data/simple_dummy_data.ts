@@ -1,6 +1,7 @@
 import type { EventDetails } from "@/types/event.ts";
 import type { UserDetails } from "@/types/user.ts";
 import type { UserLocation } from "@/lib/geolocation";
+import { getDefaultAvatar } from "@/lib/utils"
 
 export const currentUserId: number = 1;
 
@@ -373,7 +374,7 @@ export const dummyUsers: UserDetails[] = [
     id: 1,
     username: "mateo",
     name: "Mateo Horvat",
-    profile_photo_url: null,
+    profile_photo_url: getDefaultAvatar("2"),
     gender: "M",
     date_of_birth: "1991-02-02",
     city_id: 1,
@@ -392,7 +393,7 @@ export const dummyUsers: UserDetails[] = [
     id: 2,
     username: "ivan",
     name: "Ivan Kovač",
-    profile_photo_url: null,
+    profile_photo_url: getDefaultAvatar("3"),
     gender: "M",
     date_of_birth: "1992-03-03",
     city_id: 1,
