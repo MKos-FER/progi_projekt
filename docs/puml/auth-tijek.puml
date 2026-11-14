@@ -1,0 +1,88 @@
+@startuml
+title Let's Do Sports - Google prijava, registracija i odjava (SHARED-02)
+
+autonumber
+actor Korisnik
+participant "Frontend (React)" as FE
+participant "Backend (Spring)" as BE
+participant Google
+database Baza
+
+== Pokretanje aplikacije ==
+Korisnik -> FE : otvara aplikaciju
+FE -> BE : GET /api/v1/auth/session
+BE --> FE : 200 {status: ANONYMOUS} + cookie XSRF-TOKEN
+
+== Google prijava ==
+Korisnik -> FE : "Prijava s Googleom"
+FE -> BE : navigacija: GET /oauth2/authorization/google
+BE --> Korisnik : 302 na Google (state spremljen u sesiji)
+Korisnik -> Google : prijava i odobrenje
+alt odustajanje ili neuspjeh
+  Google --> BE : GET /login/oauth2/code/google?error=access_denied
+  BE --> FE : 302 /login?error=cancelled (ili ?error=failed)\n(React stranica, loginPage("/login"))
+  FE --> Korisnik : "Prijava je otkazana." (ostaje neprijavljen)
+else uspjeh
+  Google --> BE : GET /login/oauth2/code/google?code&state
+  BE -> Google : zamjena code za tokene
+  Google --> BE : ID token (sub, email, name)
+  BE -> BE : provjera state, potpisa i roka tokena
+  BE -> Baza : AppOidcUserService: SELECT u.id, u.app_role_id\nFROM oauth_accounts o JOIN users u ON u.id = o.user_id\nWHERE o.provider='google' AND o.provider_user_id=:sub
+  alt prva prijava (nema retka)
+    Baza --> BE : nema rezultata
+    BE -> BE : sesija = REGISTRATION_REQUIRED\n(ništa se ne upisuje u bazu); novi ID sesije
+    BE --> FE : 302 /register
+    FE -> BE : GET /api/v1/auth/session
+    BE --> FE : 200 {status: REGISTRATION_REQUIRED, pendingIdentity}
+    FE -> BE : GET /api/v1/sports, /cities, /skill-levels
+    BE -> Baza : čitanje šifrarnika
+    BE --> FE : 200 popisi
+    Korisnik -> FE : ispunjava obrazac
+    alt odustajanje od obrasca
+      FE -> BE : POST /api/v1/auth/logout (X-XSRF-TOKEN)
+      BE -> BE : poništi sesiju
+      BE --> FE : 204
+    else slanje obrasca
+      FE -> BE : POST /api/v1/auth/registration (X-XSRF-TOKEN)
+      alt neispravan unos
+        BE --> FE : 400 {errors} ili 409 USERNAME_TAKEN
+        FE --> Korisnik : greške uz polja
+      else valjan unos
+        BE -> Baza : BEGIN; INSERT users; INSERT user_sports;\nINSERT oauth_accounts('google', sub, email); COMMIT
+        Baza --> BE : novi users.id
+        BE -> BE : sesija = AUTHENTICATED (userId, ROLE_USER);\nchangeSessionId(); novi CSRF token
+        BE --> FE : 201 Location /api/v1/users/me + profil
+        FE -> BE : GET /api/v1/auth/session (invalidate ['authSession'])
+        BE --> FE : 200 {status: AUTHENTICATED, user} + novi XSRF-TOKEN
+        opt odabrana fotografija
+          FE -> BE : PUT /api/v1/users/me/photo (multipart)
+          BE --> FE : 200 profil
+        end
+        FE --> Korisnik : početna stranica (prijavljen)
+      end
+    end
+  else ponovna prijava (redak postoji)
+    Baza --> BE : u.id, u.app_role_id
+    BE -> BE : sesija = AUTHENTICATED (userId, ROLE_USER\n(+ ROLE_ADMIN)); novi ID sesije
+    BE --> FE : 302 /
+    FE -> BE : GET /api/v1/auth/session
+    BE -> Baza : profil korisnika
+    BE --> FE : 200 {status: AUTHENTICATED, user}
+    FE --> Korisnik : početna stranica (prijavljen)
+  end
+end
+
+== Profil ==
+FE -> BE : GET / PATCH /api/v1/users/me
+BE -> Baza : čitanje / izmjena u transakciji
+BE --> FE : 200 profil (400 / 401 / 403 / 409 pri grešci)
+
+== Odjava ==
+Korisnik -> FE : "Odjava"
+FE -> BE : POST /api/v1/auth/logout (X-XSRF-TOKEN)
+BE -> BE : poništi sesiju, obriši cookie JSESSIONID (deleteCookies)
+BE --> FE : 204
+FE --> Korisnik : neprijavljeno stanje
+FE -> BE : GET /api/v1/users/me (stari cookie)
+BE --> FE : 401 NOT_AUTHENTICATED
+@enduml
