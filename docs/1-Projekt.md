@@ -29,7 +29,7 @@ Očekivana korist je jednostavnije pronalaženje suigrača i pregled dogovora na
 
 **Uključeno u planiranu verziju:**
 
-- Registracija i prijava putem vanjskih servisa za autentifikaciju uporabom radnog okvira OAuth 2.0 te uređivanje korisničkog profila sa sportovima i razinom iskustva. Konkretan servis za prijavu još nije odabran.
+- Registracija i prijava putem Google računa (OpenID Connect nad OAuth 2.0) te uređivanje korisničkog profila sa sportovima i razinom iskustva. Jedan lokalni korisnik ima jedan Google račun; dodatni računi i automatsko spajanje po e-pošti nisu podržani.
 - Pretraživanje igrača prema sportu, gradu ili kvartu, dobnoj skupini i iskustvu. Profile igrača mogu pregledavati prijavljeni korisnici.
 - Javni pregled događaja i filtriranje prema sportu, području i terminu. Prijavljeni korisnici mogu stvarati događaje i prijavljivati se na njih dok ima mjesta.
 - Uređivanje i otkazivanje vlastitog događaja te odjava sudionika. Organizator se računa u maksimalan broj sudionika, a prijave ne trebaju njegovo odobrenje.
@@ -46,7 +46,7 @@ Izravna rezervacija i potvrda termina u aplikaciji, plaćanje, partnerstva sa sp
 
 **Vanjske ovisnosti:**
 
-Za karte će se koristiti [OpenStreetMap](https://www.openstreetmap.org/). Biblioteku za prikaz i način dohvaćanja karte još treba odrediti. Registracija i prijava ovise o vanjskom servisu za autentifikaciju putem OAuth 2.0, koji još nije odabran; aplikacija neće imati vlastitu prijavu lozinkom. Za rezervacije se koriste vanjske stranice sportskih centara; aplikacija o njima ovisi samo pri odlasku na rezervaciju.
+Za karte će se koristiti [OpenStreetMap](https://www.openstreetmap.org/). Biblioteku za prikaz i način dohvaćanja karte još treba odrediti. Registracija i prijava ovise o Googleu putem OpenID Connecta nad OAuth 2.0; aplikacija neće imati vlastitu prijavu lozinkom. Za rezervacije se koriste vanjske stranice sportskih centara; aplikacija o njima ovisi samo pri odlasku na rezervaciju.
 
 Dogovoreni su React za frontend, Java sa Spring Bootom za backend i PostgreSQL za bazu podataka. Usluga za javno postavljanje aplikacije još nije odabrana. Dogovorene tehnologije i otvorene odluke zabilježene su u [odjeljku 2.4 analize zahtjeva](2-Analiza-zahtjeva.md#24-ograničenja-i-pretpostavke).
 

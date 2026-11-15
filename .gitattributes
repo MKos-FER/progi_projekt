@@ -1,0 +1,2 @@
+# Linux kontejneri moraju moći izvršavati shell skripte i nakon Windows checkouta.
+*.sh text eol=lf
