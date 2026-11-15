@@ -1,0 +1,40 @@
+# Isključivo izolirani testovi; ove vjerodajnice ne koriste se u razvojnoj bazi.
+services:
+  db:
+    image: docker.io/library/postgres:18
+    environment:
+      POSTGRES_USER: lds_admin
+      POSTGRES_PASSWORD: test_admin_password
+      POSTGRES_DB: lds_user_test
+      APP_DB_USER: lds_app
+      APP_DB_PASSWORD: test_app_password
+      TZ: Europe/Zagreb
+      PGTZ: Europe/Zagreb
+    ports:
+      - "127.0.0.1::5432"
+    volumes:
+      - test_data:/var/lib/postgresql
+      - ./init-db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lds_admin -d lds_user_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  migrate:
+    image: docker.io/flyway/flyway:13
+    command: -connectRetries=60 migrate
+    environment:
+      FLYWAY_URL: jdbc:postgresql://db:5432/lds_user_test
+      FLYWAY_USER: lds_admin
+      FLYWAY_PASSWORD: test_admin_password
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+      FLYWAY_VALIDATE_MIGRATION_NAMING: "true"
+    volumes:
+      - ./migrations:/flyway/sql:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  test_data:

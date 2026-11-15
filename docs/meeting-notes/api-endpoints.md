@@ -52,7 +52,7 @@ Nakon uspješnog vanjskog logina backend mora provjeriti identitet, dohvatiti po
 | GET    | `/users`          | Pretraga i filtriranje igrača             | Query: `sportId`, `cityId`, `ageMin`, `ageMax`, `skillLevelId`                                                        | Authenticated | F-005   |
 | GET    | `/users/{userId}` | Pregled profila odabranog igrača          | Path: `userId`                                                                                                        | Authenticated | F-005   |
 
-Sve putanje iz ove tablice imaju prefiks `/api/v1`. Za F-005 rute pregleda drugih igrača i pretraživanja još nisu implementirane.
+Sve putanje iz ove tablice imaju prefiks `/api/v1`. F-005 rute pregleda drugih igrača i pretraživanja implementirane su. F-004 rute iz tablice nisu implementirane u trenutačnom checkoutu.
 
 **Pravila filtriranja igrača (F-005):** svi filtri su opcionalni, a poslani filtri primjenjuju se zajedno. Izostavljeni filtri ne ograničavaju rezultate. ID-evi se preuzimaju iz šifrarnika.
 
@@ -63,6 +63,8 @@ Sve putanje iz ove tablice imaju prefiks `/api/v1`. Za F-005 rute pregleda drugi
 | `skillLevelId` | Igrači s točno odabranom razinom iskustva za sport naveden u `sportId`. |
 
 `skillLevelId` zahtijeva `sportId`; ako se pošalje bez njega, backend vraća `400 Bad Request`. Razina se uspoređuje za isti odabrani sport, a ne za neki drugi sport u profilu.
+
+`ageMin` i `ageMax` su uključive nenegativne cjelobrojne granice; ako su obje poslane, `ageMin <= ageMax`. ID-evi šifrarnika moraju biti cijeli brojevi 1–32767. Neispravan format, raspon ili kombinacija vraća `400 INVALID_REQUEST`. Valjan ID šifrarnika bez podudaranja vraća `200 []`. Popis nema paginaciju, uključuje prijavljenog igrača ako odgovara filtrima i sortiran je po ID-u igrača. Odgovor sadrži sve njegove sportove, sortirane po ID-u sporta, i kad je odabran filtar sporta.
 
 Primjer: `GET /api/v1/users?cityId=1&sportId=2&skillLevelId=1` vraća igrače iz grada `1` koji imaju sport `2` s točno razinom `1`. Vrijednosti su ilustrativne.
 
@@ -102,7 +104,7 @@ Vrijednosti su ilustrativne. `age` se računa prema trenutačnom datumu u zoni `
 
 ### 3.2 Odgovor za pregled igrača (F-005)
 
-`GET /api/v1/users` vraća JSON popis igrača, a `GET /api/v1/users/{userId}` jedan objekt igrača. Svaki element popisa i pojedinačni profil imaju isti skup polja. Obje rute dostupne su samo prijavljenim korisnicima; zahtjev bez prijave vraća `401`. Rute još nisu implementirane.
+`GET /api/v1/users` vraća JSON popis igrača, a `GET /api/v1/users/{userId}` jedan objekt igrača. Svaki element popisa i pojedinačni profil imaju isti skup polja. Obje rute implementirane su i dostupne samo autentificiranoj sesiji s lokalnim principalom `ApplicationUserPrincipal(localUserId)`; zahtjev bez takve sesije vraća `401 UNAUTHENTICATED`. Stvarna OAuth prijava čeka zasebnu integraciju. `userId` mora biti pozitivan cjelobrojni `long`; nevaljan ID vraća `400 INVALID_REQUEST`, a nepostojeći igrač `404 USER_NOT_FOUND`.
 
 | Polje             | Značenje                                                                                                      |
 | ----------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -136,6 +138,8 @@ Primjer jednog igrača (vrijednosti su ilustrativne):
 ```
 
 Odgovori za pregled drugih igrača ne sadrže datum rođenja, spol, e-poštu, OAuth podatke ni aplikacijsku ulogu. Nazivi grada, sportova i iskustva vraćaju se uz ID-eve radi izravnog prikaza u sučelju. Prazan rezultat pretrage vraća `200` i `[]`.
+
+Dob i dobni filtri koriste isti referentni datum u zoni `Europe/Zagreb`. Za datum rođenja 29. veljače u neprestupnoj godini dob se mijenja 1. ožujka. Poruku za prazan popis i zamjensku fotografiju prikazuje buduće frontend sučelje.
 
 ## 4. Sportovi (pomoćni podaci za F-004, F-005, F-006, F-007, F-016, F-017)
 
