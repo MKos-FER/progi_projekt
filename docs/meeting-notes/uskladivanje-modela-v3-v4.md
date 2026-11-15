@@ -24,8 +24,8 @@ Pravilo da je organizator prvi sudionik označeno je kao poslovno pravilo koje s
 
 Pregled i usklađivanje ERD-a nisu mijenjali aplikacijski kod ni postojeće SQL migracije.
 
-## Sljedeći koraci nakon V4
+## Potvrda pregleda i sljedeći koraci
 
-Nakon što se dovrši migracija V4, ERD ću uskladiti s novim poljima, tablicama i odnosima. Ponovno ću provjeriti primarne i strane ključeve, obaveznost veza i ograničenja.
+U sljedećoj verziji, ERDv7, dodat će se promjene iz migracija V4–V6: tablice `sif_app_role`, `sif_permissions`, `app_role_has_permissions` i `oauth_accounts` te nova polja na `users`. Usklađivanje se radi prema konačnim migracijama i opisu u `docs/korisnici-i-oauth`, uz ponovnu provjeru ključeva, ograničenja i kardinalnosti. ERDv6 ostaje prikaz stanja nakon V3.
 
-Zatim ću provjeriti izvršavanje migracija V1–V4 na zasebnoj praznoj testnoj bazi te nadogradnju postojeće V3 baze s podacima na V4. Rezultate provjera ću dopisati u ovaj dokument.
+Nakon preuzimanja migracija provjerit će se izvršavanje V1–V6 na zasebnoj praznoj testnoj bazi te nadogradnja postojeće V3 baze s podacima na V6. Rezultati se dokumentiraju uz sljedeću verziju ERD-a.
