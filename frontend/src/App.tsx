@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import footballField from './assets/football-field.svg'
 import './styles/App.css'
+import ProfilePhoto from './profile/ProfilePhoto'
 
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
       </section>
 
 
+      <ProfilePhoto />
       <div className="ticks"></div>
       <section id="spacer-bottom"></section>
     </>
