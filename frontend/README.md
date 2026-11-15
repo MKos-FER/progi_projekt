@@ -26,3 +26,7 @@ Kako bi se provjerila ispravnost statičnih datoteka potrebno je pokrenuti:
 bun preview
 ```
 Ova naredba kreira privremeni web server s datotekama iz tog direktorija.
+
+## Profilna fotografija (PROFILE-05)
+
+Komponenta `src/profile/ProfilePhoto.tsx` prikazuje opcionalnu fotografiju, omogućuje upload/zamjenu te prikazuje greške validacije. Vite prosljeđuje `/api` na backend na portu 8080. Konfiguracija razvojnog identiteta, sesije i trajne pohrane opisana je u [uputama](../docs/profile-photo.md).
