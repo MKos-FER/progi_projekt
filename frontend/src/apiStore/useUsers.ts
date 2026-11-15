@@ -19,8 +19,8 @@ export function useMyUserProfile() {
 
 export function useUserProfile() {
   return useQuery({
-    queryKey: ["myEvents"],
-    queryFn: api.getMyEvents,
+    queryKey: ["userProfile"],
+    queryFn: api.getUserProfile,
   });
 }
 
@@ -35,6 +35,18 @@ export function useEditUserProfile() {
         queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
         queryClient.invalidateQueries({ queryKey: ["users"] }),
       ]);
+    },
+  });
+}
+
+export function useUserLogout() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => api.logoutUser(),
+
+    onSuccess: () => {
+      return queryClient.clear();
     },
   });
 }

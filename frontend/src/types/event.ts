@@ -7,8 +7,9 @@ export interface EventCardInfo {
   latitude: number;
   longitude: number;
   start_date: string;
-  max_participants: number;
+  maxParticipants: number;
   participants: number[];
+  participantsCount: number;
   distance_km: number | null;
 }
 

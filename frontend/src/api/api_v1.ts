@@ -5,7 +5,7 @@ import {calculateDistanceKm, getUserLocation, type UserLocation} from "@/lib/geo
 import { getDefaultAvatar } from "@/lib/utils";
 
 // const USE_DUMMY_DATA = import.meta.env.APP_USE_DUMMY_DATA === "true";
-const USE_DUMMY_DATA = true;
+const USE_DUMMY_DATA = false;
 
 const API_PREFIX = `/api/v1`;
 
@@ -17,6 +17,25 @@ async function fetchData<T>(url: string, options?: RequestInit): Promise<T> {
   }
 
   return (await response.json()) as T;
+}
+
+const getXsrf = () => document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '';
+
+async function send(url: string, init: RequestInit = {}) {
+  const doSend = () => fetch(url, {
+    ...init,
+    credentials: 'include',
+    headers: { ...init.headers, 'X-XSRF-TOKEN': getXsrf() },
+  });
+  let res = await doSend();
+
+  // Znači da XSRF token nije bio dobro postavljen
+  if (res.status === 403) {
+    // Napravi token reload i ponovi request
+    await fetch('/api/v1/auth/csrf', { credentials: 'include' });
+    res = await doSend();
+  }
+  return res;
 }
 
 async function getUserPreferredLocation(): Promise<UserLocation> {
@@ -156,7 +175,7 @@ export async function cancelEvent(eventId: number): Promise<void> {
     return;
   }
 
-  const response = await fetch(`${API_PREFIX}/events/${eventId}/cancel`, {
+  const response = await send(`${API_PREFIX}/events/${eventId}/cancel`, {
     method: "POST",
   });
 
@@ -176,7 +195,7 @@ export async function joinEvent(eventId: number): Promise<void> {
       throw new Error("Already joined");
     }
 
-    if (event.participants.length >= event.max_participants) {
+    if (event.participants.length >= event.maxParticipants) {
       throw new Error("Event is full");
     }
 
@@ -185,7 +204,7 @@ export async function joinEvent(eventId: number): Promise<void> {
     return;
   }
 
-  const response = await fetch(`${API_PREFIX}/events/${eventId}/members`, {
+  const response = await send(`${API_PREFIX}/events/${eventId}/members`, {
     method: "POST",
   });
 
@@ -200,7 +219,7 @@ export async function leaveEvent(eventId: number): Promise<void> {
     throw new Error("NOT IMPLEMENTED");
   }
 
-  const response = await fetch(`${API_PREFIX}/events/${eventId}/members/me`, {
+  const response = await send(`${API_PREFIX}/events/${eventId}/members/me`, {
     method: "DELETE",
   });
 
@@ -265,7 +284,7 @@ export async function editUserProfile(newUserInfo: UserCreateDetails): Promise<v
   }
 
 
-  const response = await fetch(`${API_PREFIX}/users/me`, {
+  const response = await send(`${API_PREFIX}/users/me`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -291,7 +310,7 @@ export async function uploadUserProfilePhoto(url: string): Promise<void> {
     return;
   }
 
-  const response = await fetch(`${API_PREFIX}/users/me/photo`, {
+  const response = await send(`${API_PREFIX}/users/me/photo`, {
     method: "PUT",
     headers: {
       "Content-Type": "Multipart: file", // Otkriti kako ovo treba izgledati

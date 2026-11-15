@@ -7,18 +7,15 @@ import {Separator} from "@/components/ui/separator.tsx";
 import {CircleX} from "lucide-react"
 
 export default function Login() {
+  const handleGoogleLogin = () => {
+    window.location.href = "/oauth2/authorization/google";
+  };
 
   const [searchParams] = useSearchParams();
 
   const error = searchParams.get("loginError");
 
-  function HandleGoogleLogin(){
-  window.location.href = "/oauth2/authorization/google"
-  }
-
   return (
-
-
     <>
       <div>
 
@@ -30,7 +27,7 @@ export default function Login() {
           <AlertDescription>
             Prilikom autorizacije došlo je do progreške. Pokušajte ponovno.
             <Separator className={"my-3"}/>
-           
+
           </AlertDescription>
         </Alert>
       </div>
@@ -40,11 +37,10 @@ export default function Login() {
           <CardTitle className="md:text-4xl text-4xl font-bold ">
             Dobrodošli!
           </CardTitle>
-          
-          <Button className="w-full text-lg md:h-14 h-12" onClick={HandleGoogleLogin}>
+
+          <Button onClick={handleGoogleLogin} className="w-full text-lg md:h-14 h-12">
             Prijava s OAUTH2
           </Button>
-         
 
           <Link to="/" className="w-full md:h-14 h-12 ">
             <Button className="w-full md:h-14 h-12 " variant="outline">
@@ -54,7 +50,6 @@ export default function Login() {
         </CardContent>
       </Card>)}
       </div>
-
     </>
   );
 }

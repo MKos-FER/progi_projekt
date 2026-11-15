@@ -11,11 +11,15 @@ const avatars = import.meta.glob<string>(
   }
 );
 
-export function getDefaultAvatar(filename: string): string {
+export function getDefaultAvatar(filename: string | null): string | null {
+  if (!filename) {
+    return null;
+  }
+
   const photo = avatars[`/src/assets/default-avatar/${filename}.svg`];
 
   if (!photo) {
-    throw new Error(`Avatar ${filename} not found!`);
+    return null;
   }
 
   return photo;

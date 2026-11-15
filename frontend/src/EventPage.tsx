@@ -44,7 +44,7 @@ export default function EventPage() {
 
   const { data: event, isLoading, error } = useEventDetails(id);
 
-  const {mutate: deleteEvent, error: cancelError} = useCancelEvent()
+  const { mutate: deleteEvent, error: cancelError } = useCancelEvent()
   if (cancelError) {
     return (
       <p>ERROR: {cancelError.message}</p>
@@ -60,25 +60,24 @@ export default function EventPage() {
   }
 
   if (isLoading) {
-    return(
+    return (
       <>
-      <div className="mt-7">
-      <SkeletonEventInfo/>
-      </div>
+        <div className="mt-7">
+          <SkeletonEventInfo />
+        </div>
       </>
     );
   } else if (error || !event) {
     return <p>Greška pri učitavanju eventa.</p>;
   } else {
-    // TODO: DELETE THE DELETE BUTTON
+    // TODO: Responzivan dizajn (napravit da je vanjski div non-scrollable)
     return (
-      <>
-        <Button onClick={() => deleteEvent(id)} >DELETE EVENT</Button>
+      <div className="mt-3 flex-col h-screen">
         <EventDescription event={event} />
         <PeopleInfo event={event} />
         <ChatBox />
-        <TextingBox onboarded={ onboarded }/>
-      </>
+        <TextingBox onboarded={onboarded} />
+      </div>
     )
   }
 
@@ -100,8 +99,6 @@ function EventDescription({ event }: { event: EventDetails }) {
       : description.slice(0, maxLength) + "...";
 
   return (
-    //TODO: promijeniti boje ikonica ChevronUp i ChevronDown u skladu s paletom stranice s text-boja-value
-
     <Card>
       <CardContent className="flex min-w-0 flex-col gap-3 p-3 md:flex-row" >
         <EventImage />
@@ -110,14 +107,14 @@ function EventDescription({ event }: { event: EventDetails }) {
           <CardTitle className="text-lg md:text-2xl">{event.name}</CardTitle>
 
           <CardDescription>
-            <p className="break-words whitespace-normal text-sm md:text-base">Opis grupe: {displayedDescription}</p>
+            <p className="break-words whitespace-normal text-sm md:text-base">{displayedDescription}</p>
 
             {isLong && (
               <button
-                onClick={() => setExpanded(!expanded)} className="mt-2 text-blue-500 hover:underline">
+                onClick={() => setExpanded(!expanded)} className="mt-2 text-primary hover:underline">
 
-                  {expanded ? <ChevronUp className=""/> : <ChevronDown />}
-                  
+                {expanded ? <ChevronUp className="" /> : <ChevronDown />}
+
               </button>
             )}
           </CardDescription>
@@ -133,13 +130,13 @@ function PeopleInfo({ event }: { event: EventDetails }) {
   return (
     <>
       <div className=" mt-4 mb-4 flex  w-full items-center justify-between ">
-        
+
         <Badge className="" variant="outline">
           <Users className="h-3 w-3" />
-          {event.participants.length} / {event.max_participants}
+          {event.participants.length} / {event.maxParticipants}
         </Badge>
         <div>
-        <ShowMembersButton event={event}/>
+          <ShowMembersButton event={event} />
         </div>
       </div>
 
@@ -147,12 +144,12 @@ function PeopleInfo({ event }: { event: EventDetails }) {
   );
 }
 
-function ShowMembersButton({event}: {event: EventDetails}) {
+function ShowMembersButton({ event }: { event: EventDetails }) {
   const [openMemberInfo, setOpenMemberInfo] = useState(false)
   const [clickedMemberIdx, setClickedMemberIdx] = useState(-1)
   const isMobile = useIsMobile()
 
-  const {data: memberList, isLoading, error} = useEventMembers(event.id)
+  const { data: memberList, isLoading, error } = useEventMembers(event.id)
   const swipeDirection = isMobile ? "down" : "right";
 
   const clickedMember = memberList?.[clickedMemberIdx] ?? null;
@@ -194,7 +191,7 @@ function ShowMembersButton({event}: {event: EventDetails}) {
               <Field orientation="horizontal">
                 <Avatar className="self-center">
                   <AvatarImage
-                    src={member.profile_photo_url??""}
+                    src={member.profile_photo_url ?? ""}
                     alt={`@${member.username}`}
                   />
                   <AvatarFallback>{member.name[0]}</AvatarFallback>
@@ -226,32 +223,32 @@ function ShowMembersButton({event}: {event: EventDetails}) {
                 <DrawerTitle>Informacije o sudioniku</DrawerTitle>
               </DrawerHeader>
               {clickedMember && (
-              <div className="flex-1 scroll-fade overflow-y-auto p-4">
+                <div className="flex-1 scroll-fade overflow-y-auto p-4">
 
-                <div className="flex min-h-32 w-full items-center justify-center
+                  <div className="flex min-h-32 w-full items-center justify-center
                   rounded-md border bg-muted">
-                  <span className="text-sm text-muted-foreground">
-                    slika sudionika
-                  </span>
-                </div>
+                    <span className="text-sm text-muted-foreground">
+                      slika sudionika
+                    </span>
+                  </div>
 
-                <div className="grid grid-cols-2 mb-6 pr-1">
-                  <div className="text-2xl">
-                    {clickedMember.name}
+                  <div className="grid grid-cols-2 mb-6 pr-1">
+                    <div className="text-2xl">
+                      {clickedMember.name}
+                    </div>
+                    <div className="text-lg text-right self-center text-muted-foreground">
+                      {clickedMember.username}
+                    </div>
                   </div>
-                  <div className="text-lg text-right self-center text-muted-foreground">
-                    {clickedMember.username}
-                  </div>
-                </div>
 
-                Skills:
-                {clickedMember.user_sports?.map((sport) =>
-                  <div key={sport.id} className="flex justify-between mb-2">
-                    {sport.sportName}
-                    <Progress value={sport.skill_level_id/2*100} className="w-[50%] inline-block self-center" />
-                  </div>
-                )}
-              </div>
+                  Skills:
+                  {clickedMember.user_sports?.map((sport) =>
+                    <div key={sport.id} className="flex justify-between mb-2">
+                      {sport.sportName}
+                      <Progress value={sport.skill_level_id / 2 * 100} className="w-[50%] inline-block self-center" />
+                    </div>
+                  )}
+                </div>
               )}
               <DrawerFooter>
                 <DrawerClose render={<Button variant="outline"><ChevronLeft /> Natrag na popis sudionika</Button>} />
@@ -270,12 +267,9 @@ function ShowMembersButton({event}: {event: EventDetails}) {
 function ChatBox() {
   return (
     <>
-      <div className="flex w-full gap-3">
-        <div className="flex flex-1 flex-col">
+      <div className="flex w-full h-full gap-3">
 
-          <div className="min-h-120 w-full rounded-xl bg-gray-100">Chat</div>
-
-        </div>
+          <div className="h-full w-full rounded-xl bg-gray-100">Chat</div>
 
       </div>
     </>
@@ -283,29 +277,29 @@ function ChatBox() {
   );
 }
 function TextingBox({ onboarded }: { onboarded: boolean }) {
-  
-  if(!onboarded){
+
+  if (!onboarded) {
     return (
-    <>
-    <Link to="/login">
-      <Button className="mt-3" variant="outline">PRIDRUŽI SE</Button>
-      </Link>
-    </>
+      <>
+        <Link to="/login">
+          <Button className="mt-3" variant="outline">PRIDRUŽI SE</Button>
+        </Link>
+      </>
 
     );
   } else {
     return (
-    <>
-      <div className="relative mt-4">
-  <Textarea placeholder="Napiši poruku..."/>
+      <>
+        <div className="relative mt-4">
+          <Textarea placeholder="Napiši poruku..." />
 
-  <Button className="absolute bottom-3 right-3">
-    Send
-  </Button>
-</div>
-    </>
+          <Button className="absolute bottom-3 right-3">
+            Send
+          </Button>
+        </div>
+      </>
 
-  );
+    );
   }
 }
 
@@ -320,16 +314,16 @@ function EventImage() {
   );
 }
 
-function SkeletonEventInfo () {
+function SkeletonEventInfo() {
   return (
     <>
-    <Card>
-      <CardContent className="flex flex-col gap-3 p-3 md:flex-row">
+      <Card>
+        <CardContent className="flex flex-col gap-3 p-3 md:flex-row">
 
-        <Skeleton className="flex min-h-40 w-full items-center justify-center
+          <Skeleton className="flex min-h-40 w-full items-center justify-center
                     rounded-md border bg-muted md:h-52 md:w-60 md:shrink-0"/>
 
-        <div className="
+          <div className="
           grid
           w-full
           grid-cols-[1fr_1fr]
@@ -340,19 +334,19 @@ function SkeletonEventInfo () {
           gap-3
         ">
 
-          <div className="flex flex-wrap items-center [grid-area:name]">
+            <div className="flex flex-wrap items-center [grid-area:name]">
 
-            <Badge variant="secondary">
-              <Skeleton className="w-22"/>
-            </Badge>
+              <Badge variant="secondary">
+                <Skeleton className="w-22" />
+              </Badge>
+
+            </div>
+
+            <Skeleton className="rounded-md bg-muted p-3 text-sm text-muted-foreground [grid-area:desc]" />
 
           </div>
-
-          <Skeleton className="rounded-md bg-muted p-3 text-sm text-muted-foreground [grid-area:desc]"/>
-
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
     </>
   );
 }

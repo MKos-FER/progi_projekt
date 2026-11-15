@@ -224,7 +224,7 @@ export function EventCard({eventId}: { eventId: number }) {
 
             <Badge variant="outline">
               <Users className="mr-1 h-3 w-3"/>
-              {event.participants.length} / {event.max_participants}
+              {event.participantsCount} / {event.maxParticipants}
             </Badge>
 
           </div>
