@@ -133,7 +133,7 @@ function PeopleInfo({ event }: { event: EventDetails }) {
 
         <Badge className="" variant="outline">
           <Users className="h-3 w-3" />
-          {event.participants.length} / {event.maxParticipants}
+          {event.participantCount} / {event.maxParticipants}
         </Badge>
         <div>
           <ShowMembersButton event={event} />
@@ -187,11 +187,11 @@ function ShowMembersButton({ event }: { event: EventDetails }) {
         </DrawerHeader>
         <div className="flex-1 scroll-fade overflow-y-auto p-4">
           {memberList.map((member, memberListIdx) => (
-            <FieldLabel key={member.id} className="mb-2" onClick={() => handleClickUser(memberListIdx)}>
+            <FieldLabel key={member.userId} className="mb-2" onClick={() => handleClickUser(memberListIdx)}>
               <Field orientation="horizontal">
                 <Avatar className="self-center">
                   <AvatarImage
-                    src={member.profile_photo_url ?? ""}
+                    src={member.profilePhotoUrl ?? ""}
                     alt={`@${member.username}`}
                   />
                   <AvatarFallback>{member.name[0]}</AvatarFallback>
@@ -199,7 +199,7 @@ function ShowMembersButton({ event }: { event: EventDetails }) {
                 <FieldContent>
                   <FieldTitle className="flex items-center gap-2">
                     {member.name}
-                    {member.id === event.created_by_id ? (
+                    {member.userId === event.organizerId ? (
                       <Badge variant="secondary" className="bg-blue-50 text-blue-700">Organizator</Badge> // TODO: zamijeniti boje s nekima iz teme
                     ) : null}
                   </FieldTitle>
@@ -242,10 +242,10 @@ function ShowMembersButton({ event }: { event: EventDetails }) {
                   </div>
 
                   Skills:
-                  {clickedMember.user_sports?.map((sport) =>
+                  {clickedMember.userSports?.map((sport) =>
                     <div key={sport.id} className="flex justify-between mb-2">
                       {sport.sportName}
-                      <Progress value={sport.skill_level_id / 2 * 100} className="w-[50%] inline-block self-center" />
+                      <Progress value={sport.skillLevelId / 2 * 100} className="w-[50%] inline-block self-center" />
                     </div>
                   )}
                 </div>

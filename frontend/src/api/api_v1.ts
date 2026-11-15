@@ -5,7 +5,10 @@ import {calculateDistanceKm, getUserLocation, type UserLocation} from "@/lib/geo
 import { getDefaultAvatar } from "@/lib/utils";
 
 // const USE_DUMMY_DATA = import.meta.env.APP_USE_DUMMY_DATA === "true";
-const USE_DUMMY_DATA = false;
+const USE_DUMMY_DATA = true;
+
+const USE_DUMMY_USERS = true; // NOTE: Nije implementirano još na backendu, neće raditi
+const USE_DUMMY_EVENTS = true;
 
 const API_PREFIX = `/api/v1`;
 
@@ -21,7 +24,7 @@ async function fetchData<T>(url: string, options?: RequestInit): Promise<T> {
 
 const getXsrf = () => document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '';
 
-async function send(url: string, init: RequestInit = {}) {
+async function send(url: string, init: RequestInit = {}): Promise<Response> {
   const doSend = () => fetch(url, {
     ...init,
     credentials: 'include',
@@ -65,7 +68,7 @@ function roundSometimes(x: number) {
  */
 
 export async function getEvents(): Promise<EventCardInfo[]> {
-  if (USE_DUMMY_DATA) {
+  if (USE_DUMMY_DATA && USE_DUMMY_EVENTS) {
     const userLoc = await getUserPreferredLocation();
 
     return dummyEvents.map(event => ({
@@ -79,7 +82,7 @@ export async function getEvents(): Promise<EventCardInfo[]> {
 }
 
 export async function getMyEvents(): Promise<EventCardInfo[]> {
-  if (USE_DUMMY_DATA) {
+  if (USE_DUMMY_DATA && USE_DUMMY_EVENTS) {
     const userLoc = await getUserPreferredLocation();
 
     return dummyEvents.map(event => ({
@@ -96,7 +99,7 @@ export async function getMyEvents(): Promise<EventCardInfo[]> {
 }
 
 export async function getEventDetails(id: number): Promise<EventDetails> {
-  if (USE_DUMMY_DATA) {
+  if (USE_DUMMY_DATA && USE_DUMMY_EVENTS) {
     const userLoc = await getUserPreferredLocation();
 
     const event: EventDetails = dummyEvents.find(el => el.id === id)!;
@@ -110,13 +113,13 @@ export async function getEventDetails(id: number): Promise<EventDetails> {
 }
 
 export async function createEvent(data: CreateEventInfo): Promise<EventCardInfo> {
-  if (USE_DUMMY_DATA) {
+  if (USE_DUMMY_DATA && USE_DUMMY_EVENTS) {
     const event: EventDetails = {
       ...data,
       id: Math.max(0, ...dummyEvents.map(e => e.id)) + 1,
       participants: [],
-      cancelled_at: null,
-      created_at: Date.now().toString(),
+      status: null,
+      createdAt: Date.now().toString(),
     };
 
     dummyEvents.push(event);
@@ -135,14 +138,14 @@ export async function createEvent(data: CreateEventInfo): Promise<EventCardInfo>
 
 // TODO: Figure out edit
 export async function editEvent(data: CreateEventInfo): Promise<EventCardInfo> {
-  if (USE_DUMMY_DATA) {
+  if (USE_DUMMY_DATA && USE_DUMMY_EVENTS) {
     throw new Error("NOT IMPLEMENTED");
     const event: EventDetails = {
       ...data,
       id: Math.max(0, ...dummyEvents.map(e => e.id)) + 1,
       participants: [],
-      cancelled_at: null,
-      created_at: Date.now().toString(),
+      status: null,
+      createdAt: Date.now().toString(),
     };
 
     dummyEvents.push(event);
@@ -160,14 +163,14 @@ export async function editEvent(data: CreateEventInfo): Promise<EventCardInfo> {
 }
 
 export async function cancelEvent(eventId: number): Promise<void> {
-  if (USE_DUMMY_DATA) {
+  if (USE_DUMMY_DATA && USE_DUMMY_EVENTS) {
     const eventIdx = dummyEvents.findIndex(e => e.id === eventId);
     if (eventIdx === -1) {
       throw new Error("Event cannot be canceled as it does not exist!");
     }
 
     const event = dummyEvents[eventIdx];
-    if (event.created_by_id !== currentUserId) {
+    if (event.organizerId !== currentUserId) {
       throw new Error("Permission denied! You cannot cancel this event!");
     }
 
@@ -186,7 +189,7 @@ export async function cancelEvent(eventId: number): Promise<void> {
 
 // TODO: Figure out join
 export async function joinEvent(eventId: number): Promise<void> {
-  if (USE_DUMMY_DATA) {
+  if (USE_DUMMY_DATA && USE_DUMMY_EVENTS) {
     const event = dummyEvents.find(e => e.id === eventId);
 
     if (!event) throw new Error("Event not found");
@@ -215,7 +218,7 @@ export async function joinEvent(eventId: number): Promise<void> {
 
 // TODO: Figure out leave
 export async function leaveEvent(eventId: number): Promise<void> {
-  if (USE_DUMMY_DATA) {
+  if (USE_DUMMY_DATA && USE_DUMMY_EVENTS) {
     throw new Error("NOT IMPLEMENTED");
   }
 
@@ -229,13 +232,13 @@ export async function leaveEvent(eventId: number): Promise<void> {
 }
 
 export async function getEventMembers(eventId: number): Promise<PublicUserInfo[]> {
-  if (USE_DUMMY_DATA) {
+  if (USE_DUMMY_DATA && USE_DUMMY_EVENTS) {
     const event = dummyEvents.find(e => e.id === eventId);
 
     if (!event) throw new Error("Event not found");
 
     return event.participants.map(userId => {
-      const user = dummyUsers.find(u => u.id === userId);
+      const user = dummyUsers.find(u => u.userId === userId);
       if (!user) {
         return
       }
@@ -256,8 +259,8 @@ export async function getEventMembers(eventId: number): Promise<PublicUserInfo[]
 
 
 export async function getUserProfile(): Promise<UserDetails> {
-  if (USE_DUMMY_DATA) {
-    const user = dummyUsers.find(u => u.id === currentUserId);
+  if (USE_DUMMY_DATA && USE_DUMMY_USERS) {
+    const user = dummyUsers.find(u => u.userId === currentUserId);
 
     if (!user) {
       throw new Error("User profile not found!")
@@ -271,8 +274,8 @@ export async function getUserProfile(): Promise<UserDetails> {
 
 
 export async function editUserProfile(newUserInfo: UserCreateDetails): Promise<void> {
-  if (USE_DUMMY_DATA) {
-    const userIdx = dummyUsers.findIndex(u => u.id === currentUserId);
+  if (USE_DUMMY_DATA && USE_DUMMY_USERS) {
+    const userIdx = dummyUsers.findIndex(u => u.userId === currentUserId);
 
     if (userIdx === -1) {
       throw new Error("User profile not found!")
@@ -298,14 +301,14 @@ export async function editUserProfile(newUserInfo: UserCreateDetails): Promise<v
 }
 
 export async function uploadUserProfilePhoto(url: string): Promise<void> {
-  if (USE_DUMMY_DATA) {
-    const userIdx = dummyUsers.findIndex(u => u.id === currentUserId);
+  if (USE_DUMMY_DATA && USE_DUMMY_USERS) {
+    const userIdx = dummyUsers.findIndex(u => u.userId === currentUserId);
 
     if (userIdx === -1) {
       throw new Error("User profile not found!")
     }
 
-    dummyUsers[userIdx].profile_photo_url = getDefaultAvatar(url);
+    dummyUsers[userIdx].profilePhotoUrl = getDefaultAvatar(url);
 
     return;
   }
@@ -324,7 +327,7 @@ export async function uploadUserProfilePhoto(url: string): Promise<void> {
 }
 
 export async function getUsers(sportId: number | null, cityId: number | null, ageMin: number | null, ageMax: number | null, skillLevelId: number | null ): Promise<PublicUserInfo[]> {
-  if (USE_DUMMY_DATA) {
+  if (USE_DUMMY_DATA && USE_DUMMY_USERS) {
     function calculateAge(dateOfBirth: string): number {
       const birthDate = new Date(dateOfBirth);
       const today = new Date();
@@ -342,11 +345,11 @@ export async function getUsers(sportId: number | null, cityId: number | null, ag
     }
 
     const users = dummyUsers.filter(u =>
-      (!sportId || u.user_sports.map(s => s.sport_id).includes(sportId))
+      (!sportId || u.userSports.map(s => s.sportId).includes(sportId))
       && (!cityId || u.city_id === cityId)
-      && (!ageMin || u.date_of_birth && calculateAge(u.date_of_birth) >= ageMin)
-      && (!ageMax || u.date_of_birth && calculateAge(u.date_of_birth) <= ageMax)
-      && ((!sportId || !skillLevelId) || u.user_sports.filter(s => s.sport_id === sportId && s.skill_level_id >= skillLevelId).length > 0)
+      && (!ageMin || u.dateOfBirth && calculateAge(u.dateOfBirth) >= ageMin)
+      && (!ageMax || u.dateOfBirth && calculateAge(u.dateOfBirth) <= ageMax)
+      && ((!sportId || !skillLevelId) || u.userSports.filter(s => s.sportId === sportId && s.skillLevelId >= skillLevelId).length > 0)
     );
 
     if (!users) {
@@ -387,8 +390,8 @@ export async function getUsers(sportId: number | null, cityId: number | null, ag
 
 
 export async function getUserInfo(userId: number): Promise<UserDetails> {
-  if (USE_DUMMY_DATA) {
-    const user = dummyUsers.find(u => u.id === userId);
+  if (USE_DUMMY_DATA && USE_DUMMY_USERS) {
+    const user = dummyUsers.find(u => u.userId === userId);
 
     if (!user) {
       throw new Error("User profile not found!")

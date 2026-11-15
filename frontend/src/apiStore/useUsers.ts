@@ -6,16 +6,7 @@ import {
 
 import * as api from "@/api/api_v1";
 
-// TODO: Napraviti hooks za users
-import type { CreateEventInfo } from "@/types/event";
 import type { UserCreateDetails } from "@/types/user";
-
-export function useMyUserProfile() {
-  return useQuery({
-    queryKey: ["userProfile"],
-    queryFn: api.getUserProfile,
-  });
-}
 
 export function useUserProfile() {
   return useQuery({

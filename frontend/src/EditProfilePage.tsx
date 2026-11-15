@@ -1,4 +1,4 @@
-import { useEditUserProfile, useMyUserProfile } from "@/apiStore/useUsers"
+import { useEditUserProfile, useUserProfile } from "@/apiStore/useUsers"
 
 
 export default function EditProfile() {
@@ -12,7 +12,7 @@ export default function EditProfile() {
 export function EditPicture(){
     const {mutate: editUserProfile, isPending, error: editError} = useEditUserProfile();
 
-    const {data: user, isLoading, error} = useMyUserProfile();
+    const {data: user, isLoading, error} = useUserProfile();
 
-    
+
 }

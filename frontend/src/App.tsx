@@ -97,7 +97,7 @@ function NavigationBar() {
       <DropdownMenu >
         <DropdownMenuTrigger nativeButton={false} render={
             <Avatar size={"lg"}>
-              <AvatarImage src={getDefaultAvatar(user.profile_photo_url)} />
+              <AvatarImage src={getDefaultAvatar(user.profilePhotoUrl)??""} />
               <AvatarFallback className="text-2xl">{user.name[0]}</AvatarFallback>
             </Avatar>
         } />
@@ -112,7 +112,7 @@ function NavigationBar() {
               <span className="text-muted-foreground text-md">{user.username}</span>
             </div>
             <Avatar className="self-center justify-self-end h-full w-full ">
-              <AvatarImage src={getDefaultAvatar(user.profile_photo_url)} />
+              <AvatarImage src={getDefaultAvatar(user.profilePhotoUrl)??""} />
               <AvatarFallback className="text-4xl">{user.name[0]}</AvatarFallback>
             </Avatar>
 

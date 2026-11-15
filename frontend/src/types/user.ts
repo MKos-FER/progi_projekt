@@ -2,33 +2,34 @@ export type AppRole = "GUEST" | "USER" | "MODERATOR";
 
 export interface UserSportDetails {
   id: number;
-  sport_id: number;
+  sportId: number;
   sportName: string;
-  skill_level_id: number;
+  skillLevelId: number;
 }
 
 export interface UserDetails {
-  id: number;
+  userId: number;
   username: string;
   name: string;
-  profile_photo_url: string | null;
+  profilePhotoUrl: string | null;
   gender: string | null;
-  date_of_birth: string | null;
+  dateOfBirth: string | null;
   city_id: number | null;
   cityName: string | null;
-  app_role_id: AppRole;
-  created_at: string | null;
-  user_sports: UserSportDetails[];
+  appRoleId: AppRole;
+  userSports: UserSportDetails[];
+  joinedAt: string
 }
 
-export type UserCreateDetails = Omit<UserDetails, "id | profile_photo_url | created_at | cityName | app_role_id">
+export type UserCreateDetails = Omit<UserDetails, "userId | profilePhotoUrl | cityName | appRoleId">
 
 
 export interface PublicUserInfo {
-    id: number;
+    userId: number;
     username: string;
     name: string;
-    profile_photo_url: string | null;
-    user_sports: UserSportDetails[];
-    app_role_id: AppRole;
+    profilePhotoUrl: string | null;
+    userSports: UserSportDetails[];
+    appRoleId: AppRole;
+    joinedAt: string
 }
