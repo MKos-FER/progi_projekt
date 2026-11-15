@@ -42,16 +42,15 @@ export function useUserLogout() {
   });
 }
 
-export function useCreateEvent() {
+export function useCreateUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateEventInfo) => api.createEvent(data),
+    mutationFn: (data: UserCreateDetails) => api.registerUser(data),
 
     onSuccess: () => {
       return Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["events"] }),
-        queryClient.invalidateQueries({ queryKey: ["myEvents"] }),
+        queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
       ]);
     },
   });

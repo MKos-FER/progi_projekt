@@ -8,6 +8,7 @@ import MyEvents from './MyEventsPage.tsx'
 import EventPage from './EventPage.tsx'
 import { CookiePolicy, PrivacyPolicy } from './LegalStuff.tsx'
 import EditProfile from './EditProfilePage.tsx'
+import OnBoarding from './OnBoardingPage.tsx'
 
 
 import {Button} from "@/components/ui/button.tsx";
@@ -53,6 +54,7 @@ function App() {
           <Route path="/events/:eventId" element={<EventPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile/edit" element={<EditProfile/>}/>
+          <Route path="/register" element={<OnBoarding />}/>
         </Routes>
       </BrowserRouter>
     </div>

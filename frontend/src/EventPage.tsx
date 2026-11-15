@@ -242,7 +242,7 @@ function ShowMembersButton({ event }: { event: EventDetails }) {
                   </div>
 
                   Skills:
-                  {clickedMember.userSports?.map((sport) =>
+                  {clickedMember.sports?.map((sport) =>
                     <div key={sport.id} className="flex justify-between mb-2">
                       {sport.sportName}
                       <Progress value={sport.skillLevelId / 2 * 100} className="w-[50%] inline-block self-center" />

@@ -14,14 +14,14 @@ export interface UserDetails {
   profilePhotoUrl: string | null;
   gender: string | null;
   dateOfBirth: string | null;
-  city_id: number | null;
+  cityId: number | null;
   cityName: string | null;
   appRoleId: AppRole;
-  userSports: UserSportDetails[];
+  sports: UserSportDetails[];
   joinedAt: string
 }
 
-export type UserCreateDetails = Omit<UserDetails, "userId | profilePhotoUrl | cityName | appRoleId">
+export type UserCreateDetails = Omit<UserDetails, "userId" | "profilePhotoUrl" | "cityName" | "appRoleId" | "joinedAt">
 
 
 export interface PublicUserInfo {
@@ -29,7 +29,7 @@ export interface PublicUserInfo {
     username: string;
     name: string;
     profilePhotoUrl: string | null;
-    userSports: UserSportDetails[];
+    sports: UserSportDetails[];
     appRoleId: AppRole;
     joinedAt: string
 }

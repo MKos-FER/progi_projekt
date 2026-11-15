@@ -1,7 +1,8 @@
-import { dummyEvents, dummyUsers, currentUserId, preferedUserLocation } from "@/dummy_data/simple_dummy_data.ts";
-import type {EventCardInfo, CreateEventInfo, EventDetails} from "@/types/event.ts";
-import type {PublicUserInfo, UserDetails, UserCreateDetails} from "@/types/user.ts";
-import {calculateDistanceKm, getUserLocation, type UserLocation} from "@/lib/geolocation.ts";
+import { dummyEvents, dummyUsers, currentUserId, preferedUserLocation } from "@/dummy_data/simple_dummy_data";
+import type {EventCardInfo, CreateEventInfo, EventDetails} from "@/types/event";
+import type {PublicUserInfo, UserDetails, UserCreateDetails} from "@/types/user";
+import {ApiError, type RegisterResult} from "@/types/auth";
+import {calculateDistanceKm, getUserLocation, type UserLocation} from "@/lib/geolocation";
 import { getDefaultAvatar } from "@/lib/utils";
 
 // const USE_DUMMY_DATA = import.meta.env.APP_USE_DUMMY_DATA === "true";
@@ -345,11 +346,11 @@ export async function getUsers(sportId: number | null, cityId: number | null, ag
     }
 
     const users = dummyUsers.filter(u =>
-      (!sportId || u.userSports.map(s => s.sportId).includes(sportId))
-      && (!cityId || u.city_id === cityId)
+      (!sportId || u.sports.map(s => s.sportId).includes(sportId))
+      && (!cityId || u.cityId === cityId)
       && (!ageMin || u.dateOfBirth && calculateAge(u.dateOfBirth) >= ageMin)
       && (!ageMax || u.dateOfBirth && calculateAge(u.dateOfBirth) <= ageMax)
-      && ((!sportId || !skillLevelId) || u.userSports.filter(s => s.sportId === sportId && s.skillLevelId >= skillLevelId).length > 0)
+      && ((!sportId || !skillLevelId) || u.sports.filter(s => s.sportId === sportId && s.skillLevelId >= skillLevelId).length > 0)
     );
 
     if (!users) {
@@ -401,4 +402,32 @@ export async function getUserInfo(userId: number): Promise<UserDetails> {
   }
 
   return fetchData<UserDetails>(`/users/${userId}`);
+}
+
+// TODO: Error checking
+export async function logoutUser(): Promise<void> {
+  await send('/api/v1/auth/logout', {
+    method: 'POST',
+  });
+}
+
+
+export async function registerUser(user: UserCreateDetails): Promise<void> {
+  const res = await send('/api/v1/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(user),
+  });
+
+  if (res.status === 201) {
+    return;
+  }
+
+  const body = await res.json().catch(() => {}) as RegisterResult;
+
+  throw new ApiError(
+    res.status,
+    body.errors,
+    body.message
+  );
 }
