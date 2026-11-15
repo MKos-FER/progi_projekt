@@ -81,7 +81,6 @@ Negativni testovi kao `lds_app`: drugi Google račun istog korisnika, `provider 
 
 ## 5. Otvoreno
 
-- **API ugovor (Filip):** u §3.1 spol je opisan kao "neprazan tekst" s primjerom `žensko`, a baza od V4 prima samo `Male`, `Female` i `Other`. Treba uskladiti opis i primjer te dodati donju granicu datuma rođenja (1900.). Uz to treba dopisati redak u tablicu 2.5 analize zahtjeva.
 - **Prijedlog:** backend sprema ime i korisničko ime bez razmaka na početku i kraju. To još nije dio ugovora.
 - **ERD (Roko):** sljedeću verziju ERD-a uskladiti s V4–V6.
 - Brisanje korisničkog računa nije u zahtjevima. Korisnik koji je organizirao događaj trenutačno se ne može obrisati (`events.created_by_id` nema `ON DELETE`).
