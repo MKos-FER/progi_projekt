@@ -35,16 +35,18 @@ import {
 
 import {useEffect, useState, type JSX} from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useUserProfile, useUserLogout } from "./apiStore/useUsers.ts";
+import { useUserProfile, useUserLogout, useIsAuth } from "./apiStore/useUsers.ts";
 import { getDefaultAvatar } from "./lib/utils.ts";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 function App() {
   return (
-    <div className="bg-background p-4">
+    <div className="flex flex-col bg-background p-4 h-svh overflow-visible">
       <BrowserRouter>
         <NavigationBar/>
 
+        <div className="h-full">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/legal/cookie_policy" element={<CookiePolicy />} />
@@ -56,6 +58,7 @@ function App() {
           <Route path="/profile/edit" element={<EditProfile/>}/>
           <Route path="/register" element={<OnBoarding />}/>
         </Routes>
+        </div>
       </BrowserRouter>
     </div>
   )
@@ -67,25 +70,27 @@ type NavLink = {
   name: string;
 }
 function NavigationBar() {
-  const [isAuth, setIsAuth] = useState(false)
+  // const [isAuth, setIsAuth] = useState(false)
 
   const {data: user, isLoading} = useUserProfile()
   const {mutate: doLogout, isPending} = useUserLogout()
 
-  useEffect(() => {
-    async function checkAuth(): Promise<boolean> {
-      const result = await fetch("/api/v1/users/me");
+  const {data: isAuth} = useIsAuth();
 
-      if (result.status === 401) {
-        return false;
-      } else {
-        return true;
-      }
-
-    }
-
-    checkAuth().then(val => setIsAuth(val)).catch(() => {});
-  }, [isPending]);
+  // useEffect(() => {
+  //   async function checkAuth(): Promise<boolean> {
+  //     const result = await fetch("/api/v1/users/me");
+  //
+  //     if (result.status === 401) {
+  //       return false;
+  //     } else {
+  //       return true;
+  //     }
+  //
+  //   }
+  //
+  //   checkAuth().then(val => setIsAuth(val)).catch(() => {});
+  // }, [isPending]);
 
   const navLinks: Array<NavLink> = [
     {url:"/events", name:"Moji događaji"},
@@ -93,6 +98,8 @@ function NavigationBar() {
   ];
   const navigate = useNavigate();
   let profile_button: JSX.Element;
+
+  (window as any).workingClient = useQueryClient();
 
   if (isAuth && !isLoading && user && !isPending) {
     profile_button = (

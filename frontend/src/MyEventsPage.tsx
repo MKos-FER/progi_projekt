@@ -67,7 +67,7 @@ export default function MyEvents() {
 
 
   return (
-    <div className="my-4 mx-auto flex flex-col gap-8">
+    <div className="my-4 mx-auto flex flex-col gap-6">
       {displayEvents}
     </div>
   );
@@ -195,7 +195,7 @@ export function EventCard({eventId}: { eventId: number }) {
   const event: EventCardInfo = events!.find(e => e.id == eventId)!
   return (
     // <Link to={`/events/${eventId}`} className="select-auto">
-    <Card className="transition-all duration-200 hover:scale-101 active:scale-99"
+    <Card className="transition-all duration-200 hover:scale-101 active:scale-99 p-0"
           onClick={() => { // Ovako je cijeli Card i dalje clickable a text se i dalje može selectat
             if (window.getSelection()?.toString()) return;
             void navigate(`/events/${eventId}`);

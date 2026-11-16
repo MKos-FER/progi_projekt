@@ -62,7 +62,7 @@ export default function HomeFeed() {
   }
 
   return (
-    <div className="mx-auto flex flex-col gap-8">
+    <div className="mx-auto flex flex-col gap-6">
 
       <WelcomeMessage username="username"/>
 

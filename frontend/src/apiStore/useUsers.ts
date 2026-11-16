@@ -37,7 +37,10 @@ export function useUserLogout() {
     mutationFn: () => api.logoutUser(),
 
     onSuccess: () => {
-      return queryClient.clear();
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
+        queryClient.invalidateQueries({ queryKey: ["isAuth"] })
+      ]);
     },
   });
 }
@@ -53,6 +56,13 @@ export function useCreateUser() {
         queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
       ]);
     },
+  });
+}
+
+export function useIsAuth() {
+  return useQuery({
+    queryKey: ["isAuth"],
+    queryFn: api.getUserIsAuth,
   });
 }
 

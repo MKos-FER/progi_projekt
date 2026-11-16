@@ -1,14 +1,13 @@
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { useCancelEvent, useEventDetails, useEventMembers } from "@/apiStore/useEvents.ts";
+import { MessageScrollerGroupChat, TextingBox } from "./ChatTest.tsx";
 import type { EventDetails } from "@/types/event";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, ChevronLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton"
-import { Textarea } from "@/components/ui/textarea"
-import { Link } from "react-router-dom";
 
 
 
@@ -72,11 +71,10 @@ export default function EventPage() {
   } else {
     // TODO: Responzivan dizajn (napravit da je vanjski div non-scrollable)
     return (
-      <div className="mt-3 flex-col h-screen">
+      <div className="mt-3 flex flex-col min-h-0 h-full">
         <EventDescription event={event} />
         <PeopleInfo event={event} />
         <ChatBox />
-        <TextingBox onboarded={onboarded} />
       </div>
     )
   }
@@ -98,8 +96,9 @@ function EventDescription({ event }: { event: EventDetails }) {
       ? description
       : description.slice(0, maxLength) + "...";
 
+  // TODO: Napraviti da se Card ne može kompresirat
   return (
-    <Card>
+    <Card className="min-h-50">
       <CardContent className="flex min-w-0 flex-col gap-3 p-3 md:flex-row" >
         <EventImage />
 
@@ -265,43 +264,15 @@ function ShowMembersButton({ event }: { event: EventDetails }) {
 }
 
 function ChatBox() {
+  // TODO: Napraviti da se ChatBox ne može kompresirati
   return (
-    <>
-      <div className="flex w-full h-full gap-3">
-
-          <div className="h-full w-full rounded-xl bg-gray-100">Chat</div>
-
-      </div>
-    </>
-
+    <div className="flex grow min-h-50 max-h-155 w-full overflow-y-auto rounded-xl bg-gray-100">
+      <MessageScrollerGroupChat />
+    </div>
   );
 }
-function TextingBox({ onboarded }: { onboarded: boolean }) {
 
-  if (!onboarded) {
-    return (
-      <>
-        <Link to="/login">
-          <Button className="mt-3" variant="outline">PRIDRUŽI SE</Button>
-        </Link>
-      </>
 
-    );
-  } else {
-    return (
-      <>
-        <div className="relative mt-4">
-          <Textarea placeholder="Napiši poruku..." />
-
-          <Button className="absolute bottom-3 right-3">
-            Send
-          </Button>
-        </div>
-      </>
-
-    );
-  }
-}
 
 function EventImage() {
   return (

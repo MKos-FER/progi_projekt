@@ -1,8 +1,8 @@
 import { dummyEvents, dummyUsers, currentUserId, preferedUserLocation } from "@/dummy_data/simple_dummy_data";
-import type {EventCardInfo, CreateEventInfo, EventDetails} from "@/types/event";
-import type {PublicUserInfo, UserDetails, UserCreateDetails} from "@/types/user";
-import {ApiError, type RegisterResult} from "@/types/auth";
-import {calculateDistanceKm, getUserLocation, type UserLocation} from "@/lib/geolocation";
+import type { EventCardInfo, CreateEventInfo, EventDetails } from "@/types/event";
+import type { PublicUserInfo, UserDetails, UserCreateDetails } from "@/types/user";
+import { ApiError, type RegisterResult } from "@/types/auth";
+import { calculateDistanceKm, getUserLocation, type UserLocation } from "@/lib/geolocation";
 import { getDefaultAvatar } from "@/lib/utils";
 
 // const USE_DUMMY_DATA = import.meta.env.APP_USE_DUMMY_DATA === "true";
@@ -75,7 +75,7 @@ export async function getEvents(): Promise<EventCardInfo[]> {
     return dummyEvents.map(event => ({
       ...event,
       distance_km: roundSometimes(calculateDistanceKm(userLoc.latitude,
-                   userLoc.longitude, event.latitude, event.longitude)),
+        userLoc.longitude, event.latitude, event.longitude)),
     }));
   }
 
@@ -91,9 +91,9 @@ export async function getMyEvents(): Promise<EventCardInfo[]> {
       distance_km: roundSometimes(calculateDistanceKm(userLoc.latitude,
         userLoc.longitude, event.latitude, event.longitude)),
     }))
-    .filter(event =>
-      event.participants.includes(currentUserId)
-    );
+      .filter(event =>
+        event.participants.includes(currentUserId)
+      );
   }
 
   return fetchData<EventCardInfo[]>("/users/me/events");
@@ -327,7 +327,7 @@ export async function uploadUserProfilePhoto(url: string): Promise<void> {
   }
 }
 
-export async function getUsers(sportId: number | null, cityId: number | null, ageMin: number | null, ageMax: number | null, skillLevelId: number | null ): Promise<PublicUserInfo[]> {
+export async function getUsers(sportId: number | null, cityId: number | null, ageMin: number | null, ageMax: number | null, skillLevelId: number | null): Promise<PublicUserInfo[]> {
   if (USE_DUMMY_DATA && USE_DUMMY_USERS) {
     function calculateAge(dateOfBirth: string): number {
       const birthDate = new Date(dateOfBirth);
@@ -374,7 +374,7 @@ export async function getUsers(sportId: number | null, cityId: number | null, ag
     + `${keyVal("sportId", sportId)}`
     + `${keyVal("cityId", cityId)}`
     + `${keyVal("ageMin", ageMin)}`
-    + `${keyVal("ageMax",ageMax)}`
+    + `${keyVal("ageMax", ageMax)}`
     + `${keyVal("skillLevelId", skillLevelId, sportId && skillLevelId)}`;
 
   if (filter.endsWith(',')) {
@@ -423,11 +423,21 @@ export async function registerUser(user: UserCreateDetails): Promise<void> {
     return;
   }
 
-  const body = await res.json().catch(() => {}) as RegisterResult;
+  const body = await res.json().catch(() => { }) as RegisterResult;
 
   throw new ApiError(
     res.status,
     body.errors,
     body.message
   );
+}
+
+export async function getUserIsAuth(): Promise<boolean> {
+  const result = await fetch("/api/v1/users/me");
+
+  if (result.status === 401) {
+    return false;
+  } else {
+    return true;
+  }
 }

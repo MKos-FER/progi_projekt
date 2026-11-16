@@ -18,3 +18,40 @@
   color: var(--muted-foreground);
   background-color: var(--muted);
 }
+
+
+.other-chat-bubble > div {
+  position: relative;
+  width: fit-content;
+  border-radius: 0px 16px 16px 16px;
+}
+
+.other-chat-bubble::after {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 0;
+  width: 0;
+  height: 0;
+  border: 10px solid transparent;
+  border-top: 14px solid var(--muted);
+  border-left: 10px solid transparent;
+}
+
+.my-chat-bubble > div {
+  position: relative;
+  width: fit-content;
+  border-radius: 16px 0px 16px 16px;
+}
+
+.my-chat-bubble::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  top: 0;
+  width: 0;
+  height: 0;
+  border: 10px solid transparent;
+  border-top: 14px solid var(--color-primary);
+  border-left: 10px solid transparent;
+}
