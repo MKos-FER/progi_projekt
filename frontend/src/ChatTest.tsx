@@ -34,7 +34,7 @@ import { useIsAuth } from "./apiStore/useUsers"
 import { Textarea } from "@/components/ui/textarea"
 import { Link } from "react-router-dom";
 
-const currentUser = "Rocky"
+const currentUser = "Mateo Horvat"
 
 const initialItems = [
   {
@@ -42,41 +42,51 @@ const initialItems = [
     type: "message",
     sender: "Albert",
     role: "participant",
-    text: "@mary, the astrophage line keeps matching Venus energy output. Can you check my math?",
+    text: "Nisi puno napisala u opisu, ima li nekih posebnih pravila?",
   },
   {
     id: "2",
     type: "messageGroup",
-    sender: "Mary",
+    sender: "Marija (Organizator)",
     role: "organiser",
-    text: ["Yes. Confirmed. The curve points to a microorganism harvesting stellar energy and breeding near carbon dioxide. If @rocky agrees, this is the clue we need.",
-      "Yes. Confirmed. The curve points to a microorganism harvesting stellar energy and breeding near carbon dioxide. If @rocky agrees, this is the clue we need."],
+    text: ["A pa dosta standardno, nema guranja, loptu donosiš sam",
+      "E al mislila sam možda kasnije neki roštilj nabacit pa recite ako ste za da znam koliko nabaviti"],
   },
   {
     id: "3",
     type: "message",
     sender: "Albert",
     role: "participant",
-    text: "ping @rocky",
+    text: "Yoooo, roštilj je super ideja",
     scrollAnchor: true,
   },
 ] satisfies GroupChatItem[]
 
-const rockyMarker = {
+const joinMarker = {
   id: "marker-1",
   type: "event",
-  text: "Rocky has joined the chat",
+  text: currentUser + " has joined the event",
   scrollAnchor: false,
 } satisfies GroupChatItem
 
-const rockyMessage = {
-  id: "4",
-  type: "message",
-  sender: "Rocky",
-  role: "participant",
-  text: "Amaze. Astrophage eats light, makes heat, goes to carbon dioxide. Rocky has fuel model. Grace is smart.",
-  scrollAnchor: true,
-} satisfies GroupChatItem
+const newMessage = [
+  {
+    id: "4",
+    type: "messageGroup",
+    sender: currentUser,
+    role: "participant",
+    text: ["Ja sam samo za roštilj ušao, mogu nabavit ako što još treba", "Samo javi kad da dođem"],
+    scrollAnchor: false,
+  },
+  {
+    id: "5",
+    type: "message",
+    sender: "Marija (Organizator)",
+    role: "organiser",
+    text: "Ne treba ništa, dođi u 5",
+    scrollAnchor: false,
+  },
+] satisfies GroupChatItem[]
 
 type GroupChatItem =
   | {
@@ -133,9 +143,9 @@ export function MessageScrollerGroupChat() {
   >("idle")
   const items =
     rockyTurn === "message"
-      ? [...initialItems, rockyMarker, rockyMessage]
+      ? [...initialItems, joinMarker, ...newMessage]
       : rockyTurn === "marker"
-        ? [...initialItems, rockyMarker]
+        ? [...initialItems, joinMarker]
         : initialItems
   const buttonLabel =
     rockyTurn === "idle" ? "Pridruži se" : "Pošalji poruku"
@@ -218,10 +228,12 @@ function GroupChatMessage({
     <MessageScrollerItem messageId={item.id} scrollAnchor={item.scrollAnchor}>
       <Message align={isCurrentUser ? "end" : "start"}>
         <MessageAvatar className="self-start">
-          <Avatar>
-            <AvatarImage src={getDefaultAvatar("22") ?? ""} alt="username" />
-            <AvatarFallback>R</AvatarFallback>
-          </Avatar>
+          {!isCurrentUser &&
+            <Avatar>
+              <AvatarImage src={item.role === "organiser" ? getDefaultAvatar("28") ?? "" : getDefaultAvatar("22") ?? ""} alt="username" />
+              <AvatarFallback>R</AvatarFallback>
+            </Avatar>
+          }
         </MessageAvatar>
         <MessageContent>
           <Bubble variant={variant} className={bubbleClass}>
@@ -258,10 +270,12 @@ function GroupChatMultiMessage({
               return (
                 <Message key={item.id + " " + messageIdx} align={isCurrentUser ? "end" : "start"}>
                   <MessageAvatar className="self-start">
-                    <Avatar>
-                      <AvatarImage src={getDefaultAvatar("28") ?? ""} alt="username" />
-                      <AvatarFallback>R</AvatarFallback>
-                    </Avatar>
+                    {!isCurrentUser &&
+                      <Avatar>
+                        <AvatarImage src={getDefaultAvatar("28") ?? ""} alt="username" />
+                        <AvatarFallback>R</AvatarFallback>
+                      </Avatar>
+                    }
                   </MessageAvatar>
                   <MessageContent>
                     <Bubble variant={variant} className={bubbleClass}>
@@ -313,7 +327,7 @@ function GroupChatMarker({
 
 
 export function TextingBox() {
-  const {data: isAuth} = useIsAuth();
+  const { data: isAuth } = useIsAuth();
 
   if (!isAuth) {
     return (

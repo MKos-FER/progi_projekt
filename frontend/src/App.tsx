@@ -1,4 +1,4 @@
-import {BrowserRouter, Route, Routes, NavLink, Link, useNavigate} from "react-router-dom";
+import { BrowserRouter, Route, Routes, NavLink, Link, useNavigate } from "react-router-dom";
 
 import './styles/App.css'
 import Home from './HomePage.tsx'
@@ -11,7 +11,7 @@ import EditProfile from './EditProfilePage.tsx'
 import OnBoarding from './OnBoardingPage.tsx'
 
 
-import {Button} from "@/components/ui/button.tsx";
+import { Button } from "@/components/ui/button.tsx";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -33,31 +33,32 @@ import {
   UserPen,
 } from "lucide-react";
 
-import {useEffect, useState, type JSX} from "react";
+import letsDoSportsLogo from "./assets/logo.svg"
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUserProfile, useUserLogout, useIsAuth } from "./apiStore/useUsers.ts";
 import { getDefaultAvatar } from "./lib/utils.ts";
-import { useQueryClient } from "@tanstack/react-query";
+import {type JSX} from "react";
 
 
 function App() {
   return (
     <div className="flex flex-col bg-background p-4 h-svh overflow-visible">
       <BrowserRouter>
-        <NavigationBar/>
+        <NavigationBar />
 
         <div className="h-full">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/legal/cookie_policy" element={<CookiePolicy />} />
-          <Route path="/legal/privacy_policy" element={<PrivacyPolicy />} />
-          <Route path="/reports" element={<ReportsPage />} />
-          <Route path="/events" element={<MyEvents />} />
-          <Route path="/events/:eventId" element={<EventPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/profile/edit" element={<EditProfile/>}/>
-          <Route path="/register" element={<OnBoarding />}/>
-        </Routes>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/legal/cookie_policy" element={<CookiePolicy />} />
+            <Route path="/legal/privacy_policy" element={<PrivacyPolicy />} />
+            <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/events" element={<MyEvents />} />
+            <Route path="/events/:eventId" element={<EventPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/profile/edit" element={<EditProfile />} />
+            <Route path="/register" element={<OnBoarding />} />
+          </Routes>
         </div>
       </BrowserRouter>
     </div>
@@ -72,10 +73,10 @@ type NavLink = {
 function NavigationBar() {
   // const [isAuth, setIsAuth] = useState(false)
 
-  const {data: user, isLoading} = useUserProfile()
-  const {mutate: doLogout, isPending} = useUserLogout()
+  const { data: user, isLoading } = useUserProfile()
+  const { mutate: doLogout, isPending } = useUserLogout()
 
-  const {data: isAuth} = useIsAuth();
+  const { data: isAuth } = useIsAuth();
 
   // useEffect(() => {
   //   async function checkAuth(): Promise<boolean> {
@@ -93,22 +94,21 @@ function NavigationBar() {
   // }, [isPending]);
 
   const navLinks: Array<NavLink> = [
-    {url:"/events", name:"Moji događaji"},
-    {url:"/reports", name:"Moje prijave"}
+    { url: "/", name: "Početna" },
+    { url: "/events", name: "Moji događaji" },
+    { url: "/reports", name: "Moje prijave" }
   ];
   const navigate = useNavigate();
   let profile_button: JSX.Element;
-
-  (window as any).workingClient = useQueryClient();
 
   if (isAuth && !isLoading && user && !isPending) {
     profile_button = (
       <DropdownMenu >
         <DropdownMenuTrigger nativeButton={false} render={
-            <Avatar size={"lg"}>
-              <AvatarImage src={getDefaultAvatar(user.profilePhotoUrl)??""} />
-              <AvatarFallback className="text-2xl">{user.name[0]}</AvatarFallback>
-            </Avatar>
+          <Avatar size={"lg"}>
+            <AvatarImage src={getDefaultAvatar(user.profilePhotoUrl) ?? ""} />
+            <AvatarFallback className="text-2xl">{user.name[0]}</AvatarFallback>
+          </Avatar>
         } />
         <DropdownMenuContent className="w-80 p-1 block grid-cols-2" align="start">
           <div className="grid w-full p-2
@@ -121,7 +121,7 @@ function NavigationBar() {
               <span className="text-muted-foreground text-md">{user.username}</span>
             </div>
             <Avatar className="self-center justify-self-end h-full w-full ">
-              <AvatarImage src={getDefaultAvatar(user.profilePhotoUrl)??""} />
+              <AvatarImage src={getDefaultAvatar(user.profilePhotoUrl) ?? ""} />
               <AvatarFallback className="text-4xl">{user.name[0]}</AvatarFallback>
             </Avatar>
 
@@ -137,7 +137,7 @@ function NavigationBar() {
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
-);
+    );
   } else {
     profile_button = (
       <Button className="py-5" onClick={() => void navigate("/login")}>
@@ -151,12 +151,12 @@ function NavigationBar() {
     <header className="flex flex-wrap items-center gap-4">
 
       <Link to="/">
-        <div className="flex h-16 w-44 shrink-0 items-center justify-center
-                        rounded-md border bg-card">
-        <span className="text-xl font-semibold">
-          LOGO pic
-        </span>
-        </div>
+        <img
+          src={letsDoSportsLogo}
+          alt="Let's Do Sports Logo"
+          width="50"
+          className="dark:brightness-20 grayscale-90 hover:grayscale-0"
+        />
       </Link>
 
       <PcNavMenu navLinks={navLinks} />
@@ -168,15 +168,15 @@ function NavigationBar() {
   );
 }
 
-function PhoneNavMenu({navLinks}: {navLinks: NavLink[]}) {
+function PhoneNavMenu({ navLinks }: { navLinks: NavLink[] }) {
   const navMenuItems: JSX.Element[] = navLinks.map(link => {
     return (
       <NavLink key={link.url}
         to={link.url}
       >
-      <DropdownMenuItem className="navigation-bar-button">
+        <DropdownMenuItem className="navigation-bar-button">
           {link.name}
-      </DropdownMenuItem>
+        </DropdownMenuItem>
       </NavLink>
     );
   })
@@ -187,7 +187,7 @@ function PhoneNavMenu({navLinks}: {navLinks: NavLink[]}) {
                              rounded-md bg-card px-4 py-2">
       </div>
       <DropdownMenu >
-        <DropdownMenuTrigger render={<button className="block md:hidden"><Menu/></button>} />
+        <DropdownMenuTrigger render={<button className="block md:hidden"><Menu /></button>} />
         <DropdownMenuContent className="w-40 p-1 block md:hidden" align="start">
           <DropdownMenuGroup>
             <DropdownMenuLabel>Odaberi prikaz</DropdownMenuLabel>
@@ -199,7 +199,7 @@ function PhoneNavMenu({navLinks}: {navLinks: NavLink[]}) {
   );
 }
 
-function PcNavMenu({navLinks}: {navLinks: NavLink[]}) {
+function PcNavMenu({ navLinks }: { navLinks: NavLink[] }) {
   const navMenuItems: JSX.Element[] = navLinks.map(link => {
     return (
       <NavigationMenuItem key={link.url}>
@@ -214,12 +214,12 @@ function PcNavMenu({navLinks}: {navLinks: NavLink[]}) {
   })
 
   return (
-  <NavigationMenu className="max-w-none hidden md:block flex-1 justify-start
+    <NavigationMenu className="max-w-none hidden md:block flex-1 justify-start
                              rounded-md border bg-card px-4 py-2">
-    <NavigationMenuList className="flex-wrap gap-4">
-      {navMenuItems}
-    </NavigationMenuList>
-  </NavigationMenu>
+      <NavigationMenuList className="flex-wrap gap-4">
+        {navMenuItems}
+      </NavigationMenuList>
+    </NavigationMenu>
   );
 }
 

@@ -1,6 +1,8 @@
-import { dummyEvents, dummyUsers, currentUserId, preferedUserLocation } from "@/dummy_data/simple_dummy_data";
-import type { EventCardInfo, CreateEventInfo, EventDetails } from "@/types/event";
+import { dummyEvents, dummyUsers, currentUserId, preferedUserLocation, dummySports, dummyCities } from "@/dummy_data/simple_dummy_data";
+import type { EventCardInfo, CreateEventInfo, EventDetails, EventFilters } from "@/types/event";
 import type { PublicUserInfo, UserDetails, UserCreateDetails } from "@/types/user";
+import type { Sport } from "@/types/sport";
+import type { City } from "@/types/city";
 import { ApiError, type RegisterResult } from "@/types/auth";
 import { calculateDistanceKm, getUserLocation, type UserLocation } from "@/lib/geolocation";
 import { getDefaultAvatar } from "@/lib/utils";
@@ -63,20 +65,46 @@ function roundSometimes(x: number) {
   else return Math.round(x);
 }
 
+
+/*
+ * Sif api
+ * /sports
+ * /venues
+ * /cities
+ */
+
+export async function getSports(): Promise<Sport[]> {
+  return dummySports
+}
+
+export async function getCities(): Promise<City[]> {
+  return dummyCities
+}
+
 /*
  *  Event api
  *  /event/*
  */
 
-export async function getEvents(): Promise<EventCardInfo[]> {
+export async function getEvents(filters?: EventFilters): Promise<EventCardInfo[]> {
   if (USE_DUMMY_DATA && USE_DUMMY_EVENTS) {
     const userLoc = await getUserPreferredLocation();
 
-    return dummyEvents.map(event => ({
+    const events = dummyEvents.map(event => ({
       ...event,
       distance_km: roundSometimes(calculateDistanceKm(userLoc.latitude,
         userLoc.longitude, event.latitude, event.longitude)),
-    }));
+    })) satisfies EventCardInfo[];
+
+    if (!filters) {
+      return events;
+    }
+
+    return events.filter(event =>
+      (!filters.cityId || filters.cityId.includes(event.cityId ?? -1))
+      && (!filters.sportId || filters.sportId.includes(event.sportId ?? -1))
+      && (!filters.distance_km || event.distance_km <= filters.distance_km)
+    )
   }
 
   return fetchData<EventCardInfo[]>("/events");
@@ -282,7 +310,10 @@ export async function editUserProfile(newUserInfo: UserCreateDetails): Promise<v
       throw new Error("User profile not found!")
     }
 
-    dummyUsers[userIdx] = newUserInfo;
+    dummyUsers[userIdx] = {
+      ...dummyUsers[userIdx],
+      ...newUserInfo,
+    };
 
     return;
   }

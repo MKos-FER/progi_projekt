@@ -6,13 +6,13 @@ import {
 
 import * as api from "@/api/api_v1";
 
-import type { CreateEventInfo } from "@/types/event.ts";
+import type { CreateEventInfo, EventFilters } from "@/types/event.ts";
 
 // get all events
-export function useEvents() {
+export function useEvents(filters?: EventFilters) {
   return useQuery({
-    queryKey: ["events"],
-    queryFn: api.getEvents,
+    queryKey: ["events", filters],
+    queryFn: () => api.getEvents(filters),
   });
 }
 

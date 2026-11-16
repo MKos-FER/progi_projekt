@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
-import { useCancelEvent, useEventDetails, useEventMembers } from "@/apiStore/useEvents.ts";
-import { MessageScrollerGroupChat, TextingBox } from "./ChatTest.tsx";
+import { useEventDetails, useEventMembers } from "@/apiStore/useEvents.ts";
+import { MessageScrollerGroupChat } from "./ChatTest.tsx";
 import type { EventDetails } from "@/types/event";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -39,20 +39,8 @@ import { Progress } from "@/components/ui/progress"
 export default function EventPage() {
   const { eventId } = useParams();
   const id = Number(eventId);
-  const [onboarded, setOnboarded] = useState(false)
 
   const { data: event, isLoading, error } = useEventDetails(id);
-
-  const { mutate: deleteEvent, error: cancelError } = useCancelEvent()
-  if (cancelError) {
-    return (
-      <p>ERROR: {cancelError.message}</p>
-    );
-  }
-
-  console.log("EVENT:", event);
-  console.log("LOADING:", isLoading);
-  console.log("ERROR:", error);
 
   if (!eventId || isNaN(Number(eventId))) {
     return <p>Neispravan ID eventa.</p>;

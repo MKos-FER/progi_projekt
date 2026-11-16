@@ -2,6 +2,7 @@ export interface EventCardInfo {
   id: number;
   venueId: number;
   sportId?: number;
+  cityId?: number;
   name: string;
   description: string;
   sportName: string;
@@ -25,3 +26,12 @@ export interface EventDetails extends EventCardInfo {
   status: string | null;
   createdAt: string;
 }
+
+export interface EventFilters {
+  sportId?: number[],
+  cityId?: number[],
+  distance_km?: number,
+  scheduledAt?: string;
+  endingBefore?: number;
+}
+

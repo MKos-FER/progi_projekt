@@ -1,5 +1,7 @@
-import type { EventDetails } from "@/types/event.ts";
-import type { UserDetails } from "@/types/user.ts";
+import type { EventDetails } from "@/types/event";
+import type { UserDetails } from "@/types/user";
+import type { City } from "@/types/city";
+import type { Sport } from "@/types/sport";
 import type { UserLocation } from "@/lib/geolocation";
 import { getDefaultAvatar } from "@/lib/utils"
 
@@ -12,13 +14,34 @@ export const preferedUserLocation: UserLocation = {
   accuracyRadiusMeters: 0,
 }
 
+export const dummyCities: City[] = [
+  {id: 1, name: "Zagreb"},
+  {id: 2, name: "Split"},
+  {id: 3, name: "Rijeka"},
+  {id: 4, name: "Osijek"},
+  {id: 5, name: "Zadar"},
+];
+
+export const dummySports: Sport[] = [
+  {id: 1, name: "Football"},
+  {id: 2, name: "Basketball"},
+  {id: 3, name: "Tennis"},
+  {id: 4, name: "Running"},
+  {id: 5, name: "Volleyball"},
+  {id: 6, name: "Badminton"},
+  {id: 7, name: "Cycling"},
+  {id: 8, name: "Table Tennis"},
+];
+
 export const dummyEvents: EventDetails[] = [
   {
     id: 1,
     name: "Sunday Football Tournament",
     description: "A recreational 5-a-side football tournament. All skill levels are welcome.",
+    sportId: 1,
     sportName: "Football",
     locationName: "ŠRC Jarun, Zagreb",
+    cityId: 1,
     latitude: 45.78121,
     longitude: 15.92309,
     distance_km: null,
@@ -39,8 +62,10 @@ export const dummyEvents: EventDetails[] = [
     id: 2,
     name: "Evening Basketball",
     description: "Casual basketball game. Bring your friends and enjoy some friendly competition.",
+    sportId: 2,
     sportName: "Basketball",
     locationName: "Sportska dvorana Trešnjevka, Zagreb",
+    cityId: 1,
     latitude: 45.79636,
     longitude: 15.94207,
     distance_km: null,
@@ -61,8 +86,10 @@ export const dummyEvents: EventDetails[] = [
     id: 3,
     name: "Intermediate Tennis Match",
     description: "Friendly singles tennis match for intermediate players. Bring your own racket.",
+    sportId: 3,
     sportName: "Tennis",
     locationName: "Tenis centar Maksimir, Zagreb",
+    cityId: 1,
     latitude: 45.82049,
     longitude: 16.03323,
     distance_km: null,
@@ -83,8 +110,10 @@ export const dummyEvents: EventDetails[] = [
     id: 4,
     name: "Saturday Morning Run",
     description: "Start your weekend with a relaxed 5 km group run through Maksimir Park.",
+    sportId: 4,
     sportName: "Running",
     locationName: "Glavni ulaz u Park Maksimir, Zagreb",
+    cityId: 1,
     latitude: 45.819623,
     longitude: 16.015606,
     distance_km: null,
@@ -105,8 +134,10 @@ export const dummyEvents: EventDetails[] = [
     id: 5,
     name: "Indoor Volleyball Meetup",
     description: "Recreational volleyball meetup. No professional experience required.",
+    sportId: 5,
     sportName: "Volleyball",
     locationName: "Sportska dvorana Trešnjevka, Zagreb",
+    cityId: 1,
     latitude: 45.79636,
     longitude: 15.94207,
     distance_km: null,
@@ -127,8 +158,10 @@ export const dummyEvents: EventDetails[] = [
     id: 6,
     name: "Badminton Doubles",
     description: "Casual doubles matches. Rackets available at the venue.",
+    sportId: 6,
     sportName: "Badminton",
     locationName: "Sportski centar Zagi, Zagrebački velesajam",
+    cityId: 1,
     latitude: 45.7779219,
     longitude: 15.9694918,
     distance_km: null,
@@ -149,8 +182,10 @@ export const dummyEvents: EventDetails[] = [
     id: 7,
     name: "Five-a-side Football",
     description: "Evening indoor football. Looking for a few more players.",
+    sportId: 1,
     sportName: "Football",
     locationName: "Sportski centar Dubrava, Zagreb",
+    cityId: 1,
     latitude: 45.8282288,
     longitude: 16.0536521,
     distance_km: null,
@@ -171,8 +206,10 @@ export const dummyEvents: EventDetails[] = [
     id: 8,
     name: "Cycling Around Jarun",
     description: "Relaxed group cycling around Lake Jarun. Suitable for recreational cyclists.",
+    sportId: 7,
     sportName: "Cycling",
     locationName: "ŠRC Jarun, Zagreb",
+    cityId: 1,
     latitude: 45.78121,
     longitude: 15.92309,
     distance_km: null,
@@ -193,8 +230,10 @@ export const dummyEvents: EventDetails[] = [
     id: 9,
     name: "Table Tennis Meetup",
     description: "Friendly table tennis games. Beginners are welcome.",
+    sportId: 8,
     sportName: "Table Tennis",
     locationName: "Sportski centar Dubrava, Zagreb",
+    cityId: 1,
     latitude: 45.8282288,
     longitude: 16.0536521,
     distance_km: null,
@@ -215,8 +254,10 @@ export const dummyEvents: EventDetails[] = [
     id: 10,
     name: "Outdoor Basketball at Bundek",
     description: "Pick-up basketball game at the outdoor courts. First come, first served.",
+    sportId: 2,
     sportName: "Basketball",
     locationName: "Bundek, Zagreb",
+    cityId: 1,
     latitude: 45.785385,
     longitude: 15.98603,
     distance_km: null,
@@ -237,8 +278,10 @@ export const dummyEvents: EventDetails[] = [
     id: 11,
     name: "Sunday Football in Sesvete",
     description: "Weekly recreational football meetup. A great way to meet new players.",
+    sportId: 1,
     sportName: "Football",
     locationName: "Sava Sport, Sesvete",
+    cityId: 1,
     latitude: 45.8354942,
     longitude: 16.1189209,
     distance_km: null,
@@ -259,8 +302,10 @@ export const dummyEvents: EventDetails[] = [
     id: 12,
     name: "Beach Volleyball Meetup",
     description: "Beach volleyball meetup at Bačvice. Enjoy a friendly game by the sea.",
+    sportId: 5,
     sportName: "Volleyball",
     locationName: "Plaža Bačvice, Split",
+    cityId: 2,
     latitude: 43.50247,
     longitude: 16.446767,
     distance_km: null,
@@ -281,8 +326,10 @@ export const dummyEvents: EventDetails[] = [
     id: 13,
     name: "Riverside Running",
     description: "Group run along the Rijeka waterfront. Approximately 6 km at a relaxed pace.",
+    sportId: 4,
     sportName: "Running",
     locationName: "Korzo, Rijeka",
+    cityId: 3,
     latitude: 45.3242342,
     longitude: 14.4430002,
     distance_km: null,
@@ -303,8 +350,10 @@ export const dummyEvents: EventDetails[] = [
     id: 14,
     name: "Osijek Basketball Meetup",
     description: "Casual basketball game for local players. All experience levels welcome.",
+    sportId: 2,
     sportName: "Basketball",
     locationName: "Športska dvorana Zrinjevac, Osijek",
+    cityId: 4,
     latitude: 45.55532,
     longitude: 18.68039,
     distance_km: null,
@@ -325,8 +374,10 @@ export const dummyEvents: EventDetails[] = [
     id: 15,
     name: "Weekend Tennis in Zadar",
     description: "Friendly weekend tennis meetup. All levels are welcome.",
+    sportId: 3,
     sportName: "Tennis",
     locationName: "Teniski tereni Sutomiška 1, Zadar",
+    cityId: 5,
     latitude: 44.12239,
     longitude: 15.24539,
     distance_km: null,
@@ -347,8 +398,10 @@ export const dummyEvents: EventDetails[] = [
     id: 16,
     name: "Zagreb Weekend Football Meetup",
     description: "Join us for a friendly weekend football meetup in Zagreb! This event is open to players of all experience levels, whether you are a complete beginner or have been playing for years. We will organize teams based on the number of participants, play several short matches, and make sure everyone gets enough time on the field. Bring your own sports clothes, comfortable football shoes, and plenty of water. The main goal is to have fun, meet new people, improve your skills, and enjoy some friendly competition. Feel free to invite your friends!",
+    sportId: 1,
     sportName: "Football",
     locationName: "Sportski centar Šalata, Zagreb",
+    cityId: 1,
     latitude: 45.83112,
     longitude: 15.97985,
     distance_km: null,
@@ -381,7 +434,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-02T10:00:00",
-    userSports: [
+    sports: [
       { id: 1, sportId: 1, sportName: "Football", skillLevelId: 1 },
       { id: 2, sportId: 2, sportName: "Basketball", skillLevelId: 1 },
       { id: 3, sportId: 3, sportName: "Tennis", skillLevelId: 2 },
@@ -400,7 +453,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-03T10:00:00",
-    userSports: [
+    sports: [
       { id: 6, sportId: 1, sportName: "Football", skillLevelId: 1 },
       { id: 7, sportId: 2, sportName: "Basketball", skillLevelId: 2 },
       { id: 8, sportId: 4, sportName: "Running", skillLevelId: 1 },
@@ -417,7 +470,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-04T10:00:00",
-    userSports: [
+    sports: [
       { id: 9, sportId: 1, sportName: "Football", skillLevelId: 2 },
       { id: 10, sportId: 2, sportName: "Basketball", skillLevelId: 1 },
       { id: 11, sportId: 6, sportName: "Badminton", skillLevelId: 1 },
@@ -435,7 +488,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-05T10:00:00",
-    userSports: [
+    sports: [
       { id: 13, sportId: 1, sportName: "Football", skillLevelId: 1 },
       { id: 14, sportId: 2, sportName: "Basketball", skillLevelId: 1 },
       { id: 15, sportId: 5, sportName: "Volleyball", skillLevelId: 1 },
@@ -452,7 +505,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-06T10:00:00",
-    userSports: [
+    sports: [
       { id: 16, sportId: 1, sportName: "Football", skillLevelId: 1 },
       { id: 17, sportId: 4, sportName: "Running", skillLevelId: 1 },
       { id: 18, sportId: 6, sportName: "Badminton", skillLevelId: 1 },
@@ -470,7 +523,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-07T10:00:00",
-    userSports: [
+    sports: [
       { id: 20, sportId: 1, sportName: "Football", skillLevelId: 1 },
       { id: 21, sportId: 2, sportName: "Basketball", skillLevelId: 2 },
       { id: 22, sportId: 5, sportName: "Volleyball", skillLevelId: 1 },
@@ -489,7 +542,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-08T10:00:00",
-    userSports: [
+    sports: [
       { id: 25, sportId: 1, sportName: "Football", skillLevelId: 2 },
       { id: 26, sportId: 5, sportName: "Volleyball", skillLevelId: 2 },
       { id: 27, sportId: 7, sportName: "Cycling", skillLevelId: 1 },
@@ -506,7 +559,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-09T10:00:00",
-    userSports: [
+    sports: [
       { id: 28, sportId: 1, sportName: "Football", skillLevelId: 1 },
       { id: 29, sportId: 2, sportName: "Basketball", skillLevelId: 1 },
       { id: 30, sportId: 4, sportName: "Running", skillLevelId: 2 },
@@ -524,7 +577,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-10T10:00:00",
-    userSports: [
+    sports: [
       { id: 32, sportId: 1, sportName: "Football", skillLevelId: 1 },
       { id: 33, sportId: 2, sportName: "Basketball", skillLevelId: 1 },
       { id: 34, sportId: 6, sportName: "Badminton", skillLevelId: 1 },
@@ -542,7 +595,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-11T10:00:00",
-    userSports: [
+    sports: [
       { id: 36, sportId: 1, sportName: "Football", skillLevelId: 1 },
       { id: 37, sportId: 4, sportName: "Running", skillLevelId: 1 },
     ],
@@ -558,7 +611,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-12T10:00:00",
-    userSports: [
+    sports: [
       { id: 38, sportId: 2, sportName: "Basketball", skillLevelId: 1 },
       { id: 39, sportId: 5, sportName: "Volleyball", skillLevelId: 2 },
     ],
@@ -574,7 +627,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-13T10:00:00",
-    userSports: [
+    sports: [
       { id: 40, sportId: 1, sportName: "Football", skillLevelId: 1 },
     ],
   },
@@ -589,7 +642,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Split",
     appRoleId: "USER",
     joinedAt: "2026-10-14T10:00:00",
-    userSports: [
+    sports: [
       { id: 41, sportId: 5, sportName: "Volleyball", skillLevelId: 1 },
     ],
   },
@@ -604,7 +657,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Split",
     appRoleId: "USER",
     joinedAt: "2026-10-15T10:00:00",
-    userSports: [
+    sports: [
       { id: 42, sportId: 5, sportName: "Volleyball", skillLevelId: 1 },
     ],
   },
@@ -619,7 +672,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Split",
     appRoleId: "USER",
     joinedAt: "2026-10-16T10:00:00",
-    userSports: [
+    sports: [
       { id: 43, sportId: 5, sportName: "Volleyball", skillLevelId: 2 },
     ],
   },
@@ -634,7 +687,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Rijeka",
     appRoleId: "USER",
     joinedAt: "2026-10-17T10:00:00",
-    userSports: [
+    sports: [
       { id: 44, sportId: 4, sportName: "Running", skillLevelId: 2 },
     ],
   },
@@ -649,7 +702,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Rijeka",
     appRoleId: "USER",
     joinedAt: "2026-10-18T10:00:00",
-    userSports: [
+    sports: [
       { id: 45, sportId: 4, sportName: "Running", skillLevelId: 1 },
     ],
   },
@@ -664,7 +717,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Rijeka",
     appRoleId: "USER",
     joinedAt: "2026-10-19T10:00:00",
-    userSports: [
+    sports: [
       { id: 46, sportId: 4, sportName: "Running", skillLevelId: 1 },
     ],
   },
@@ -679,7 +732,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Rijeka",
     appRoleId: "USER",
     joinedAt: "2026-10-20T10:00:00",
-    userSports: [
+    sports: [
       { id: 47, sportId: 4, sportName: "Running", skillLevelId: 1 },
     ],
   },
@@ -694,7 +747,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Osijek",
     appRoleId: "USER",
     joinedAt: "2026-10-21T10:00:00",
-    userSports: [
+    sports: [
       { id: 48, sportId: 2, sportName: "Basketball", skillLevelId: 1 },
     ],
   },
@@ -709,7 +762,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Osijek",
     appRoleId: "USER",
     joinedAt: "2026-10-22T10:00:00",
-    userSports: [
+    sports: [
       { id: 49, sportId: 2, sportName: "Basketball", skillLevelId: 1 },
     ],
   },
@@ -724,7 +777,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Osijek",
     appRoleId: "USER",
     joinedAt: "2026-10-23T10:00:00",
-    userSports: [
+    sports: [
       { id: 50, sportId: 2, sportName: "Basketball", skillLevelId: 2 },
     ],
   },
@@ -739,7 +792,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zadar",
     appRoleId: "USER",
     joinedAt: "2026-10-24T10:00:00",
-    userSports: [
+    sports: [
       { id: 51, sportId: 3, sportName: "Tennis", skillLevelId: 1 },
     ],
   },
@@ -754,7 +807,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zadar",
     appRoleId: "USER",
     joinedAt: "2026-10-25T10:00:00",
-    userSports: [
+    sports: [
       { id: 52, sportId: 3, sportName: "Tennis", skillLevelId: 1 },
     ],
   },
@@ -769,7 +822,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-26T10:00:00",
-    userSports: [
+    sports: [
       { id: 53, sportId: 1, sportName: "Football", skillLevelId: 1 },
     ],
   },
@@ -784,7 +837,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-27T10:00:00",
-    userSports: [
+    sports: [
       { id: 54, sportId: 1, sportName: "Football", skillLevelId: 1 },
     ],
   },
@@ -799,7 +852,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-28T10:00:00",
-    userSports: [
+    sports: [
       { id: 55, sportId: 1, sportName: "Football", skillLevelId: 2 },
     ],
   },
@@ -814,7 +867,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-01T10:00:00",
-    userSports: [
+    sports: [
       { id: 56, sportId: 1, sportName: "Football", skillLevelId: 1 },
     ],
   },
@@ -829,7 +882,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "USER",
     joinedAt: "2026-10-02T10:00:00",
-    userSports: [
+    sports: [
       { id: 57, sportId: 1, sportName: "Football", skillLevelId: 1 },
     ],
   },
@@ -844,7 +897,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "GUEST",
     joinedAt: "2026-10-30T10:00:00",
-    userSports: [],
+    sports: [],
   },
   {
     userId: 31,
@@ -857,7 +910,7 @@ export const dummyUsers: UserDetails[] = [
     cityName: "Zagreb",
     appRoleId: "GUEST",
     joinedAt: "2026-10-30T10:00:00",
-    userSports: [],
+    sports: [],
   },
   {
     userId: 32,
