@@ -83,4 +83,11 @@ public class UserRepository {
 
         return jdbc.sql(sql.toString()).params(p).query(UserResponse.class).list();
     }
+
+    public UserResponse getById(Long id){
+        StringBuilder sql = new StringBuilder(RESPONSE_SELECT).append(" WHERE u.id=:id");
+        Map<String, Object> p = new HashMap<>();
+        p.put("id", id);
+        return jdbc.sql(sql.toString()).params(p).query(UserResponse.class).single();
+    }
 }

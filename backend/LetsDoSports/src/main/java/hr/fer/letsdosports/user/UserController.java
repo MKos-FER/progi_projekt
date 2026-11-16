@@ -1,6 +1,7 @@
 package hr.fer.letsdosports.user;
 
 import hr.fer.letsdosports.auth.CurrentUserId;
+import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,7 +10,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("users")
+@RequestMapping("/users")
 public class UserController {
 
     private final UserService service;
@@ -27,17 +28,27 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public /*ResponseEntity<UserResponse>*/ void getOne(@PathVariable Long id){
+    public UserResponse getOne(@PathVariable Long id){
+        return service.getById(id);
+    }
+
+    @GetMapping("/me")
+    private UserResponse getMe(@CurrentUserId Long userId){
+        return service.getMine(userId);
+    }
+
+    @PostMapping("/me")
+    private void newUser(){
 
     }
 
-    @GetMapping("me")
-    private /*User*/ void getMe(@CurrentUserId Long userId){
+    @PatchMapping("/me")
+    private void update(@CurrentUserId Long userId){
 
     }
 
-    @PatchMapping("me")
-    private /*UserResponse*/ void update(@CurrentUserId Long userId){
+    @PutMapping("/users/me/photo")
+    private void updatePicture(){
 
     }
 

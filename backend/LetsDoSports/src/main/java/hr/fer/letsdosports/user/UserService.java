@@ -25,4 +25,11 @@ public class UserService {
         return users.search(cityId, sportId, skillLevelId,ageMin,ageMax);
     }
 
+    public UserResponse getById(Long userId){
+        return users.getById(userId);
+    }
+
+    public UserResponse getMine(Long userId){
+        return users.getById(userId);
+    }
 }
