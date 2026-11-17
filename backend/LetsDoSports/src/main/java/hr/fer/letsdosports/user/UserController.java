@@ -5,7 +5,9 @@ import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -38,13 +40,17 @@ public class UserController {
     }
 
     @PostMapping("/me")
-    private void newUser(){
-
+    private ResponseEntity<UserResponse> newUser(@Valid @RequestBody CreateUserRequest req){
+        User u = service.create(req);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(u.getId()).toUri();
+        return ResponseEntity.created(location).body(service.getById(u.getId()));
     }
 
     @PatchMapping("/me")
-    private void update(@CurrentUserId Long userId){
+    private UserResponse update(@CurrentUserId Long userId, @Valid @RequestBody UpdateUserRequest req){
 
+        service.update(userId, req);
+        return service.getById(userId);
     }
 
     @PutMapping("/users/me/photo")

@@ -15,7 +15,7 @@ public record UserResponse(
         String gender,
         LocalDate birthDate,
         Integer age,
-        String cityName,
+        String cityId,
         String appRoleId,
         List<SportDto> sports,
         OffsetDateTime createdAt

@@ -1,6 +1,6 @@
 package hr.fer.letsdosports.user;
 
-import hr.fer.letsdosports.sport.Sport;
+import hr.fer.letsdosports.sport.SportDto;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,12 +12,12 @@ import java.util.List;
 @Setter
 public class User {
     private Long id;
-    private String mame;
+    private String name;
     private String userName;
     private String photoUrl;
     private String gender;
     private OffsetDateTime dob;
     private Short cityId;
-    private String role;
-    private List<Sport> sports;
+    private Short appRoleId;
+    private List<SportDto> sports;
 }
