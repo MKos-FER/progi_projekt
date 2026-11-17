@@ -3,8 +3,8 @@ title Let's Do Sports - obrasci uporabe
 left to right direction
 skinparam shadowing false
 skinparam packageStyle rectangle
-skinparam nodesep 22
-skinparam ranksep 65
+skinparam nodesep 35
+skinparam ranksep 90
 skinparam ArrowColor #526579
 
 actor "A-01\nPosjetitelj" as A01
@@ -88,7 +88,34 @@ UC001 -- A07
 UC002 -- A07
 UC015 -- A06
 
+' Proširenje: strelica vodi od opcionalne radnje prema osnovnom pregledu.
+' Uvjeti i točke proširenja opisani su u docs/3-Obrasci-uporabe.md, odjeljak 3.1.1.
+UC008 ..> UC006 : <<extend>>
+UC009 ..> UC006 : <<extend>>
+UC010 ..> UC006 : <<extend>>
+UC011 ..> UC006 : <<extend>>
+
+UC013 ..> UC012 : <<extend>>
+UC014 ..> UC012 : <<extend>>
+UC023 ..> UC012 : <<extend>>
+
+UC016 ..> UC015 : <<extend>>
+UC018 ..> UC016 : <<extend>>
+UC019 ..> UC016 : <<extend>>
+UC020 ..> UC016 : <<extend>>
+UC022 ..> UC016 : <<extend>>
+
+' Uključivanje: strelica vodi prema obaveznom, ponovno korištenom ponašanju.
+' Odgovor uključuje objavu komentara uz dodatnu vezu na izvorni komentar.
+UC023 ..> UC013 : <<include>>
+' Obrada prijave uključuje pregled podataka prijavljenog terena.
+UC021 ..> UC016 : <<include>>
+
 legend bottom
+  <<include>>: obavezno uključeno ponašanje; strelica vodi prema uključenom UC-u.
+  <<extend>>: opcionalna radnja; strelica vodi prema osnovnom UC-u.
+  Uvjeti i točke proširenja: dokument Obrasci uporabe, odjeljak 3.1.1.
+  Sam pregled ne zahtijeva izvršavanje proširenja; vrijede ovlasti pojedinog UC-a.
   Organizator i sudionik uloge su korisnika na konkretnom događaju.
   Autorstvo terena i komentara provjerava se nad konkretnim zapisom.
   Google i kartografski servis sekundarni su akteri.
