@@ -190,6 +190,7 @@ class UserControllerTest {
         verify(service, never()).getById(any());   // "me" must not be treated as {id}
     }
 
+
     // -------------------------------------------------------- PATCH /users/me
 
     @Test
@@ -278,18 +279,4 @@ class UserControllerTest {
                 .andExpect(status().isConflict());
     }
 
-    // -------------------------------------------------- PUT /users/me/photo
-
-
-    @Test
-    @Disabled("PUT /users/me/photo not implemented yet")
-    void putPhoto_validFile_returns200() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("file", "me.png", "image/png", new byte[]{1, 2, 3});
-
-        mvc.perform(multipart(BASE + "/me/photo").file(file).with(req -> {
-                    req.setMethod("PUT");
-                    return req;
-                }))
-                .andExpect(status().isOk());
-    }
 }

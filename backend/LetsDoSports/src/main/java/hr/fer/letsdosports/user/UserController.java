@@ -46,9 +46,4 @@ public class UserController {
         return service.getById(userId);
     }
 
-    @PutMapping("/users/me/photo")
-    private void updatePicture(){
-
-    }
-
 }
