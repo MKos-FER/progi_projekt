@@ -1,140 +1,334 @@
 # 3. Obrasci uporabe
 
-**Cilj:** Prikazati glavne interakcije između aktera aplikacije i sustava. Opišite kako akter ostvaruje cilj i što se događa kada važan korak ne uspije. Interakcije temeljite na odobrenim zahtjevima i ažurirajte ih kako se aplikacija razvija.
+Obrasci opisuju dogovoreno ponašanje aplikacije Let's Do Sports prema [opsegu projekta](1-Projekt.md), [analizi zahtjeva](2-Analiza-zahtjeva.md) i [API ugovoru](meeting-notes/api-endpoints.md). Dokument obuhvaća i planirane funkcionalnosti; nije potvrda da su svi tokovi implementirani ili ispitani.
+
+**Pretpostavke koje je potrebno usuglasiti unutar tima:**
+
+- Za događaje se preuzima ponašanje postojećeg koda: obavezan naziv i postojeći teren, minimalna dob od barem 13 godina, opcionalna gornja dob i minimalna razina iskustva te ograničenja radnji prema statusu događaja. Izvori su CreateEventRequest, UpdateEventRequest i EventService u [modulu događaja](../backend/LetsDoSports/src/main/java/hr/fer/letsdosports/event/) te EventMemberService u [modulu sudjelovanja](../backend/LetsDoSports/src/main/java/hr/fer/letsdosports/eventmember/). Područje proizlazi iz odabranog terena; time se za ove obrasce precizira opis „teren ili mjesto” iz analize zahtjeva.
+- Donja dobna granica od 13 godina odnosi se na uvjet događaja; ovime se ne uvodi novo pravilo dobi za registraciju.
+- Javno čitanje oglasne ploče, očuvanje odgovora uz oznaku obrisanog izvornog komentara te zabrana brisanja terena povezanog s događajima. Ograničenje brisanja povezanog terena postoji i u [shemi baze](../db/migrations/V2__events_schema.sql).
 
 ## 3.1 Dijagram obrazaca uporabe
 
-**Cilj:** Prikazati granicu sustava, relevantne aktere i njihove glavne ciljeve u **preglednom UML dijagramu obrazaca uporabe**. Ako je za razumijevanje pojedinog dijela sustava potrebno prikazati više detalja, taj dio izdvojite u dodatni usmjereni dijagram. Dodatni dijagrami trebaju produbiti dio preglednog modela, a ne stvarati nepovezane ili duplicirane prikaze istog sustava.
+![Dijagram obrazaca uporabe sustava Let's Do Sports](./assets/diagrams/3-1-lets-do-sports-UC.svg)
 
-![Dijagram obrazaca uporabe sustava CrisisMap](./assets/diagrams/3-1-crisismap-system-UC.svg)
+**Slika 3.1. Dijagram obrazaca uporabe sustava Let's Do Sports**
 
-**Slika 3.1. Dijagram obrazaca uporabe sustava CrisisMap**
+**PlantUML izvor:** [3-1-lets-do-sports-UC.puml](./puml/3-1-lets-do-sports-UC.puml)
 
-**PlantUML izvor:** [izvor](./puml/3-1-crisismap-system-UC.puml)
+Akteri A-01 - A-07 preuzeti su iz [analize zahtjeva](2-Analiza-zahtjeva.md#23-dionici-i-akteri). Organizator i sudionik specijalizacije su registriranog korisnika u odnosu na pojedini događaj. Autorstvo terena ili komentara provjerava se nad konkretnim sadržajem i ne uvodi zasebnu vrstu računa. Registrirani korisnik i administrator imaju pristup javnim pregledima; zajedničke veze prema tim pregledima prikazane su i preko nasljeđivanja aktera.
 
-**Provjera dijagrama:** Prikažite prepoznate uloge koje **komuniciraju s aplikacijom**, a ne dionike koji s njom nemaju interakciju. Svaki glavni korisnički cilj mora imati pridruženog aktera; uključeni obrazac uporabe može se dosegnuti preko drugog obrasca uporabe bez vlastite izravne veze s akterom. `<<include>>` i `<<extend>>` koristite samo kada odnos odgovara stvarnom ponašanju.
-
-<details>
-<summary><strong>Primjer aktera i granica sustava</strong></summary>
-
-**Opis primjera — CrisisMap:**
-
-Dijagram prikazuje **ogledni scenarij** s građaninom, posjetiteljem i koordinatorom pomoći te vanjskim pružateljem identiteta. Pružatelj identiteta sudjeluje u obrascu uporabe „Prijava u sustav” kao sekundarni akter: korisnik pokreće prijavu u aplikaciji, a vanjski sustav provodi autentikaciju. Budući da projekt koristi vanjskog pružatelja identiteta, ta se ovisnost prikazuje i u dijagramu obrazaca uporabe; tehnički detalji integracije pripadaju arhitekturnoj dokumentaciji.
-
-**Odabir aktera i ciljeva:** Granica pokazuje što aplikacija nudi, akteri imaju različite ciljeve, a nijedan akter ni obrazac uporabe ne tvrdi da ova studentska aplikacija angažira hitne službe. Dijagram usporedite s odobrenim funkcijskim zahtjevima i akterima.
-
-
-**Pet pitanja za odabir sadržaja dijagrama** (ne pet dijagrama za predaju):
-
-| Fokus | Pitanje |
-| --- | --- |
-| Cijeli sustav | Koji korisnički ciljevi najbolje objašnjavaju čemu ova aplikacija služi? |
-| Ključne funkcionalnosti | Koje ciljeve treba detaljnije opisati ili, ako je potrebno, prikazati zasebnim usmjerenim dijagramom? |
-| Korisničke uloge | Koji akteri mogu sudjelovati u pojedinom cilju i kako se njihove ovlasti razlikuju? |
-| Ključni procesi | Koji cilj ima važne alternative koje treba opisati u obrascu uporabe? |
-| Vanjske integracije | Sudjeluje li drugi sustav u obrascu uporabe kao **sekundarni akter**, primjerice odobreni pružatelj identiteta pri prijavi? |
-
-Vanjski sustav može biti sekundarni akter obrasca uporabe kada sudjeluje u ostvarenju korisničkog cilja; tehničke veze opisuju se u arhitekturi. Nemojte stvarati dodatni obavezni dijagram obrazaca uporabe samo radi popisa integracija. Prenatrpan dijagram podijelite prema povezanim akterima ili ciljevima samo kada time postaje čitljiviji.
-
-</details>
+Google sudjeluje u registraciji i prijavi, a kartografski servis u pregledu karte. Vanjska stranica za rezervaciju samo je odredište poveznice, bez razmjene podataka o rezervacijama s aplikacijom. Studentski tim i nastavnici dionici su projekta, a ne akteri ovog dijagrama. Prijava je preduvjet zaštićenih radnji, pa nije ponavljana odnosom `<<include>>`.
 
 ## 3.2 Specifikacije obrazaca uporabe
 
-**Cilj:** Za svaki obrazac uporabe iz dijagrama objasniti cilj aktera, uobičajenu interakciju s aplikacijom i važne alternative. Jednostavne obrasce uporabe opišite kratko; proširite one kod kojih alternative, vanjske ovisnosti ili posljedice zahtijevaju dodatno objašnjenje.
+Kod svake zaštićene radnje sustav na poslužitelju provjerava prijavu i ovlasti nad konkretnim zapisom (NF-01, NF-02). Ako prijava nedostaje ili istekne, radnja se odbija do ponovne prijave. Ako akter nema ovlast, promjena se odbija bez izmjene podataka. Nepostojeći zapis prijavljuje se razumljivom porukom.
 
-**Za svaki obrazac uporabe koristite jednu okomitu tablicu.** Navedite samo onoliko pojedinosti koliko interakcija zahtijeva; neprimjenjivu alternativu izostavite umjesto da je popunjavate samo radi forme.
+Pri neuspješnoj pohrani sustav ne prikazuje potvrdu uspjeha; povezane promjene pojedine operacije moraju se spremiti zajedno ili ostati neprovedene. Uspješno spremljeni podaci i fotografije ostaju dostupni nakon ponovnog pokretanja (NF-03). Sučelje i poruke trebaju biti čitljivi na računalu i mobitelu (NF-04, NF-05). U tablicama se dodatno navode alternative važne za konkretni cilj.
 
-### UC-[ID]: [Naziv usmjeren na cilj]
+<a id="uc-001"></a>
+
+### UC-001: Registrirati račun putem Googlea
 
 | Element specifikacije | Opis |
 | :--- | :--- |
-| **Primarni akter** | [Uloga definirana u analizi zahtjeva] |
-| **Povezani zahtjevi** | [Identifikatori funkcijskih zahtjeva, npr. F-001, F-004] |
-| **Preduvjeti** | [Stanje sustava koje mora biti zadovoljeno prije početka izvođenja] |
-| **Glavni uspješni tok** | 1. Akter pokreće akciju.<br>2. Program obrađuje unos i vraća povratnu informaciju.<br>3. [Koračni prikaz interakcije do ostvarenja cilja] |
-| **Alternativni tokovi / Iznimke** | **[Korak]a — [Naziv iznimke]:** [Uvjet nastanka, reakcija programa i nastavak toka] |
-| **Posljedice (ishod)** | [Promjena stanja podataka ili potvrda nakon uspješnog završetka] |
+| **Primarni akter** | A-01 Posjetitelj; sekundarni akter: A-07 Google. |
+| **Povezani zahtjevi** | F-001, F-004. |
+| **Preduvjeti** | Posjetitelj nema lokalni račun povezan s odabranim Google identitetom. |
+| **Glavni uspješni tok** | 1. Posjetitelj odabire registraciju putem Googlea.<br>2. Google provodi autentifikaciju, a aplikacija provjerava vraćeni identitet.<br>3. Aplikacija prikazuje početni obrazac profila. Posjetitelj unosi ime, jedinstveni username, spol, datum rođenja, grad i barem jedan sport s razinom iskustva.<br>4. Posjetitelj šalje obrazac; aplikacija provjerava unos i zajedno sprema lokalni račun, sportove i vezu s Google identitetom.<br>5. Aplikacija potvrđuje registraciju i omogućuje radnje prijavljenog korisnika. |
+| **Alternativni tokovi / Iznimke** | **2a - Prekinuta ili nevaljana prijava:** Račun ne nastaje i zaštićene radnje nisu dostupne; posjetitelj može ponovno pokrenuti registraciju.<br>**2b - Postojeći Google identitet:** Aplikacija prepoznaje postojeći račun i nastavlja prijavom iz UC-002, bez dupliciranja računa.<br>**3a - Odustajanje:** Zatvaranje početnog obrasca ne stvara lokalni račun niti omogućuje radnje registriranog korisnika.<br>**4a - Nevaljan profil ili zauzet username:** Aplikacija objašnjava pogrešku; ništa se ne sprema, a posjetitelj ispravlja unos i ponavlja korak 4. |
+| **Posljedice (ishod)** | Postoji potpun lokalni račun povezan s jednim Google računom. Fotografija je opcionalna i može se postaviti kroz UC-004. Aplikacija ne prikuplja korisnikovu Google lozinku. |
 
-<details>
-<summary><strong>Primjeri specifikacija: Registracija i prijava kriznog događaja</strong></summary>
+<a id="uc-002"></a>
 
-**Primjer — CrisisMap:**
+### UC-002: Prijaviti se putem Googlea
 
-**UC-001: Registracija računa.** Ovaj kratki primjer odnosi se na projekt čiji odobreni zadatak uključuje račune s adresom e-pošte i lozinkom.
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-01 Posjetitelj s postojećim računom; sekundarni akter: A-07 Google. |
+| **Povezani zahtjevi** | F-002. |
+| **Preduvjeti** | Postoji lokalni račun povezan s odabranim Google identitetom. |
+| **Glavni uspješni tok** | 1. Posjetitelj pokreće prijavu i odabire Google račun.<br>2. Google provodi autentifikaciju, a aplikacija provjerava rezultat.<br>3. Aplikacija prepoznaje lokalni račun prema Googleovu identifikatoru sub i omogućuje prijavljeni pristup. |
+| **Alternativni tokovi / Iznimke** | **2a - Odustajanje ili neuspjeh:** Korisnik ostaje neprijavljen i dobiva razumljivu poruku.<br>**3a - Google identitet nema lokalni račun:** Nastavlja se početnom registracijom iz UC-001. Drugi Google račun ne spaja se s postojećim prema e-pošti. |
+| **Posljedice (ishod)** | Korisnik ima pristup svojem postojećem računu. Ne stvara se novi račun pri svakoj prijavi; povezivanje ili promjena Google računa nisu podržani. |
 
-| Polje | Opis |
-| --- | --- |
-| Primarni akter | Građanin (A-02 u primjeru) |
-| ID zahtjeva | F-001 |
-| Preduvjeti, ako postoje | Nema. |
-| Glavni tijek | Građanin unosi adresu e-pošte; aplikacija šalje poveznicu za potvrdu; građanin potvrđuje račun. |
-| Alternativni ili neuspješni tijekovi, ako postoje | Adresa e-pošte već postoji → aplikacija objašnjava zašto se registracija ne može nastaviti. |
-| Rezultat | Račun je aktivan nakon potvrde. |
+<a id="uc-003"></a>
 
-Ako odobreni zadatak umjesto toga koristi isključivo OAuth prijavu, zamijenite ovaj primjer odgovarajućim ponašanjem prijave; nemojte dodavati registraciju lokalnom lozinkom samo radi podudaranja s primjerom.
+### UC-003: Odjaviti se iz aplikacije
 
-**UC-002: Podnošenje prijave kriznog događaja.** Ista polja mogu opisati dulji tijek u kojem odabir lokacije, provjera valjanosti i pohrana mogu ne uspjeti.
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-02 Registrirani korisnik. |
+| **Povezani zahtjevi** | F-003. |
+| **Preduvjeti** | Korisnik je prijavljen u aplikaciju. |
+| **Glavni uspješni tok** | 1. Korisnik odabire odjavu.<br>2. Aplikacija završava prijavljeni pristup i prikazuje javni prikaz. |
+| **Alternativni tokovi / Iznimke** | **2a - Odjava nije potvrđena:** Aplikacija prijavljuje problem i omogućuje ponovni pokušaj; ne prikazuje lažnu potvrdu odjave. |
+| **Posljedice (ishod)** | Zaštićene radnje zahtijevaju novu prijavu. Odjava iz aplikacije ne znači odjavu iz Google računa. |
 
-| Polje | Opis |
-| --- | --- |
-| Primarni akter | Građanin |
-| ID zahtjeva | F-004 |
-| Preduvjeti, ako postoje | Obrazac za prijavu dostupan je. Ako odobreni zadatak zahtijeva prijavu u sustav, građanin je prijavljen. |
-| Glavni tijek | 1. Građanin otvara obrazac za prijavu; aplikacija prikazuje polja za vrstu kriznog događaja, razinu ozbiljnosti, opis i lokaciju.<br>2. Građanin unosi podatke i odabire lokaciju na karti ili drugim podržanim načinom.<br>3. Građanin podnosi obrazac; aplikacija provjerava obavezna polja i lokaciju.<br>4. Aplikacija pohranjuje prijavu i prikazuje potvrdu s referencom na nju. |
-| Alternativni ili neuspješni tijekovi, ako postoje | **1a — Prijava u sustav nije uspjela:** Ako je prijava obavezna, a pružatelj identiteta je ne dovrši, prijava kriznog događaja ostaje nepodnesena i aplikacija objašnjava kako pokušati ponovno.<br>**2a — Odbijen pristup lokaciji:** Ako aplikacija nudi geolokaciju, ali je korisnik odbije, građanin ručno odabire lokaciju ako ta mogućnost postoji; tijek se nastavlja u koraku 3.<br>**3a — Nevaljana ili nedostajuća lokacija:** Aplikacija objašnjava problem, po mogućnosti zadržava unesene podatke i ne pohranjuje prijavu; građanin ispravlja lokaciju i ponavlja korak 3.<br>**3b — Pohrana nije uspjela:** Aplikacija prijavljuje neuspjeh i ne prikazuje lažnu potvrdu o podnošenju. |
-| Rezultat | Aplikacija pohranjuje prijavu kriznog događaja i potvrđuje njezino podnošenje. |
+<a id="uc-004"></a>
 
-**Odabir razine detalja:** Oba primjera koriste ista polja. UC-001 je kratak jer je glavna iznimka jasna; UC-002 zahtijeva numerirane korake i alternative jer oni mijenjaju ishod i mogu usmjeravati ispitivanje.Pri prilagodbi primjera koristite ID-ove zahtjeva i ponašanje vlastite aplikacije.
+### UC-004: Urediti vlastiti sportski profil
 
-**UC-005: Moderiranje prijave kriznog događaja.** Ovaj primjer vrijedi samo za projekt u kojem odobreni opseg uključuje moderatorski pregled prijava.
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-02 Registrirani korisnik. |
+| **Povezani zahtjevi** | F-004. |
+| **Preduvjeti** | Korisnik je prijavljen i ima lokalni račun. Početno popunjavanje profila dio je UC-001. |
+| **Glavni uspješni tok** | 1. Korisnik otvara vlastiti profil; aplikacija prikazuje postojeće podatke.<br>2. Korisnik mijenja željene podatke: ime, username, spol, datum rođenja, grad ili sportove s iskustvom.<br>3. Korisnik sprema promjene; aplikacija provjerava cjelovitost profila i jedinstvenost usernamea te sprema izmijenjene podatke.<br>4. Po želji korisnik postavlja ili zamjenjuje profilnu fotografiju; aplikacija sprema fotografiju i prikazuje ažurirani profil. |
+| **Alternativni tokovi / Iznimke** | **3a - Nepotpun ili nevaljan unos:** Prazno obavezno polje, budući datum rođenja, nepostojeći odabir ili izostanak svih sportova odbijaju se; korisnik ispravlja unos i ponavlja korak 3.<br>**3b - Username je zauzet:** Promjena se odbija i korisnik bira drugi username.<br>**4a - Fotografija se ne može spremiti:** Aplikacija objašnjava problem; prethodno uspješno spremljeni podaci profila ostaju dostupni. |
+| **Posljedice (ishod)** | Vlastiti profil ažuriran je uz očuvanje svih obaveznih podataka i barem jednog sporta s iskustvom. Izostavljeni podaci pri djelomičnoj izmjeni ostaju nepromijenjeni; dob se računa iz datuma rođenja. |
 
-| Polje | Opis |
-| --- | --- |
-| Primarni akter | Moderator (A-05 u primjeru) |
-| ID zahtjeva | F-008 |
-| Preduvjeti, ako postoje | Moderator je prijavljen i ima moderatorske ovlasti; postoji prijava koja čeka pregled. |
-| Glavni tijek | 1. Moderator otvara prijavu koja čeka pregled.<br>2. Aplikacija prikazuje podatke prijave i dostupne moderatorske radnje.<br>3. Moderator odabire odobravanje ili odbijanje.<br>4. Aplikacija provjerava ovlasti, mijenja status prijave i prikazuje novi status. |
-| Alternativni ili neuspješni tijekovi, ako postoje | **3a — Radnja nije potvrđena:** Moderator odustaje od promjene i prijava ostaje nepromijenjena.<br>**4a — Ovlasti nisu valjane:** Aplikacija odbija promjenu i status prijave ostaje nepromijenjen. |
-| Rezultat | Prijava ima novi status ako je moderatorska radnja uspješno provedena; inače ostaje nepromijenjena. |
-</details>
+<a id="uc-005"></a>
 
----
+### UC-005: Pronaći i pregledati igrače
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-02 Registrirani korisnik. |
+| **Povezani zahtjevi** | F-005. |
+| **Preduvjeti** | Korisnik je prijavljen. |
+| **Glavni uspješni tok** | 1. Korisnik otvara pregled igrača.<br>2. Po želji odabire sport, grad, dobni raspon i točnu razinu iskustva za odabrani sport.<br>3. Aplikacija prikazuje igrače koji zadovoljavaju sve odabrane kriterije; izostavljeni filtri ne ograničavaju rezultate.<br>4. Korisnik odabire igrača i pregledava njegov profil. |
+| **Alternativni tokovi / Iznimke** | **2a - Iskustvo bez sporta:** Aplikacija odbija takvu kombinaciju i traži odabir sporta ili uklanjanje filtra iskustva.<br>**3a - Nema rezultata:** Aplikacija prikazuje poruku; korisnik može promijeniti filtre. |
+| **Posljedice (ishod)** | Popis i pojedinačni profil prikazuju ID, username, ime, opcionalnu fotografiju, dob, grad te sportove s iskustvom. Ne prikazuju datum rođenja, spol, e-poštu, OAuth podatke ni aplikacijsku ulogu. |
+
+<a id="uc-006"></a>
+
+### UC-006: Pronaći i pregledati sportski događaj
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-01 Posjetitelj ili A-02 Registrirani korisnik. |
+| **Povezani zahtjevi** | F-006; prikaz oglednih oglasa: F-023. |
+| **Preduvjeti** | Prijava nije potrebna. |
+| **Glavni uspješni tok** | 1. Akter otvara pregled događaja.<br>2. Po želji filtrira događaje prema sportu, području, terminu ili statusu.<br>3. Aplikacija prikazuje odgovarajuće događaje.<br>4. Akter otvara detalje; aplikacija prikazuje naziv, sport, organizatora, teren i područje, termin, opis, status, broj sudionika, kapacitet te zadane dobne uvjete i minimalno iskustvo. |
+| **Alternativni tokovi / Iznimke** | **3a - Nema rezultata:** Aplikacija prikazuje poruku i omogućuje promjenu filtara.<br>**4a - Otkazan ili popunjen događaj:** Detalji ostaju dostupni uz vidljivu oznaku statusa; nova prijava nije moguća. |
+| **Posljedice (ishod)** | Akter ima pregled podataka i uvjeta događaja, bez promjene sudjelovanja. U javnom sučelju na predviđenim mjestima prikazuju se označeni ogledni oglasi. |
+
+<a id="uc-007"></a>
+
+### UC-007: Stvoriti sportski događaj
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-02 Registrirani korisnik. |
+| **Povezani zahtjevi** | F-007. |
+| **Preduvjeti** | Korisnik je prijavljen; postoji teren koji podržava odabrani sport. |
+| **Glavni uspješni tok** | 1. Korisnik otvara obrazac za novi događaj.<br>2. Unosi naziv do 40 znakova, odabire sport i postojeći teren, termin koji nije u prošlosti, maksimalan broj sudionika i minimalnu dob od barem 13 godina. Po želji dodaje opis, očekivano trajanje, maksimalnu dob i minimalno iskustvo.<br>3. Korisnik šalje obrazac; aplikacija provjerava unos, sportove terena i zadane uvjete.<br>4. Aplikacija zajedno sprema događaj i organizatora kao prvog sudionika te prikazuje detalje događaja. |
+| **Alternativni tokovi / Iznimke** | **3a - Nevaljan unos:** Nedostaju obavezni podaci, kapacitet je manji od jedan, termin je u prošlosti, trajanje nije pozitivno ili je maksimalna dob manja od minimalne. Aplikacija odbija unos i traži ispravak.<br>**3b - Neodgovarajući teren ili odabir:** Teren ne podržava odabrani sport ili odabrani podatak ne postoji; korisnik mijenja odabir i ponavlja korak 3. |
+| **Posljedice (ishod)** | Događaj je dostupan u javnom pregledu. Autor postaje organizator i prvi sudionik te ulazi u maksimalan broj sudionika. |
+
+<a id="uc-008"></a>
+
+### UC-008: Urediti vlastiti događaj
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-03 Organizator događaja. |
+| **Povezani zahtjevi** | F-008. |
+| **Preduvjeti** | Organizator je prijavljen; događaj postoji i nije otkazan ni završen. |
+| **Glavni uspješni tok** | 1. Organizator otvara uređivanje svojeg događaja.<br>2. Mijenja naziv, opis, sport, teren, termin, trajanje, kapacitet ili dobne uvjete i minimalno iskustvo.<br>3. Aplikacija provjerava ovlasti, status i valjanost novih podataka prema pravilima iz UC-007 te broj sudionika.<br>4. Aplikacija sprema promjene i prikazuje ažurirane detalje. |
+| **Alternativni tokovi / Iznimke** | **3a - Premalen kapacitet:** Novi maksimum manji je od trenutačnog broja sudionika; promjena se odbija i organizator ispravlja unos.<br>**3b - Nevaljan unos:** Promjene ne zadovoljavaju pravila podataka događaja; ništa se ne sprema.<br>**3c - Promijenjen status:** Ako je događaj u međuvremenu otkazan ili završen, uređivanje se odbija. |
+| **Posljedice (ishod)** | Događaj ima ažurirane podatke; broj sudionika ne prelazi kapacitet. Prema postojećem kodu uređivanje je dopušteno i dok događaj traje, uz navedene provjere. |
+
+<a id="uc-009"></a>
+
+### UC-009: Otkazati vlastiti događaj
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-03 Organizator događaja. |
+| **Povezani zahtjevi** | F-009. |
+| **Preduvjeti** | Organizator je prijavljen; događaj postoji i nije otkazan ni završen. |
+| **Glavni uspješni tok** | 1. Organizator odabire otkazivanje svojeg događaja.<br>2. Aplikacija provjerava ovlasti i status te označava događaj otkazanim.<br>3. Aplikacija prikazuje vidljivu oznaku otkazivanja i onemogućuje nove prijave. |
+| **Alternativni tokovi / Iznimke** | **2a - Već otkazan ili završen događaj:** Aplikacija odbija radnju i objašnjava trenutačni status. |
+| **Posljedice (ishod)** | Događaj ostaje dohvatljiv s oznakom otkazivanja. Otkazivanje ne briše zapis ni popis sudionika i ne šalje obavijesti. |
+
+<a id="uc-010"></a>
+
+### UC-010: Prijaviti se na događaj
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-02 Registrirani korisnik. |
+| **Povezani zahtjevi** | F-010. |
+| **Preduvjeti** | Korisnik je prijavljen i odabrao je postojeći događaj. |
+| **Glavni uspješni tok** | 1. Korisnik u detaljima događaja odabire prijavu.<br>2. Aplikacija provjerava da korisnik još nije sudionik, da je događaj otvoren i ima slobodno mjesto te da korisnik zadovoljava dobne uvjete i zadano minimalno iskustvo za sport događaja.<br>3. Aplikacija dodaje korisnika među sudionike i prikazuje ažurirani broj sudionika, bez odobrenja organizatora. |
+| **Alternativni tokovi / Iznimke** | **2a - Postojeća prijava:** Ponovna prijava odbija se bez dupliciranja sudjelovanja.<br>**2b - Popunjen, otkazan, započet ili završen događaj:** Prijava se odbija uz objašnjenje statusa.<br>**2c - Nezadovoljeni uvjeti:** Dob je izvan zadanog raspona ili iskustvo za sport nedostaje odnosno niže je od minimalnog; prijava se odbija uz objašnjenje.<br>**3a - Istodobna prijava za zadnje mjesto:** Mjesto dobiva samo jedan korisnik; drugi dobiva poruku da je događaj popunjen. |
+| **Posljedice (ishod)** | Korisnik postaje A-04 Sudionik događaja. Kapacitet, uključujući organizatora, nije prekoračen ni pri istodobnim pokušajima. |
+
+<a id="uc-011"></a>
+
+### UC-011: Odjaviti svoje sudjelovanje
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-04 Sudionik događaja koji nije organizator. |
+| **Povezani zahtjevi** | F-011. |
+| **Preduvjeti** | Sudionik je prijavljen u aplikaciju i sudjeluje u događaju. |
+| **Glavni uspješni tok** | 1. Sudionik otvara događaj, primjerice iz pregleda vlastitih događaja, i odabire odjavu sudjelovanja.<br>2. Aplikacija provjerava članstvo i da je događaj otvoren ili popunjen te uklanja njegovo sudjelovanje.<br>3. Aplikacija prikazuje novi broj sudionika. |
+| **Alternativni tokovi / Iznimke** | **2a - Organizator pokušava odjavu:** Aplikacija odbija odjavu i upućuje na otkazivanje događaja iz UC-009.<br>**2b - Događaj je započeo, završio ili je otkazan:** Odjava se odbija uz objašnjenje.<br>**2c - Korisnik više nije sudionik:** Odjava se odbija bez promjene tuđeg sudjelovanja. |
+| **Posljedice (ishod)** | Korisnik više nije sudionik, oslobađa se mjesto i prestaje pravo objave na ploči po osnovi sudjelovanja. |
+
+<a id="uc-012"></a>
+
+### UC-012: Pročitati oglasnu ploču događaja
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-01 Posjetitelj ili A-02 Registrirani korisnik. |
+| **Povezani zahtjevi** | F-012, F-024. |
+| **Preduvjeti** | Događaj postoji; prijava i sudjelovanje nisu potrebni za čitanje. |
+| **Glavni uspješni tok** | 1. Akter otvara oglasnu ploču događaja.<br>2. Aplikacija prikazuje komentare i odgovore u jedinstvenom kronološkom popisu, s autorom i vremenom objave te oznakom izvornog komentara uz odgovor.<br>3. Akter osvježava ili ponovno otvara stranicu kako bi vidio nove komentare. |
+| **Alternativni tokovi / Iznimke** | **2a - Nema komentara:** Prikazuje se poruka da je ploča prazna.<br>**2b - Izvorni komentar je obrisan:** Odgovori ostaju vidljivi uz neutralnu oznaku obrisanog izvornika, bez njegova teksta.<br>**3a - Dohvat nije uspio:** Aplikacija prikazuje pogrešku i omogućuje ponovni pokušaj. |
+| **Posljedice (ishod)** | Akter čita dogovor bez promjene podataka. Nove poruke ne pristižu u stvarnom vremenu i ne šalju se obavijesti. |
+
+<a id="uc-013"></a>
+
+### UC-013: Objaviti komentar na događaju
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-03 Organizator ili A-04 Sudionik događaja. |
+| **Povezani zahtjevi** | F-013. |
+| **Preduvjeti** | Akter je prijavljen; događaj postoji i akter je njegov organizator ili trenutačni sudionik. |
+| **Glavni uspješni tok** | 1. Akter na ploči upisuje tekst komentara.<br>2. Akter odabire objavu; aplikacija provjerava pravo objave i neprazan tekst.<br>3. Aplikacija sprema komentar, postavlja autora i vrijeme te ga prikazuje na ploči. |
+| **Alternativni tokovi / Iznimke** | **2a - Prazan komentar:** Objava se odbija; akter dopunjava tekst i ponavlja korak 2.<br>**2b - Prestalo sudjelovanje:** Ako akter više nije sudionik ni organizator, objava se odbija bez spremanja. |
+| **Posljedice (ishod)** | Komentar je pohranjen uz događaj; ostali ga vide pri sljedećem otvaranju ili osvježavanju ploče. |
+
+<a id="uc-014"></a>
+
+### UC-014: Obrisati vlastiti komentar
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-02 Registrirani korisnik, autor komentara ili odgovora. |
+| **Povezani zahtjevi** | F-014, F-024. |
+| **Preduvjeti** | Korisnik je prijavljen i njegov komentar postoji. Za brisanje vlastitog komentara nije potrebno trenutačno sudjelovanje u događaju. |
+| **Glavni uspješni tok** | 1. Autor uz vlastiti komentar odabire brisanje.<br>2. Aplikacija provjerava autorstvo i briše sadržaj komentara.<br>3. Aplikacija osvježava prikaz ploče. |
+| **Alternativni tokovi / Iznimke** | **2a - Tuđi komentar:** Brisanje se odbija bez promjene podataka.<br>**3a - Postoje odgovori:** Odgovori se ne brišu; zadržavaju vezu s izvornikom uz neutralnu oznaku da je obrisan. Njegov izvorni tekst više se ne prikazuje. |
+| **Posljedice (ishod)** | Sadržaj obrisanog komentara više nije vidljiv ni nakon osvježavanja, a postojeći odgovori ostaju čitljivi. |
+
+<a id="uc-015"></a>
+
+### UC-015: Pronaći terene na karti
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-01 Posjetitelj ili A-02 Registrirani korisnik; sekundarni akter: A-06 Kartografski servis. |
+| **Povezani zahtjevi** | F-015; prikaz oglednih oglasa: F-023. |
+| **Preduvjeti** | Prijava nije potrebna. |
+| **Glavni uspješni tok** | 1. Akter otvara kartu terena.<br>2. Aplikacija prikazuje kartu s podacima OpenStreetMapa, oznaku izvora podataka i oznake terena na spremljenim koordinatama.<br>3. Akter odabire oznaku i otvara podatke terena kroz UC-016. |
+| **Alternativni tokovi / Iznimke** | **2a - Nema terena:** Karta nema oznake i aplikacija prikazuje poruku.<br>**2b - Karta nije dostupna:** Aplikacija objašnjava da se karta ne može učitati i omogućuje ponovni pokušaj; ne prikazuje netočne lokacije. |
+| **Posljedice (ishod)** | Akter pronalazi teren i može pregledati njegove podatke. U sučelju se na predviđenim mjestima prikazuju označeni ogledni oglasi, bez povezivanja s oglasnom mrežom. |
+
+<a id="uc-016"></a>
+
+### UC-016: Pregledati podatke terena
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-01 Posjetitelj ili A-02 Registrirani korisnik. |
+| **Povezani zahtjevi** | F-016. |
+| **Preduvjeti** | Teren postoji; prijava nije potrebna. |
+| **Glavni uspješni tok** | 1. Akter otvara odabrani teren.<br>2. Aplikacija prikazuje naziv, lokaciju, grad, sportove, fotografije, opis, podatak o naplati i mogućnosti rezervacije.<br>3. Ako postoji vanjska poveznica za rezervaciju, akter je može slijediti kroz UC-022. |
+| **Alternativni tokovi / Iznimke** | **3a - Poveznica nije unesena:** Ne prikazuje se aktivna poveznica, čak ni ako teren podržava rezervacije. |
+| **Posljedice (ishod)** | Akter je upoznat s podacima terena; aplikacija ne prikazuje vlastitu evidenciju slobodnih termina. |
+
+<a id="uc-017"></a>
+
+### UC-017: Dodati sportski teren
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-02 Registrirani korisnik. |
+| **Povezani zahtjevi** | F-017. |
+| **Preduvjeti** | Korisnik je prijavljen. |
+| **Glavni uspješni tok** | 1. Korisnik otvara obrazac za dodavanje terena.<br>2. Unosi naziv, lokaciju na karti, grad, sportove, početnu fotografiju, opis te podatke o naplati i mogućnosti rezervacije. Po želji unosi adresu i dostupnu vanjsku poveznicu za rezervaciju.<br>3. Korisnik šalje obrazac; aplikacija provjerava podatke i početnu fotografiju.<br>4. Aplikacija sprema teren, sportove i fotografiju, bilježi autora te prikazuje novi teren. |
+| **Alternativni tokovi / Iznimke** | **3a - Nedostaju obavezni podaci:** Bez naziva, valjane lokacije, grada, barem jednog sporta ili početne fotografije teren se ne sprema; korisnik ispravlja unos.<br>**3b - Poveznica bez mogućnosti rezervacije:** Aplikacija odbija nedosljedan unos i traži ispravak.<br>**4a - Fotografija se ne može spremiti:** Dodavanje se ne smatra uspješnim i teren bez obavezne početne fotografije ne postaje dostupan kao uspješno dodan unos. |
+| **Posljedice (ishod)** | Teren je dostupan u javnom pregledu i na karti; korisnik je njegov autor. |
+
+<a id="uc-018"></a>
+
+### UC-018: Urediti vlastiti teren
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-02 Registrirani korisnik, autor terena. |
+| **Povezani zahtjevi** | F-018. |
+| **Preduvjeti** | Korisnik je prijavljen i autor je postojećeg terena. Administratorski ispravci opisani su u UC-021. |
+| **Glavni uspješni tok** | 1. Autor otvara uređivanje svojeg terena.<br>2. Mijenja podatke terena i šalje izmjene.<br>3. Aplikacija provjerava autorstvo i valjanost podataka, uključujući sportove, lokaciju i dosljednost rezervacijske poveznice.<br>4. Aplikacija sprema promjene i prikazuje ažurirane podatke. |
+| **Alternativni tokovi / Iznimke** | **3a - Nevaljan unos:** Aplikacija odbija promjene i traži ispravak; prethodni podaci ostaju nepromijenjeni.<br>**3b - Tuđi teren:** Obični korisnik ne može spremiti promjene tuđeg terena. |
+| **Posljedice (ishod)** | Izmjene su vidljive nakon ponovnog otvaranja terena. Nove fotografije dodaju se kroz UC-019. |
+
+<a id="uc-019"></a>
+
+### UC-019: Dodati fotografiju terena
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-02 Registrirani korisnik. |
+| **Povezani zahtjevi** | F-019. |
+| **Preduvjeti** | Korisnik je prijavljen; teren postoji. Korisnik ne mora biti autor terena. |
+| **Glavni uspješni tok** | 1. Korisnik na terenu odabire dodavanje fotografije i datoteku.<br>2. Aplikacija provjerava datoteku i sprema fotografiju povezanu s terenom.<br>3. Aplikacija prikazuje dodanu fotografiju. |
+| **Alternativni tokovi / Iznimke** | **2a - Datoteka nije prihvatljiva ili pohrana nije uspjela:** Aplikacija odbija dodavanje i prikazuje razlog; postojeće fotografije ostaju dostupne. |
+| **Posljedice (ishod)** | Nova fotografija ostaje povezana s terenom i vidljiva nakon ponovnog otvaranja njegovih podataka. |
+
+<a id="uc-020"></a>
+
+### UC-020: Prijaviti netočne podatke o terenu
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-02 Registrirani korisnik. |
+| **Povezani zahtjevi** | F-020. |
+| **Preduvjeti** | Korisnik je prijavljen; teren postoji. |
+| **Glavni uspješni tok** | 1. Korisnik uz teren odabire prijavu netočnosti.<br>2. Opisuje problem i šalje prijavu.<br>3. Aplikacija provjerava neprazan opis, sprema prijavu uz teren i potvrđuje primitak. |
+| **Alternativni tokovi / Iznimke** | **3a - Opis je prazan:** Prijava se ne sprema; korisnik dopunjava opis i ponavlja slanje. |
+| **Posljedice (ishod)** | Prijava je dostupna administratoru. Podaci terena ne mijenjaju se automatski podnošenjem prijave. |
+
+<a id="uc-021"></a>
+
+### UC-021: Obraditi prijavu netočnih podataka o terenu
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-05 Administrator. |
+| **Povezani zahtjevi** | F-021. |
+| **Preduvjeti** | Administrator je prijavljen i ima ovlasti za obradu prijava; postoji prijava netočnosti. |
+| **Glavni uspješni tok** | 1. Administrator otvara pregled prijava i odabire prijavu.<br>2. Aplikacija prikazuje teren i opis problema.<br>3. Administrator ispravlja podatke ili odabire uklanjanje neispravnog terena; aplikacija provjerava ovlasti, podatke i povezanost s događajima te provodi dopuštenu radnju.<br>4. Nakon uspješne obrade administrator označava prijavu riješenom, a aplikacija sprema i prikazuje njezino stanje. |
+| **Alternativni tokovi / Iznimke** | **3a - Neosnovana prijava:** Administrator je označava odbijenom bez promjene terena.<br>**3b - Teren je povezan s događajima:** Brisanje se odbija bez promjene terena ili događaja; aplikacija objašnjava razlog i nudi ispravak podataka.<br>**3c - Ispravak nije valjan ili pohrana nije uspjela:** Radnja se ne potvrđuje kao uspješna; prijava se ne označava riješenom na temelju neuspjele radnje.<br>**4a - Spremanje stanja prijave nije uspjelo:** Aplikacija objašnjava problem; prethodno uspješan ispravak ili uklanjanje ostaje proveden, a administrator može ponoviti označavanje prijave. |
+| **Posljedice (ishod)** | Prijava je riješena nakon dopuštenog ispravka ili uklanjanja, odnosno odbijena ako je neosnovana. Događaji se ne brišu radi uklanjanja terena. |
+
+<a id="uc-022"></a>
+
+### UC-022: Otvoriti vanjsku stranicu za rezervaciju terena
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-01 Posjetitelj ili A-02 Registrirani korisnik. |
+| **Povezani zahtjevi** | F-022. |
+| **Preduvjeti** | Teren ima unesenu vanjsku poveznicu za rezervaciju; prijava u aplikaciju nije potrebna. |
+| **Glavni uspješni tok** | 1. Akter u podacima terena odabire poveznicu za rezervaciju.<br>2. Preglednik otvara unesenu vanjsku stranicu na kojoj akter može nastaviti postupak prema pravilima te stranice. |
+| **Alternativni tokovi / Iznimke** | **2a - Vanjska stranica nije dostupna:** Preglednik ne uspijeva otvoriti odredište; aplikacija nema potvrdu rezervacije i ne bilježi rezervaciju. |
+| **Posljedice (ishod)** | Akter prelazi na vanjsku stranicu. Aplikacija ne vodi termine, ne obrađuje plaćanje i ne potvrđuje niti sprema rezervaciju. |
+
+<a id="uc-023"></a>
+
+### UC-023: Odgovoriti na komentar
+
+| Element specifikacije | Opis |
+| :--- | :--- |
+| **Primarni akter** | A-03 Organizator ili A-04 Sudionik događaja. |
+| **Povezani zahtjevi** | F-024, F-013. |
+| **Preduvjeti** | Akter je prijavljen i organizator je ili trenutačni sudionik događaja; odabrani komentar pripada istom događaju. |
+| **Glavni uspješni tok** | 1. Akter uz komentar odabire gumb „Reply”.<br>2. Aplikacija iznad polja za pisanje prikazuje autora i tekst odabranog komentara.<br>3. Akter upisuje odgovor i odabire objavu.<br>4. Aplikacija provjerava pravo objave, neprazan tekst i pripadnost izvornog komentara istom događaju te sprema odgovor povezan s njim.<br>5. Odgovor se prikazuje u zajedničkom kronološkom popisu uz oznaku komentara na koji se odnosi. |
+| **Alternativni tokovi / Iznimke** | **4a - Prazan odgovor:** Aplikacija odbija objavu i traži dopunu teksta.<br>**4b - Nema ovlasti ili referenca nije valjana:** Objava se odbija ako je prestalo sudjelovanje, komentar ne postoji ili pripada drugom događaju.<br>**5a - Izvornik je naknadno obrisan:** Odgovor ostaje dostupan uz neutralnu oznaku obrisanog izvornika. |
+| **Posljedice (ishod)** | Odgovor je pohranjen s autorom, vremenom i vezom na izvorni komentar. Povezanost je vidljiva i nakon osvježavanja; ne stvaraju se zasebne rasprave izvan kronološke ploče. |
 
 ## 3.3 Provjera dosljednosti obrazaca uporabe
 
-**Cilj:** Provjeriti međusobnu usklađenost obrazaca uporabe, aktera, zahtjeva i ispitnih slučajeva. Cjelovito mapiranje održava se isključivo u **[matrici sljedivosti zahtjeva](2-Analiza-zahtjeva.md#26-sljedivost-zahtjeva)**.
+Dijagram i specifikacije sadrže iste oznake UC-001 - UC-023. Organizator i sudionik zadržavaju mogućnosti registriranog korisnika; prava uređivanja i brisanja ovise o vlasništvu nad konkretnim sadržajem. Google i kartografski servis imaju ulogu sekundarnih aktera, dok rezervacijska stranica ostaje odredište vanjske poveznice.
 
-| Provjera | Pitanje za tim |
-| --- | --- |
-| Zahtjev | Je li svaki važan obrazac uporabe povezan s postojećim zahtjevom? |
-| Akter | Odgovara li akter naveden ovdje prethodno utvrđenoj ulozi i dopuštenoj interakciji? |
-| Aplikacija | Može li tim demonstrirati opisani glavni rezultat i važnu alternativu ili je opis jasno označen kao trenutačno oblikovanje? |
+Poveznice zahtjev -> obrazac uporabe -> planirana provjera održavaju se u [matrici sljedivosti zahtjeva](2-Analiza-zahtjeva.md#26-sljedivost-zahtjeva). F-023 ostvaruje se prikazom označenih oglednih oglasa pri javnim pregledima; nema zaseban korisnički cilj ni vanjsku oglasnu mrežu. Nefunkcijski zahtjevi primjenjuju se kroz zajednička pravila i provjere tokova, bez izmišljanja zasebnih aktera ili obrazaca za pohranu i sigurnost.
 
----
-
-Povezivanje zahtjev → obrazac uporabe → ispitivanje održavajte **samo jednom, u [tablici sljedivosti zahtjeva](./2-Analiza-zahtjeva.md)**. Ovdje nemojte održavati drugu projektnu tablicu mapiranja ni stupac sa statusom implementacije. Ako važan zahtjev nema interakciju s ljudskim akterom, objasnite gdje se obrađuje umjesto izmišljanja aktera.
-
-<details>
-<summary><strong>Provjera pokrivenosti zahtjeva</strong></summary>
-
-**Primjer — CrisisMap:** Tablica pokrivenosti obrazaca uporabe koju treba analizirati:
-
-| Broj obrasca uporabe | Naziv obrasca uporabe | Obuhvaćeni funkcijski zahtjevi |
-| --- | --- | --- |
-| UC-001 | Registracija računa | F-001: Registracija računa putem e-pošte |
-| UC-002 | Prijava kriznog događaja | F-022: Prijava i provjera kriznog događaja |
-| UC-003 | Sustav upozorenja | F-045: Slanje upozorenja korisnicima i timovima |
-| UC-004 | Koordinacija spašavanja | F-067: Koordinacija s hitnim službama |
-
----
-
-**Problemi pokrivenosti koje treba riješiti:**
-
-- **Pogrešan ID zahtjeva:** ova tablica povezuje UC-002 s F-022, dok se opis UC-002 u odjeljku 3.2 poziva na F-004, zahtjev za podnošenje prijave iz odjeljka 2.1.
-- **Zahtjevi koji ne postoje:** F-022, F-045 i F-067 nisu definirani u oglednim zahtjevima u 2.1.
-- **Obrasci uporabe bez opisa:** UC-003 i UC-004 nemaju opis u 3.2. UC-004 (koordinacija s hitnim službama) ujedno je mogućnost s vanjskim posljedicama koju opseg dopušta samo ako je uključena u odobreni zadatak.
-- **Nesklad aktera:** primjer aktera u odjeljku 2.3 navodi da koordinator pomoći podnosi prijave (F-004), dok UC-002 kao primarnog aktera navodi građanina.
-
-</details>
-
-**Završna provjera:** Dijagram, specifikacije obrazaca uporabe i matrica sljedivosti međusobno su usklađeni. Svaki važan obrazac uporabe povezan je s postojećim zahtjevom, akteri odgovaraju stvarnim ulogama u aplikaciji, a opisani glavni i alternativni tijekovi odgovaraju ponašanju koje sustav stvarno podržava.
+Posebno treba provjeriti neuspješnu Google prijavu i odustajanje od registracije, obavezne podatke profila i terena, ovlasti nad tuđim sadržajem, uvjete i kapacitet događaja pri istodobnim prijavama, očuvanje odgovora nakon brisanja izvornika te zabranu brisanja terena povezanog s događajima.
