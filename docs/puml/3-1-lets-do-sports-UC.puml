@@ -1,11 +1,35 @@
 @startuml
-title Let's Do Sports - obrasci uporabe
+title <back:white>Let's Do Sports - obrasci uporabe</back>
 left to right direction
 skinparam shadowing false
 skinparam packageStyle rectangle
-skinparam nodesep 35
-skinparam ranksep 90
-skinparam ArrowColor #526579
+' Pravokutne putanje i razmaci odvajaju veze od oznaka i naziva UC-ova.
+skinparam linetype ortho
+skinparam nodesep 55
+skinparam ranksep 160
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam ArrowColor #64748B
+skinparam ArrowFontSize 12
+skinparam ArrowFontColor #1E3A5F
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #64748B
+  FontColor #0F172A
+}
+skinparam package {
+  BorderColor #CBD5E1
+  FontColor #0F172A
+  FontStyle bold
+}
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #94A3B8
+}
+skinparam legend {
+  BackgroundColor #F8FAFC
+  BorderColor #CBD5E1
+}
 
 actor "A-01\nPosjetitelj" as A01
 actor "A-02\nRegistrirani korisnik" as A02
@@ -15,15 +39,15 @@ actor "A-05\nAdministrator" as A05
 actor "A-07\nGoogle" as A07
 actor "A-06\nKartografski servis" as A06
 
-rectangle "Let's Do Sports" {
-  package "Račun i igrači" {
+rectangle "<back:white>Let's Do Sports</back>" {
+  package "<back:#F8FAFC>Račun i igrači</back>" #F8FAFC {
     usecase "UC-001\nRegistrirati račun putem\nGooglea" as UC001
     usecase "UC-002\nPrijaviti se putem Googlea" as UC002
     usecase "UC-003\nOdjaviti se iz aplikacije" as UC003
     usecase "UC-004\nUrediti vlastiti sportski\nprofil" as UC004
     usecase "UC-005\nPronaći i pregledati igrače" as UC005
   }
-  package "Događaji i sudjelovanje" {
+  package "<back:#F8FAFC>Događaji i sudjelovanje</back>" #F8FAFC {
     usecase "UC-006\nPronaći i pregledati\nsportski događaj" as UC006
     usecase "UC-007\nStvoriti sportski događaj" as UC007
     usecase "UC-008\nUrediti vlastiti događaj" as UC008
@@ -31,13 +55,13 @@ rectangle "Let's Do Sports" {
     usecase "UC-010\nPrijaviti se na događaj" as UC010
     usecase "UC-011\nOdjaviti svoje sudjelovanje" as UC011
   }
-  package "Oglasna ploča" {
+  package "<back:#F8FAFC>Oglasna ploča</back>" #F8FAFC {
     usecase "UC-012\nPročitati oglasnu ploču\ndogađaja" as UC012
     usecase "UC-013\nObjaviti komentar na\ndogađaju" as UC013
     usecase "UC-014\nObrisati vlastiti komentar" as UC014
     usecase "UC-023\nOdgovoriti na komentar" as UC023
   }
-  package "Tereni" {
+  package "<back:#F8FAFC>Tereni</back>" #F8FAFC {
     usecase "UC-015\nPronaći terene na karti" as UC015
     usecase "UC-016\nPregledati podatke terena" as UC016
     usecase "UC-017\nDodati sportski teren" as UC017
@@ -90,26 +114,26 @@ UC015 -- A06
 
 ' Proširenje: strelica vodi od opcionalne radnje prema osnovnom pregledu.
 ' Uvjeti i točke proširenja opisani su u docs/3-Obrasci-uporabe.md, odjeljak 3.1.1.
-UC008 ..> UC006 : <<extend>>
-UC009 ..> UC006 : <<extend>>
-UC010 ..> UC006 : <<extend>>
-UC011 ..> UC006 : <<extend>>
+UC008 .[#1E3A5F].> UC006 : <back:white><<extend>></back>
+UC009 .[#1E3A5F].> UC006 : <back:white><<extend>></back>
+UC010 .[#1E3A5F].> UC006 : <back:white><<extend>></back>
+UC011 .[#1E3A5F].> UC006 : <back:white><<extend>></back>
 
-UC013 ..> UC012 : <<extend>>
-UC014 ..> UC012 : <<extend>>
-UC023 ..> UC012 : <<extend>>
+UC013 .[#1E3A5F].> UC012 : <back:white><<extend>></back>
+UC014 .[#1E3A5F].> UC012 : <back:white><<extend>></back>
+UC023 .[#1E3A5F].> UC012 : <back:white><<extend>></back>
 
-UC016 ..> UC015 : <<extend>>
-UC018 ..> UC016 : <<extend>>
-UC019 ..> UC016 : <<extend>>
-UC020 ..> UC016 : <<extend>>
-UC022 ..> UC016 : <<extend>>
+UC016 .[#1E3A5F].> UC015 : <back:white><<extend>></back>
+UC018 .[#1E3A5F].> UC016 : <back:white><<extend>></back>
+UC019 .[#1E3A5F].> UC016 : <back:white><<extend>></back>
+UC020 .[#1E3A5F].> UC016 : <back:white><<extend>></back>
+UC022 .[#1E3A5F].> UC016 : <back:white><<extend>></back>
 
 ' Uključivanje: strelica vodi prema obaveznom, ponovno korištenom ponašanju.
 ' Odgovor uključuje objavu komentara uz dodatnu vezu na izvorni komentar.
-UC023 ..> UC013 : <<include>>
+UC023 .[#1E3A5F].> UC013 : <back:white><<include>></back>
 ' Obrada prijave uključuje pregled podataka prijavljenog terena.
-UC021 ..> UC016 : <<include>>
+UC021 .[#1E3A5F].> UC016 : <back:white><<include>></back>
 
 legend bottom
   <<include>>: obavezno uključeno ponašanje; strelica vodi prema uključenom UC-u.
