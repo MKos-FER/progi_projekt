@@ -4,6 +4,7 @@ import hr.fer.letsdosports.sport.SportDto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class User {
     private String userName;
     private String photoUrl;
     private String gender;
-    private OffsetDateTime dob;
+    private LocalDate birthDate;
     private Short cityId;
     private Short appRoleId;
     private List<SportDto> sports;

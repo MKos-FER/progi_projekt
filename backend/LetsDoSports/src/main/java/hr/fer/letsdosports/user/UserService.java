@@ -47,7 +47,7 @@ public class UserService {
     }
 
 
-    private void validateUser(String username, Short city_id, Short app_role_id, List<SportDto> sports){
+    private void validateUser(String username, Short city_id, List<SportDto> sports){
         Map<String, String> errors = new LinkedHashMap<>();
 
         boolean usernameOk=!exists("SELECT EXISTS(SELECT 1 FROM users u WHERE u.username LIKE ?)", username);
@@ -58,11 +58,6 @@ public class UserService {
         boolean cityOk= exists("SELECT EXISTS (SELECT 1 FROM sif_city WHERE id=?)", city_id);
         if (!cityOk){
             errors.put("city_id", "Grad ne postoji");
-        }
-
-        boolean appRoleOK=exists("SELECT EXISTS (SELECT 1 FROM sif_app_role WHERE id=?)", app_role_id);
-        if(!appRoleOK){
-            errors.put("appRole", "App role ne postoji");
         }
 
         for (SportDto sport : sports){
@@ -81,21 +76,6 @@ public class UserService {
         if (!errors.isEmpty()) throw new ApiValidationException(errors);
     }
 
-    @Transactional
-    public User create(CreateUserRequest req){
-        validateUser(req.username(), req.cityId(), req.appRoleId(), req.sports());
-        User u =new User();
-        u.setName(req.name());
-        u.setUserName(req.username());
-        u.setPhotoUrl(req.photoUrl());
-        u.setGender(req.gender());
-        u.setDob(req.dob());
-        u.setCityId(req.cityId());
-        u.setAppRoleId(req.appRoleId());
-        u = users.insert(u);
-        return u;
-    }
-
     public void lockUser(Long userId){
         boolean foundUser = jdbc.sql("SELECT  id FROM  users WHERE id = :id FOR UPDATE ").param("id", userId).query(Long.class).optional().isPresent();
         if (!foundUser){
@@ -108,15 +88,15 @@ public class UserService {
         lockUser(userId);
         User u = users.getUserById(userId).orElseThrow();
 
-        if(req.name()!=null)u.setName(req.name());
-        if(req.username()!=null)u.setUserName(req.username());
-        if(req.gender()!=null)u.setGender(req.gender());
-        if(req.dob()!=null)u.setDob(req.dob());
-        if(req.cityId()!=null)u.setCityId(req.cityId());
-        if(req.sports()!=null)u.setSports(req.sports());
+        if(req.getName()!=null)u.setName(req.getName());
+        if(req.getUsername()!=null)u.setUserName(req.getUsername());
+        if(req.getGender()!=null)u.setGender(req.getGender());
+        if(req.getBirthDate()!=null)u.setBirthDate(req.getBirthDate());
+        if(req.getCityId()!=null)u.setCityId(req.getCityId());
+        if(req.getSports()!=null)u.setSports(req.getSports());
 
-        if(req.name()!=null ||req.username()!=null ||req.gender()!=null ||req.dob()!=null ||req.cityId()!=null ||req.sports()!=null){
-            validateUser(u.getUserName(),u.getCityId(),u.getAppRoleId(),u.getSports());
+        if(req.getName()!=null ||req.getUsername()!=null ||req.getGender()!=null ||req.getBirthDate()!=null ||req.getCityId()!=null ||req.getSports()!=null){
+            validateUser(u.getUserName(),u.getCityId(),u.getSports());
         }
 
         return users.update(u).orElseThrow();

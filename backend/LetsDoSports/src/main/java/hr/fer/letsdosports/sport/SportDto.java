@@ -1,8 +1,12 @@
 package hr.fer.letsdosports.sport;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 public record SportDto(
-        Short sportId,
+        @NotNull @Positive @Max(32767) Short sportId,
         String sportName,
-        Short skillLevelId,
+        @NotNull @Positive @Max(32767) Short skillLevelId,
         String skillLevelName
 ) {}

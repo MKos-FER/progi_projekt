@@ -96,45 +96,9 @@ public class UserRepository {
 """ ).param("id", id).query(User.class).optional();
     }
 
-    public User insert(User u) {
-        User saved = jdbc.sql("""
-        INSERT INTO users (username, name, profile_photo_url, gender, date_of_birth, city_id, app_role_id)
-        VALUES (:username, :name, :photoUrl, :gender, :dob, :cityId, :appRoleId)
-        RETURNING *""")
-                .paramSource(u)
-                .query(User.class)
-                .single();
-
-        List<SportDto> sportList = new ArrayList<>();
-        for (SportDto s : u.getSports()) {
-            SportDto dto = jdbc.sql("""
-            WITH ins AS (
-                INSERT INTO user_sports (user_id, sport_id, skill_level_id)
-                VALUES (:userId, :sportId, :skillLevelId)
-                RETURNING sport_id, skill_level_id
-            )
-            SELECT ins.sport_id        AS sport_id,
-                   sp.name             AS sport_name,
-                   ins.skill_level_id  AS skill_level_id,
-                   sl.name             AS skill_level_name
-            FROM ins
-            JOIN sports sp        ON sp.id = ins.sport_id
-            JOIN sif_skill_level sl  ON sl.id = ins.skill_level_id""")
-                    .param("userId", saved.getId())
-                    .param("sportId", s.sportId())
-                    .param("skillLevelId", s.skillLevelId())
-                    .query(SportDto.class)
-                    .single();
-            sportList.add(dto);
-        }
-
-        saved.setSports(sportList);
-        return saved;
-    }
-
     public Optional<User> update(User u){
         User u2 = jdbc.sql("""
-        UPDATE users SET username = :username, name = :name, gender = :gender, date_of_birth = :dob, city_id = cityId WHERE id = :id RETURNING *
+        UPDATE users SET username = :username, name = :name, gender = :gender, date_of_birth = :birthDate, city_id = cityId WHERE id = :id RETURNING *
 """).paramSource(u).query(User.class).single();
         for (SportDto s : u.getSports()){
             jdbc.sql("""

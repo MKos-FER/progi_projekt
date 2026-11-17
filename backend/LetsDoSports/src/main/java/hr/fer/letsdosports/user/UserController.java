@@ -39,13 +39,6 @@ public class UserController {
         return service.getMine(userId);
     }
 
-    @PostMapping("/me")
-    private ResponseEntity<UserResponse> newUser(@Valid @RequestBody CreateUserRequest req){
-        User u = service.create(req);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(u.getId()).toUri();
-        return ResponseEntity.created(location).body(service.getById(u.getId()));
-    }
-
     @PatchMapping("/me")
     private UserResponse update(@CurrentUserId Long userId, @Valid @RequestBody UpdateUserRequest req){
 
