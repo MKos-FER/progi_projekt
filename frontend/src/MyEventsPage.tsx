@@ -456,9 +456,20 @@ export function EventCard({ eventId }: { eventId: number }) {
   }
 
   const event: EventCardInfo = events!.find(e => e.id == eventId)!
+
+  const eventCardOpacity = (event.status ?? "open") === "open" ? "opacity-100" : "opacity-50";
+  let eventStatusText = "otvoren";
+  if (event.status === "in_progress") {
+    eventStatusText = "trenutno se održava";
+  } else if (event.status === "finished") {
+    eventStatusText = "završio";
+  } else if (event.status === "cancelled") {
+    eventStatusText = "otkazan";
+  }
+
   return (
     // <Link to={`/events/${eventId}`} className="select-auto">
-    <Card className="transition-all duration-200 hover:scale-101 active:scale-99 p-0"
+    <Card className={"transition-all duration-200 hover:scale-101 active:scale-99 p-0 " + eventCardOpacity}
       onClick={() => { // Ovako je cijeli Card i dalje clickable a text se i dalje može selectat
         if (window.getSelection()?.toString()) return;
         void navigate(`/events/${eventId}`);
@@ -488,6 +499,10 @@ export function EventCard({ eventId }: { eventId: number }) {
             <Badge variant="outline">
               <Users className="mr-1 h-3 w-3" />
               {event.participantCount} / {event.maxParticipants}
+            </Badge>
+
+            <Badge variant={event.status === "cancelled" ? "destructive" : "outline"}>
+              {eventStatusText}
             </Badge>
 
           </div>

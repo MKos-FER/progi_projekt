@@ -28,7 +28,7 @@ async function fetchData<T>(url: string, options?: RequestInit): Promise<T> {
 const getXsrf = () => document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '';
 
 async function send(url: string, init: RequestInit = {}): Promise<Response> {
-  const doSend = () => fetch(url, {
+  const doSend = () => fetch(API_PREFIX + url, {
     ...init,
     credentials: 'include',
     headers: { ...init.headers, 'X-XSRF-TOKEN': getXsrf() },
@@ -38,10 +38,17 @@ async function send(url: string, init: RequestInit = {}): Promise<Response> {
   // Znači da XSRF token nije bio dobro postavljen
   if (res.status === 403) {
     // Napravi token reload i ponovi request
-    await fetch('/api/v1/auth/csrf', { credentials: 'include' });
+    await fetch(API_PREFIX + '/auth/csrf', { credentials: 'include' });
     res = await doSend();
   }
   return res;
+}
+
+async function throwResposneMessage(response: Response): Promise<void> {
+  if (!response.ok) {
+    const r = (await response.json()) as {message: string}
+    throw new Error(`${r.message}`);
+  }
 }
 
 async function getUserPreferredLocation(): Promise<UserLocation> {
@@ -165,13 +172,15 @@ export async function createEvent(data: CreateEventInfo): Promise<EventCardInfo>
     return event;
   }
 
-  return fetchData<EventCardInfo>("/events", {
+  const response = await send("/events", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
   });
+
+  await throwResposneMessage(response)
 }
 
 // TODO: Figure out edit
@@ -216,16 +225,13 @@ export async function cancelEvent(eventId: number): Promise<void> {
     return;
   }
 
-  const response = await send(`${API_PREFIX}/events/${eventId}/cancel`, {
+  const response = await send(`/events/${eventId}/cancel`, {
     method: "POST",
   });
 
-  if (!response.ok) {
-    throw new Error("Event cannot be canceled: " + response.status)
-  }
+  await throwResposneMessage(response)
 }
 
-// TODO: Figure out join
 export async function joinEvent(eventId: number): Promise<void> {
   if (USE_DUMMY_DATA && USE_DUMMY_EVENTS) {
     const event = dummyEvents.find(e => e.id === eventId);
@@ -245,13 +251,11 @@ export async function joinEvent(eventId: number): Promise<void> {
     return;
   }
 
-  const response = await send(`${API_PREFIX}/events/${eventId}/members`, {
+  const response = await send(`/events/${eventId}/members`, {
     method: "POST",
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to join event: ${response.status}`);
-  }
+  await throwResposneMessage(response)
 }
 
 // TODO: Figure out leave
@@ -260,13 +264,11 @@ export async function leaveEvent(eventId: number): Promise<void> {
     throw new Error("NOT IMPLEMENTED");
   }
 
-  const response = await send(`${API_PREFIX}/events/${eventId}/members/me`, {
+  const response = await send(`/events/${eventId}/members/me`, {
     method: "DELETE",
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to leave event: ${response.status}`);
-  }
+  await throwResposneMessage(response)
 }
 
 export async function getEventMembers(eventId: number): Promise<PublicUserInfo[]> {
@@ -328,7 +330,7 @@ export async function editUserProfile(newUserInfo: UserCreateDetails): Promise<v
   }
 
 
-  const response = await send(`${API_PREFIX}/users/me`, {
+  const response = await send(`/users/me`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -339,6 +341,7 @@ export async function editUserProfile(newUserInfo: UserCreateDetails): Promise<v
   if (!response.ok) {
     throw new Error(`Cannot edit user profile: ${response.status}`)
   }
+  // await throwResposneMessage(response)
 }
 
 export async function uploadUserProfilePhoto(url: string): Promise<void> {
@@ -354,7 +357,7 @@ export async function uploadUserProfilePhoto(url: string): Promise<void> {
     return;
   }
 
-  const response = await send(`${API_PREFIX}/users/me/photo`, {
+  const response = await send(`/users/me/photo`, {
     method: "PUT",
     headers: {
       "Content-Type": "Multipart: file", // Otkriti kako ovo treba izgledati
@@ -362,9 +365,7 @@ export async function uploadUserProfilePhoto(url: string): Promise<void> {
     body: "TODO: image data"
   });
 
-  if (!response.ok) {
-    throw new Error(`Cannot edit user profile: ${response.status}`)
-  }
+  await throwResposneMessage(response)
 }
 
 export async function getUsers(sportId: number | null, cityId: number | null, ageMin: number | null, ageMax: number | null, skillLevelId: number | null): Promise<PublicUserInfo[]> {
@@ -446,14 +447,14 @@ export async function getUserInfo(userId: number): Promise<UserDetails> {
 
 // TODO: Error checking
 export async function logoutUser(): Promise<void> {
-  await send('/api/v1/auth/logout', {
+  await send('/auth/logout', {
     method: 'POST',
   });
 }
 
 
 export async function registerUser(user: UserCreateDetails): Promise<void> {
-  const res = await send('/api/v1/auth/register', {
+  const res = await send('/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(user),

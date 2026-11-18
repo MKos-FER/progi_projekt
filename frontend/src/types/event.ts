@@ -13,17 +13,18 @@ export interface EventCardInfo {
   maxParticipants: number;
   participants: number[];
   participantCount: number;
+  status?: string;
+  expectedDurationMin: number;
+  minSkillLevelId: number;
   distance_km: number | null;
 }
 
 export type CreateEventInfo = Omit<EventDetails, "id" | "participants" | "status" | "createdAt">;
 export interface EventDetails extends EventCardInfo {
   organizerId: number;
-  expectedDurationMin: number;
+  organizerUsername: string;
   minAge: number;
   maxAge: number;
-  minSkillLevelId: number;
-  status: string | null;
   createdAt: string;
 }
 

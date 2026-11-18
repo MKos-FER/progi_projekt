@@ -1,5 +1,5 @@
 import * as React from "react"
-import { RotateCwIcon } from "lucide-react"
+import { CircleX, RotateCwIcon } from "lucide-react"
 
 import { Bubble, BubbleContent } from "@/components/ui/bubble"
 import { Button } from "@/components/ui/button"
@@ -33,6 +33,10 @@ import { getDefaultAvatar } from "./lib/utils"
 import { useIsAuth } from "./apiStore/useUsers"
 import { Textarea } from "@/components/ui/textarea"
 import { Link } from "react-router-dom";
+import { useJoinEvent, useMyEvents } from "@/apiStore/useEvents"
+import type { EventDetails } from "@/types/event"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Separator } from "@base-ui/react"
 
 const currentUser = "Mateo Horvat"
 
@@ -134,7 +138,7 @@ type GroupChatItem =
 //   return <div>{String(isAuth)}</div>;
 // }
 
-export function MessageScrollerGroupChat() {
+export function MessageScrollerGroupChat({ event }: { event: EventDetails }) {
   const { data: isAuth } = useIsAuth()
 
   const [demoKey, setDemoKey] = React.useState(0)
@@ -148,8 +152,28 @@ export function MessageScrollerGroupChat() {
         ? [...initialItems, joinMarker]
         : initialItems
   const buttonLabel =
-    rockyTurn === "idle" ? "Pridruži se" : "Pošalji poruku"
+    rockyTurn === "idle" ? "Već si član eventa" : "Pošalji poruku"
   const isComplete = rockyTurn === "message"
+
+  const { mutate: joinEvent, isPending: joinIsPending, error: joinError } = useJoinEvent()
+  const { data: myEvents, isLoading: myeIsLoading, error: myeError } = useMyEvents()
+
+  if (myeIsLoading || !myEvents) {
+    // TODO: join button skeleton
+    return;
+  }
+
+  if (myeError) {
+    return (
+      <div>
+        ERROR
+      </div>
+    );
+  }
+
+  console.log(joinIsPending)
+
+  const isInEvent = myEvents.findIndex(e => e.id === event.id) !== -1
 
   return (
     <MessageScrollerProvider>
@@ -195,17 +219,39 @@ export function MessageScrollerGroupChat() {
               <p>Reset Conversation</p>
             </TooltipContent>
           </Tooltip>
-          <Button
-            type="button"
-            disabled={isComplete}
-            onClick={() =>
-              setRockyTurn((turn) => (turn === "idle" ? "marker" : "message"))
+          <div className="flex-col w-full flex gap-2">
+            {isInEvent && <Button
+              type="button"
+              disabled={isComplete}
+              onClick={() =>
+                setRockyTurn((turn) => (turn === "idle" ? "marker" : "message"))
+              }
+              className="grow"
+              variant="outline"
+            >
+              {buttonLabel}
+            </Button>}
+            {!isInEvent && <Button
+              type="button"
+              disabled={joinIsPending}
+              onClick={() => {
+                joinEvent(event.id);
+              }}
+              className="grow"
+              variant="outline"
+            >
+              Pridruži se
+            </Button>}
+            {joinError &&
+              <Alert key="alert" className="text-destructive *:[svg]:text-current bg-destructive-foreground">
+                <CircleX />
+                <AlertTitle>Dogodila se greška prilikom pokušaja ulaska u događaj</AlertTitle>
+                <AlertDescription>
+                  {joinError.message}
+                </AlertDescription>
+              </Alert>
             }
-            className="grow"
-            variant="outline"
-          >
-            {buttonLabel}
-          </Button>
+          </div>
         </CardFooter>}
         <TextingBox />
       </Card>

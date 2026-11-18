@@ -62,7 +62,7 @@ export default function EventPage() {
       <div className="mt-3 flex flex-col min-h-0 h-full">
         <EventDescription event={event} />
         <PeopleInfo event={event} />
-        <ChatBox />
+        <ChatBox event={event}/>
       </div>
     )
   }
@@ -251,11 +251,11 @@ function ShowMembersButton({ event }: { event: EventDetails }) {
   )
 }
 
-function ChatBox() {
+function ChatBox({event}: {event: EventDetails}) {
   // TODO: Napraviti da se ChatBox ne može kompresirati
   return (
     <div className="flex grow min-h-50 max-h-155 w-full overflow-y-auto rounded-xl bg-gray-100">
-      <MessageScrollerGroupChat />
+      <MessageScrollerGroupChat event={event} />
     </div>
   );
 }
