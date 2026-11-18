@@ -261,7 +261,7 @@ export function Filters({ filters, setFilters }: { filters?: EventFilters, setFi
       <Card className={`overflow-hidden animate-in fade-in slide-in-from-top-2 duration-120
                         ease-in-out ${open ? "max-h-45 opacity-100" : "max-h-0 opacity-0 m-0 p-0"}`}>
         <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground flex flex-row gap-2">
+          <div className="text-sm text-muted-foreground flex flex-row gap-2">
             <Select
               value={selectedCity}
               onValueChange={setCityFilter}
@@ -323,7 +323,7 @@ export function Filters({ filters, setFilters }: { filters?: EventFilters, setFi
                 step={0.1}
               />
             </div>
-          </p>
+          </div>
         </CardContent>
       </Card>
 
@@ -496,7 +496,7 @@ export function EventCard({ eventId }: { eventId: number }) {
             <div className="flex flex-nowrap items-center gap-2 h-full justify-center">
               <MapPin className="mr-1 h-5 w-5" />
               <div className="md:text-lg">
-                {event.locationName}
+                {event.venueName}
               </div>
             </div>
           </div>

@@ -6,7 +6,7 @@ export interface EventCardInfo {
   name: string;
   description: string;
   sportName: string;
-  locationName: string;
+  venueName: string;
   latitude: number;
   longitude: number;
   scheduledAt: string;

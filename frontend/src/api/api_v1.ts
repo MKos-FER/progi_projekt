@@ -11,7 +11,7 @@ import { getDefaultAvatar } from "@/lib/utils";
 const USE_DUMMY_DATA = true;
 
 const USE_DUMMY_USERS = true; // NOTE: Nije implementirano još na backendu, neće raditi
-const USE_DUMMY_EVENTS = true;
+const USE_DUMMY_EVENTS = false;
 
 const API_PREFIX = `/api/v1`;
 
@@ -107,7 +107,16 @@ export async function getEvents(filters?: EventFilters): Promise<EventCardInfo[]
     )
   }
 
-  return fetchData<EventCardInfo[]>("/events");
+  let events = await fetchData<EventCardInfo[]>("/events");
+  const userLoc = await getUserPreferredLocation();
+
+  events= events.map(event => ({
+    ...event,
+    distance_km: roundSometimes(calculateDistanceKm(userLoc.latitude,
+      userLoc.longitude, event.latitude, event.longitude)),
+  })) satisfies EventCardInfo[];
+
+  return events;
 }
 
 export async function getMyEvents(): Promise<EventCardInfo[]> {
