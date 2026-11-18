@@ -35,6 +35,8 @@ public class SecurityConfig {
                                 "/api/v1/events/{eventId}/comments",
                                 "/api/v1/sports",
                                 "/api/v1/sports/{sportId}",
+                                "/api/v1/cities",
+                                "/api/v1/skill-levels",
                                 "/api/v1/venues",
                                 "/api/v1/venues/{venueId}",
                                 "/api/v1/auth/csrf"
