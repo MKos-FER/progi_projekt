@@ -1,0 +1,97 @@
+@startuml
+title Let's Do Sports - obrasci uporabe
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam nodesep 22
+skinparam ranksep 65
+skinparam ArrowColor #526579
+
+actor "A-01\nPosjetitelj" as A01
+actor "A-02\nRegistrirani korisnik" as A02
+actor "A-03\nOrganizator događaja" as A03
+actor "A-04\nSudionik događaja" as A04
+actor "A-05\nAdministrator" as A05
+actor "A-07\nGoogle" as A07
+actor "A-06\nKartografski servis" as A06
+
+rectangle "Let's Do Sports" {
+  package "Račun i igrači" {
+    usecase "UC-001\nRegistrirati račun putem\nGooglea" as UC001
+    usecase "UC-002\nPrijaviti se putem Googlea" as UC002
+    usecase "UC-003\nOdjaviti se iz aplikacije" as UC003
+    usecase "UC-004\nUrediti vlastiti sportski\nprofil" as UC004
+    usecase "UC-005\nPronaći i pregledati igrače" as UC005
+  }
+  package "Događaji i sudjelovanje" {
+    usecase "UC-006\nPronaći i pregledati\nsportski događaj" as UC006
+    usecase "UC-007\nStvoriti sportski događaj" as UC007
+    usecase "UC-008\nUrediti vlastiti događaj" as UC008
+    usecase "UC-009\nOtkazati vlastiti događaj" as UC009
+    usecase "UC-010\nPrijaviti se na događaj" as UC010
+    usecase "UC-011\nOdjaviti svoje sudjelovanje" as UC011
+  }
+  package "Oglasna ploča" {
+    usecase "UC-012\nPročitati oglasnu ploču\ndogađaja" as UC012
+    usecase "UC-013\nObjaviti komentar na\ndogađaju" as UC013
+    usecase "UC-014\nObrisati vlastiti komentar" as UC014
+    usecase "UC-023\nOdgovoriti na komentar" as UC023
+  }
+  package "Tereni" {
+    usecase "UC-015\nPronaći terene na karti" as UC015
+    usecase "UC-016\nPregledati podatke terena" as UC016
+    usecase "UC-017\nDodati sportski teren" as UC017
+    usecase "UC-018\nUrediti vlastiti teren" as UC018
+    usecase "UC-019\nDodati fotografiju terena" as UC019
+    usecase "UC-020\nPrijaviti netočne podatke o\nterenu" as UC020
+    usecase "UC-021\nObraditi prijavu netočnih\npodataka o terenu" as UC021
+    usecase "UC-022\nOtvoriti vanjsku stranicu za\nrezervaciju terena" as UC022
+  }
+}
+
+A03 --|> A02
+A04 --|> A02
+A05 --|> A02
+
+A01 -- UC001
+A01 -- UC002
+A01 -- UC006
+A01 -- UC012
+A01 -- UC015
+A01 -- UC016
+A01 -- UC022
+A02 -- UC003
+A02 -- UC004
+A02 -- UC005
+A02 -- UC006
+A02 -- UC007
+A02 -- UC010
+A02 -- UC012
+A02 -- UC014
+A02 -- UC015
+A02 -- UC016
+A02 -- UC017
+A02 -- UC018
+A02 -- UC019
+A02 -- UC020
+A02 -- UC022
+A03 -- UC008
+A03 -- UC009
+A03 -- UC013
+A03 -- UC023
+A04 -- UC011
+A04 -- UC013
+A04 -- UC023
+A05 -- UC021
+
+UC001 -- A07
+UC002 -- A07
+UC015 -- A06
+
+legend bottom
+  Organizator i sudionik uloge su korisnika na konkretnom događaju.
+  Autorstvo terena i komentara provjerava se nad konkretnim zapisom.
+  Google i kartografski servis sekundarni su akteri.
+  Ogledni oglasi dio su javnih pregleda; rezervacija se odvija izvan aplikacije.
+endlegend
+@enduml

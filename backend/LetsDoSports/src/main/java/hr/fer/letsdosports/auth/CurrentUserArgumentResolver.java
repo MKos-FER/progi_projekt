@@ -2,7 +2,9 @@ package hr.fer.letsdosports.auth;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
-import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -12,27 +14,23 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Component
 public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolver {
-    private final JdbcClient jdbc;
+    private final RegistrationService registration;
 
-    public CurrentUserArgumentResolver(JdbcClient jdbc) { this.jdbc = jdbc; }
+    public CurrentUserArgumentResolver(RegistrationService registration) { this.registration = registration; }
 
     @Override
     public boolean supportsParameter(MethodParameter p) {
         return p.hasParameterAnnotation(CurrentUserId.class) && Long.class.equals(p.getParameterType());
     }
 
-    // DEV ONLY: replace the body with SecurityContext/OAuth principal lookup once auth exists.
+    // Korisnik se određuje iz OAuth prijave (sesije) preko povezanog zapisa u oauth_accounts.
     @Override
     public Object resolveArgument(MethodParameter p, ModelAndViewContainer mav,
                                   NativeWebRequest req, WebDataBinderFactory binder) {
-        String header = req.getHeader("X-User-Id");
-        if (header == null) throw unauthorized();
-        long id;
-        try { id = Long.parseLong(header.trim()); } catch (NumberFormatException e) { throw unauthorized(); }
-        boolean exists = jdbc.sql("SELECT EXISTS(SELECT 1 FROM users WHERE id = :id)")
-                .param("id", id).query(Boolean.class).single();
-        if (!exists) throw unauthorized();
-        return id;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (!(auth instanceof OAuth2AuthenticationToken token)) throw unauthorized();
+        return registration.findLinkedUserId(token).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.FORBIDDEN, "Registracija nije dovršena."));
     }
 
     private ResponseStatusException unauthorized() {

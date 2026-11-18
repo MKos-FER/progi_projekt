@@ -22,6 +22,9 @@ INSERT INTO users (username, name, gender, date_of_birth, city_id) VALUES
 INSERT INTO oauth_accounts (user_id, provider, provider_user_id)
 SELECT id, 'google', 'dev-seed-' || username FROM users;
 
+-- Administrator za lokalno isprobavanje obrade prijava netočnosti (F-021)
+UPDATE users SET app_role_id = 'ADMIN' WHERE username = 'ivan';
+
 INSERT INTO user_sports (user_id, sport_id, skill_level_id)
 SELECT u.id, s.id, l.id
 FROM (VALUES ('ana',   'Nogomet', 'Average'),

@@ -45,7 +45,7 @@ class EventControllerTest {
     }
 
     private static EventResponse sample(long id, String name) {
-        return new EventResponse(id, name, "opis", (short) 1, 10L,
+        return new EventResponse(id, name, "opis", (short) 1, 10L, "Test Venue", 45.8, 16.0,
                 OffsetDateTime.parse("2099-01-01T10:00:00Z"), 60, 10,
                 (short) 18, null, null, OffsetDateTime.parse("2026-01-01T10:00:00Z"),
                 "open", USER_ID, "ana", 1L);
@@ -132,7 +132,10 @@ class EventControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(5))
                 .andExpect(jsonPath("$.name").value("Košarka"))
-                .andExpect(jsonPath("$.participantCount").value(1));
+                .andExpect(jsonPath("$.participantCount").value(1))
+                .andExpect(jsonPath("$.venueName").value("Test Venue"))
+                .andExpect(jsonPath("$.latitude").value(45.8))
+                .andExpect(jsonPath("$.longitude").value(16.0));
     }
 
     @Test

@@ -1,0 +1,70 @@
+[Unit]
+Description=LetsDoSports Backend
+Documentation=
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# Run as an unprivileged user
+User=mateo
+Group=mateo
+
+# Application directory
+WorkingDirectory=/opt/PROGI_projekt/backend/LetsDoSports
+
+# Java 23 environment - adjust to your actual JDK location
+EnvironmentFile=/opt/PROGI_deployment/.env
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
+
+# Build before starting
+ExecStartPre=/usr/bin/make build
+
+# Start application
+ExecStart=/usr/bin/make run
+
+# Restart on failure
+Restart=on-failure
+RestartSec=5
+
+# Graceful shutdown
+KillSignal=SIGTERM
+TimeoutStopSec=30
+KillMode=control-group
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+
+ProtectProc=invisible
+ProcSubset=pid
+
+# Permit writes only where necessary
+ReadWritePaths=/opt/PROGI_projekt/backend/LetsDoSports
+ReadWritePaths=/home/mateo/.m2
+ReadOnlyPaths=/opt/PROGI_projekt/db
+
+# Allow normal network communication
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=letsdosports
+
+[Install]
+WantedBy=multi-user.target
+
