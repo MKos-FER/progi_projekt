@@ -1,21 +1,35 @@
 @startuml
-title Let's Do Sports - ER Dijagram v6 (stanje nakon V3)
+' Pravokutne veze s odvojenim prikljuccima uz rubove tablica.
+!pragma layout elk
+title Let's Do Sports - ER Dijagram v6
 
 hide circle
 hide methods
 skinparam linetype ortho
 skinparam shadowing false
-skinparam nodesep 55
-skinparam ranksep 65
-left to right direction
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 14
+skinparam classFontSize 15
+skinparam classFontStyle bold
+skinparam classAttributeFontSize 14
+skinparam ArrowFontSize 13
+skinparam ArrowColor #526579
+skinparam ArrowFontColor #1E293B
+skinparam NoteFontSize 13
+skinparam NoteBackgroundColor #FFFCE8
+skinparam NoteBorderColor #A3A3A3
+skinparam LegendBackgroundColor #F8FAFC
+skinparam LegendBorderColor #94A3B8
+
+skinparam nodesep 100
+skinparam ranksep 150
+top to bottom direction
 
 legend top left
   PK = primarni ključ; FK = strani ključ; UQ = jedinstvenost.
   NN = NOT NULL; stupci bez NN/PK dopuštaju NULL.
   IDENTITY = GENERATED ALWAYS AS IDENTITY.
-  Prikazane su aplikacijske tablice i pogled nakon V1–V3.
   Flywayova interna evidencija nije dio domenskog ERD-a.
-  V4 i ostali planirani entiteti nisu implementirani u ovom stanju.
 endlegend
 
 package "Korisnici" {
@@ -24,8 +38,11 @@ package "Korisnici" {
     --
     username : text <<NN, UQ>>
     name : text <<NN>>
-    date_of_birth : date
-    city_id : smallint <<FK>>
+    profile_photo_url : text
+    gender : text <<NN>>
+    date_of_birth : date <<NN>>
+    city_id : smallint <<FK, NN>>
+    app_role_id : text <<FK, NN>> = 'USER'
     created_at : timestamptz <<NN>> = now()
   }
   entity "user_sports" as user_sports #E5D9F2 {
@@ -37,6 +54,35 @@ package "Korisnici" {
     --
     UQ(user_id, sport_id)
   }
+
+  entity "oauth_accounts" as oauth_accounts #E5D9F2 {
+    * id : bigint <<PK, IDENTITY>>
+    --
+    user_id : bigint <<FK, NN>>
+    provider : text <<NN>>
+    provider_user_id : text <<NN>>
+    email : text
+    linked_at : timestamptz <<NN>> = now()
+    --
+    UQ(provider, provider_user_id)
+    UQ(user_id, provider)
+  }
+
+  note bottom of users
+    CHECK: username i name sadrže znak koji nije whitespace.
+    gender IN ('Male', 'Female', 'Other').
+    date_of_birth >= DATE '1900-01-01'.
+    Datum u budućnosti provjerava backend.
+    Fotografija je opcionalna.
+  end note
+
+  note bottom of oauth_accounts
+    CHECK: provider IN ('google').
+    provider_user_id sadrži znak koji nije whitespace.
+    Googleov sub identificira vanjski račun; email je informativan.
+    UQ(user_id, provider) dopušta najviše jedan Google račun.
+    Obavezno postojanje OAuth računa pri registraciji osigurava aplikacija.
+  end note
 }
 
 package "Događaji" {
@@ -73,6 +119,42 @@ package "Događaji" {
     participant_count : bigint
     status : text
   }
+
+  entity "messages" as messages #D6E5F5 {
+      * id : bigint <<PK, IDENTITY>>
+      --
+      event_id : bigint <<FK>>
+      sender_id : bigint <<FK>>
+      reply_to_id : bigint <<FK>>
+      content : text
+      sent_at : timestamptz
+      edited_at : timestamptz
+      deleted_at : timestamptz
+  }
+
+  note bottom of events
+    CHECK: btrim(name) nije prazan.
+    max_participants >= 1.
+    Kada su zadani: expected_duration_min > 0,
+    min_age >= 0, max_age >= 0.
+    Kada su obje granice zadane: min_age <= max_age.
+    NULL u dobi ili minimalnoj razini znači da uvjeta nema.
+  end note
+
+  note bottom of event_members
+    Poslovno pravilo: organizator je prvi sudionik
+    i ulazi u max_participants. Sam FK to ne jamči;
+    backend upisuje događaj i članstvo u transakciji.
+  end note
+
+  note bottom of events_with_status
+    participant_count = COUNT(event_members.id).
+    Status, redom prioriteta: cancelled, finished,
+    in_progress, full, open.
+    Završetak = scheduled_at + trajanje;
+    NULL trajanje računa se kao 0 minuta.
+    Pogled nema zaseban PK ni FK.
+  end note
 }
 
 package "Tereni" {
@@ -90,6 +172,7 @@ package "Tereni" {
     is_paid : boolean <<NN>> = false
     supports_booking : boolean <<NN>> = false
     external_booking_url : text
+    cover_photo_id : bigint <<FK>>
   }
   entity "venue_sports" as venue_sports #D9EEDC {
     * venue_id : bigint <<PK, FK>>
@@ -97,6 +180,36 @@ package "Tereni" {
     --
     PK(venue_id, sport_id)
   }
+
+  entity "venue_photos" as venue_photos #D9EEDC {
+      * id : bigint <<PK, IDENTITY>>
+      --
+      venue_id : bigint <<FK>>
+      uploaded_by_id : bigint <<FK>>
+      photo_url : text
+      caption : text
+      uploaded_at : timestamptz
+  }
+
+  entity "venue_reports" as venue_reports #D9EEDC {
+      * id : bigint <<PK, IDENTITY>>
+      --
+      venue_id : bigint <<FK>>
+      reported_by_id : bigint <<FK>>
+      description : text
+      status_id : smallint <<FK>>
+      resolution_note : text
+      resolved_by_id : bigint <<FK>>
+      resolved_at : timestamptz
+      created_at : timestamptz
+  }
+
+  note bottom of venues
+    latitude BETWEEN -90 AND 90.
+    longitude BETWEEN -180 AND 180.
+    external_booking_url IS NULL OR supports_booking.
+    is_paid = true znači da se korištenje naplaćuje.
+  end note
 }
 
 package "Šifrarnici i sportovi" {
@@ -117,62 +230,85 @@ package "Šifrarnici i sportovi" {
     name : text <<NN, UQ>>
     description : text
   }
+
+  entity "sif_report_status" as sif_report_status {
+      * id : smallint <<PK>>
+      --
+      name : text <<UQ>>
+      action_description : text
+  }
+
+  note bottom of sif_skill_level
+    Amateur (rank 1), Average (rank 2), Pro (rank 3).
+    rank određuje poredak razina.
+  end note
+}
+
+package "Uloge i dozvole" {
+  entity "sif_app_role" as sif_app_role {
+      * id : text <<PK>>
+  }
+
+  entity "sif_permissions" as sif_permissions {
+      * id : text <<PK>>
+      --
+      description : text <<NN>>
+  }
+
+  entity "app_role_has_permissions" as app_role_has_permissions {
+      * app_role_id : text <<PK, FK>>
+      * permission_id : text <<PK, FK>>
+  }
+}
+
+package "Oglasi" {
+  entity "advertisements" as advertisements #F5E2C9 {
+      * id : bigint <<PK, IDENTITY>>
+      --
+      title : text
+      image_url : text
+      target_url : text
+      target_venue_id : bigint <<FK>>
+      active_from : timestamptz
+      active_to : timestamptz
+  }
 }
 
 ' Kardinalnosti odgovaraju nullable/NOT NULL stranim ključevima.
-users ||--o{ events : created_by_id
-users ||--o{ event_members : user_id / DELETE CASCADE
-users |o--o{ venues : created_by_id / DELETE SET NULL
-users ||--o{ user_sports : user_id / DELETE CASCADE
-events ||--o{ event_members : event_id / DELETE CASCADE
-venues ||--o{ events : venue_id
-venues ||--o{ venue_sports : venue_id / DELETE CASCADE
-sports ||--o{ events : sport_id
-sports ||--o{ user_sports : sport_id
-sports ||--o{ venue_sports : sport_id
-sif_skill_level |o--o{ events : min_skill_level_id
-sif_skill_level ||--o{ user_sports : skill_level_id
-sif_city |o--o{ users : city_id
-sif_city ||--o{ venues : city_id
+users ||--o{ events : <back:white>created_by_id</back>
+users ||--o{ event_members : <back:white>user_id /</back>\n<back:white>DELETE CASCADE</back>
+users |o--o{ venues : <back:white>created_by_id /</back>\n<back:white>DELETE SET NULL</back>
+users ||--o{ user_sports : <back:white>user_id /</back>\n<back:white>DELETE CASCADE</back>
+events ||--o{ event_members : <back:white>event_id /</back>\n<back:white>DELETE CASCADE</back>
+venues ||--o{ events : <back:white>venue_id</back>
+venues ||--o{ venue_sports : <back:white>venue_id /</back>\n<back:white>DELETE CASCADE</back>
+sports ||--o{ events : <back:white>sport_id</back>
+sports ||--o{ user_sports : <back:white>sport_id</back>
+sports ||--o{ venue_sports : <back:white>sport_id</back>
+sif_skill_level |o--o{ events : <back:white>min_skill_level_id</back>
+sif_skill_level ||--o{ user_sports : <back:white>skill_level_id</back>
+sif_city ||--o{ users : <back:white>city_id</back>
+sif_city ||--o{ venues : <back:white>city_id</back>
+
+' Vracene veze cjelovitog modela; OAuth i uloge uskladeni s V4-V6.
+users |o--o{ venue_photos : <back:white>uploaded_by_id</back>
+users |o--o{ venue_reports : <back:white>reported_by_id</back>
+users |o--o{ venue_reports : <back:white>resolved_by_id</back>
+users |o--o{ messages : <back:white>sender_id</back>
+users ||--o| oauth_accounts : <back:white>user_id /</back>\n<back:white>DELETE CASCADE</back>
+events ||--o{ messages : <back:white>event_id</back>
+messages |o-right-o{ messages : <back:white>reply_to_id</back>
+venue_photos }o--|| venues : <back:white>venue_id</back>
+venues ||--o{ venue_reports : <back:white>venue_id</back>
+venue_photos |o--o| venues : <back:white>cover_photo_id</back>
+sif_report_status ||--o{ venue_reports : <back:white>status_id</back>
+sif_app_role ||--o{ users : <back:white>app_role_id</back>
+sif_app_role ||--o{ app_role_has_permissions : <back:white>app_role_id</back>
+sif_permissions ||--o{ app_role_has_permissions : <back:white>permission_id</back>
+venues |o--o{ advertisements : <back:white>target_venue_id</back>
 
 ' Ovisnosti pogleda nisu dodatni strani ključevi.
-events_with_status ..> events : čita
-events_with_status ..> event_members : prebrojava
-
-note bottom of events
-  CHECK: btrim(name) nije prazan.
-  max_participants >= 1.
-  Kada su zadani: expected_duration_min > 0,
-  min_age >= 0, max_age >= 0.
-  Kada su obje granice zadane: min_age <= max_age.
-  NULL u dobi ili minimalnoj razini znači da uvjeta nema.
-end note
-
-note bottom of venues
-  latitude BETWEEN -90 AND 90.
-  longitude BETWEEN -180 AND 180.
-  external_booking_url IS NULL OR supports_booking.
-  is_paid = true znači da se korištenje naplaćuje.
-end note
-
-note bottom of event_members
-  Poslovno pravilo: organizator je prvi sudionik
-  i ulazi u max_participants. Sam FK to ne jamči;
-  backend upisuje događaj i članstvo u transakciji.
-end note
-
-note bottom of events_with_status
-  participant_count = COUNT(event_members.id).
-  Status, redom prioriteta: cancelled, finished,
-  in_progress, full, open.
-  Završetak = scheduled_at + trajanje;
-  NULL trajanje računa se kao 0 minuta.
-  Pogled nema zaseban PK ni FK.
-end note
-
-note bottom of sif_skill_level
-  Amateur (rank 1), Average (rank 2), Pro (rank 3).
-  rank određuje poredak razina.
-end note
+events_with_status ..> events : <back:white>čita</back>
+events_with_status ..> event_members : <back:white>prebrojava</back>
 
 @enduml
