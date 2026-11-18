@@ -1,5 +1,5 @@
 ---
-date_modified: 2026-11-14T23:00:00+01:00
+date_modified: 2026-11-18T12:00:00+01:00
 ---
 # Let's Do Sports - REST API ugovor
 
@@ -37,12 +37,12 @@ Detaljan tijek, stanja sesije, JSON strukture, kodovi grešaka i pravila sesije 
 | Metoda | Putanja                         | Opis                                                                                                                                  | Podaci koji se šalju                                                                       | Permission                 | Zahtjev             |
 | ------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------- | ------------------- |
 | GET    | `/oauth2/authorization/google`  | Pokreće Google prijavu; frontend radi navigaciju cijele stranice, ne `fetch`                                                          | -                                                                                          | Public                     | F-001, F-002        |
-| GET    | `/login/oauth2/code/google`     | OIDC povratni poziv koji obrađuje Spring Security; preusmjerava na `/`, `/register` ili `/login?error=…`; frontend ga ne poziva ručno | Query: `code`, `state` (vraća Google)                                                      | OAuth flow                 | F-001, F-002        |
-| GET    | `/api/v1/auth/session`          | Stanje sesije: `ANONYMOUS`, `REGISTRATION_REQUIRED` ili `AUTHENTICATED` (uz profil)                                                   | -                                                                                          | Public                     | F-001, F-002        |
-| POST   | `/api/v1/auth/registration`     | Dovršava registraciju: u jednoj transakciji sprema korisnika, sportove i Google identitet; vraća `201` i profil                      | Body: `name`, `username`, `gender`, `birthDate`, `cityId`, `sports: [{sportId, skillLevelId}]` | Google prijava bez računa | F-001, F-004        |
+| GET    | `/oauth2/login/code/google`     | OIDC povratni poziv koji obrađuje Spring Security; preusmjerava na `/`, `/register` ili `/login?loginError`; frontend ga ne poziva ručno | Query: `code`, `state` (vraća Google)                                                      | OAuth flow                 | F-001, F-002        |
+| GET    | `/api/v1/auth/csrf`             | Postavlja cookie `XSRF-TOKEN`, čiju vrijednost frontend šalje u zaglavlju `X-XSRF-TOKEN`; vraća `204`                                 | -                                                                                          | Public                     | F-001 – F-004       |
+| POST   | `/api/v1/auth/register`         | Dovršava registraciju: u jednoj transakciji sprema korisnika, sportove i Google identitet; vraća `201 {"id": …}`                   | Body: `name`, `username`, `gender`, `birthDate`, `cityId`, `sports: [{sportId, skillLevelId}]` | Google prijava bez računa | F-001, F-004        |
 | POST   | `/api/v1/auth/logout`           | Odjavljuje korisnika ili odbacuje registraciju u tijeku; poništava sesiju i vraća `204`                                               | Bez bodyja; zaglavlje `X-XSRF-TOKEN`                                                       | Public (bez sesije `204`)  | F-001, F-003        |
 
-Nakon uspješnog Google logina backend provjerava identitet i traži korisnika samo po Googleovom `sub`. Ako korisnik postoji, prijavljuje ga. Ako ne postoji, ne stvara ga, nego sesija prelazi u stanje registracije u tijeku, a lokalni račun nastaje tek kroz `POST /api/v1/auth/registration`. Frontend stanje dohvaća s `GET /api/v1/auth/session`. `GET /api/v1/users/me` postoji samo za registrirane korisnike i nema polja o dovršenosti profila, jer je svaki spremljeni profil potpun. Nema API-ja za lokalno postavljanje lozinke.
+Nakon uspješnog Google logina backend provjerava identitet i traži korisnika samo po Googleovom `sub`. Ako korisnik postoji, prijavljuje ga. Ako ne postoji, ne stvara ga, nego sesija prelazi u stanje registracije u tijeku, a lokalni račun nastaje tek kroz `POST /api/v1/auth/register`. Frontend stanje dohvaća s `GET /api/v1/users/me`: `200` za registriranog korisnika, `401` bez prijave i `403` dok registracija nije dovršena. Profil nema polja o dovršenosti, jer je svaki spremljeni profil potpun. Nema API-ja za lokalno postavljanje lozinke.
 
 ## 3. Korisnici i profili (F-004, F-005)
 
@@ -79,7 +79,7 @@ Primjer: `GET /api/v1/users?cityId=1&sportId=2&skillLevelId=1` vraća igrače iz
 | `sports`           | Neprazan popis `{sportId, skillLevelId}`; oba ID-a moraju postojati i biti cijeli brojevi 1–32767. Svaki element sadrži točno ta dva polja. Svaki sport navodi se najviše jednom. |
 | `profilePhotoUrl`  | Samo u odgovoru; relativna putanja `/api/v1/photos/{fileName}` (javna ruta, vidi [autentifikacija-i-profil.md](autentifikacija-i-profil.md)). Ne prima se kroz `PATCH`.                                                                                         |
 
-`GET`, uspješan `PATCH`/`PUT` i uspješna registracija (`POST /api/v1/auth/registration`) vraćaju isti flat JSON model:
+`GET` i uspješan `PATCH`/`PUT` vraćaju isti flat JSON model:
 
 ```json
 {
@@ -100,7 +100,7 @@ Vrijednosti su ilustrativne. `age` se računa prema trenutačnom datumu u zoni `
 
 **Svaki spremljeni profil** ima ime, username, neprazan spol, datum rođenja, grad i barem jedan sport s iskustvom. Fotografija je opcionalna. Nepotpun profil se ne sprema; `sports: []` vraća `400`.
 
-`PATCH` mijenja samo poslana polja; izostavljena ostaju nepromijenjena. `null` za obavezna polja, spol izvan `Male`/`Female`/`Other` i prazan ili `null` popis sportova vraćaju `400`. Ako je `sports` naveden, zamjenjuje cijeli popis. Nepoznata polja, uključujući `userId` i `appRoleId`, odbijaju se s `400`. Spajanje i spremanje izvršavaju se u jednoj transakciji. Početna registracija nije `PATCH /users/me`, nego `POST /api/v1/auth/registration` (§2), koji prima ista polja kao obavezna i interno poziva `createWithOAuth`. Ta registracijska integracija još nije implementirana.
+`PATCH` mijenja samo poslana polja; izostavljena ostaju nepromijenjena. `null` za obavezna polja, spol izvan `Male`/`Female`/`Other` i prazan ili `null` popis sportova vraćaju `400`. Ako je `sports` naveden, zamjenjuje cijeli popis. Nepoznata polja, uključujući `userId` i `appRoleId`, odbijaju se s `400`. Spajanje i spremanje izvršavaju se u jednoj transakciji. Početna registracija nije `PATCH /users/me`, nego `POST /api/v1/auth/register` (§2), koji prima ista polja kao obavezna.
 
 ### 3.2 Odgovor za pregled igrača (F-005)
 

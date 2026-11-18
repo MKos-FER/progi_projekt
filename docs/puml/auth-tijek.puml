@@ -10,8 +10,10 @@ database Baza
 
 == Pokretanje aplikacije ==
 Korisnik -> FE : otvara aplikaciju
-FE -> BE : GET /api/v1/auth/session
-BE --> FE : 200 {status: ANONYMOUS} + cookie XSRF-TOKEN
+FE -> BE : GET /api/v1/auth/csrf
+BE --> FE : 204 + cookie XSRF-TOKEN
+FE -> BE : GET /api/v1/users/me
+BE --> FE : 401 (neprijavljen)
 
 == Google prijava ==
 Korisnik -> FE : "Prijava s Googleom"
@@ -19,70 +21,56 @@ FE -> BE : navigacija: GET /oauth2/authorization/google
 BE --> Korisnik : 302 na Google (state spremljen u sesiji)
 Korisnik -> Google : prijava i odobrenje
 alt odustajanje ili neuspjeh
-  Google --> BE : GET /login/oauth2/code/google?error=access_denied
-  BE --> FE : 302 /login?error=cancelled (ili ?error=failed)\n(React stranica, loginPage("/login"))
-  FE --> Korisnik : "Prijava je otkazana." (ostaje neprijavljen)
+  Google --> BE : GET /oauth2/login/code/google?error=access_denied
+  BE --> FE : 302 FRONTEND_URL/login?loginError
+  FE --> Korisnik : "Prijava nije uspjela ili je otkazana."
 else uspjeh
-  Google --> BE : GET /login/oauth2/code/google?code&state
+  Google --> BE : GET /oauth2/login/code/google?code&state
   BE -> Google : zamjena code za tokene
   Google --> BE : ID token (sub, email, name)
-  BE -> BE : provjera state, potpisa i roka tokena
-  BE -> Baza : AppOidcUserService: SELECT u.id, u.app_role_id\nFROM oauth_accounts o JOIN users u ON u.id = o.user_id\nWHERE o.provider='google' AND o.provider_user_id=:sub
+  BE -> BE : provjera state, potpisa i roka tokena;\nnovi ID sesije
+  BE -> Baza : SELECT user_id FROM oauth_accounts\nWHERE provider='google' AND provider_user_id=:sub
   alt prva prijava (nema retka)
     Baza --> BE : nema rezultata
-    BE -> BE : sesija = REGISTRATION_REQUIRED\n(ništa se ne upisuje u bazu); novi ID sesije
-    BE --> FE : 302 /register
-    FE -> BE : GET /api/v1/auth/session
-    BE --> FE : 200 {status: REGISTRATION_REQUIRED, pendingIdentity}
+    BE --> FE : 302 FRONTEND_URL/register\n(ništa se ne upisuje u bazu)
+    FE -> BE : GET /api/v1/users/me
+    BE --> FE : 403 "Registracija nije dovršena."
     FE -> BE : GET /api/v1/sports, /cities, /skill-levels
     BE -> Baza : čitanje šifrarnika
     BE --> FE : 200 popisi
     Korisnik -> FE : ispunjava obrazac
     alt odustajanje od obrasca
       FE -> BE : POST /api/v1/auth/logout (X-XSRF-TOKEN)
-      BE -> BE : poništi sesiju
+      BE -> BE : poništi sesiju, obriši JSESSIONID i XSRF-TOKEN
       BE --> FE : 204
     else slanje obrasca
-      FE -> BE : POST /api/v1/auth/registration (X-XSRF-TOKEN)
+      FE -> BE : POST /api/v1/auth/register (X-XSRF-TOKEN)
       alt neispravan unos
-        BE --> FE : 400 {errors} ili 409 USERNAME_TAKEN
+        BE --> FE : 400 {errors} ili 409 {message}
         FE --> Korisnik : greške uz polja
       else valjan unos
         BE -> Baza : BEGIN; INSERT users; INSERT user_sports;\nINSERT oauth_accounts('google', sub, email); COMMIT
         Baza --> BE : novi users.id
-        BE -> BE : sesija = AUTHENTICATED (userId, ROLE_USER);\nchangeSessionId(); novi CSRF token
-        BE --> FE : 201 Location /api/v1/users/me + profil
-        FE -> BE : GET /api/v1/auth/session (invalidate ['authSession'])
-        BE --> FE : 200 {status: AUTHENTICATED, user} + novi XSRF-TOKEN
-        opt odabrana fotografija
-          FE -> BE : PUT /api/v1/users/me/photo (multipart)
-          BE --> FE : 200 profil
-        end
+        BE --> FE : 201 {id}
+        FE -> BE : GET /api/v1/users/me (invalidate ['me'])
+        BE -> Baza : oauth_accounts sada ima redak
+        BE --> FE : 200 profil
         FE --> Korisnik : početna stranica (prijavljen)
       end
     end
   else ponovna prijava (redak postoji)
-    Baza --> BE : u.id, u.app_role_id
-    BE -> BE : sesija = AUTHENTICATED (userId, ROLE_USER\n(+ ROLE_ADMIN)); novi ID sesije
-    BE --> FE : 302 /
-    FE -> BE : GET /api/v1/auth/session
-    BE -> Baza : profil korisnika
-    BE --> FE : 200 {status: AUTHENTICATED, user}
+    Baza --> BE : user_id
+    BE --> FE : 302 FRONTEND_URL/
+    FE -> BE : GET /api/v1/users/me
+    BE --> FE : 200 profil
     FE --> Korisnik : početna stranica (prijavljen)
   end
 end
 
-== Profil ==
-FE -> BE : GET / PATCH /api/v1/users/me
-BE -> Baza : čitanje / izmjena u transakciji
-BE --> FE : 200 profil (400 / 401 / 403 / 409 pri grešci)
-
 == Odjava ==
 Korisnik -> FE : "Odjava"
 FE -> BE : POST /api/v1/auth/logout (X-XSRF-TOKEN)
-BE -> BE : poništi sesiju, obriši cookie JSESSIONID (deleteCookies)
+BE -> BE : poništi sesiju, obriši JSESSIONID i XSRF-TOKEN
 BE --> FE : 204
 FE --> Korisnik : neprijavljeno stanje
-FE -> BE : GET /api/v1/users/me (stari cookie)
-BE --> FE : 401 NOT_AUTHENTICATED
 @enduml
