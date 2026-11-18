@@ -1,0 +1,21 @@
+[Unit]
+Description=PROGI autodeploy GitHub Push Webhook
+After=network.target
+
+[Service]
+Type=simple
+User=mateo
+Group=mateo
+WorkingDirectory=/opt/PROGI_deployment
+EnvironmentFile=/opt/PROGI_deployment/.env
+ExecStart=/opt/PROGI_deployment/git_webhook
+
+Restart=on-failure
+RestartSec=5
+
+PrivateTmp=true
+ProtectHome=false
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

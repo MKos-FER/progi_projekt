@@ -1,0 +1,24 @@
+[Unit]
+Description=PROGI autodeploy frontend to /var/www/lets-do-sports
+After=local-fs.target
+RequiresMountsFor=/var/www/lets-do-sports
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/PROGI_deployment/
+Environment="WEB_DIR=/var/www/lets-do-sports"
+ExecStart=/opt/PROGI_deployment/deploy_frontend.sh
+
+Restart=on-failure
+RestartSec=5
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=false
+ReadWritePaths=/var/www/lets-do-sports
+
+[Install]
+WantedBy=multi-user.target
