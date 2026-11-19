@@ -14,9 +14,9 @@ import java.util.List;
 @Getter
 @Setter
 public class UpdateUserRequest {
-        @JsonSetter(nulls = Nulls.FAIL) @Size(min = 1) private String name;
-        @JsonSetter(nulls = Nulls.FAIL) @Size(min = 1) private String username;
-        @JsonSetter(nulls = Nulls.FAIL) @Pattern(regexp = "muško|žensko|drugo", message = "Spol mora biti 'muško', 'žensko' ili 'drugo'") private String gender;
+        @JsonSetter(nulls = Nulls.FAIL) @Pattern(regexp = ".*\\S.*") private String name;
+        @JsonSetter(nulls = Nulls.FAIL) @Pattern(regexp = ".*\\S.*") private String username;
+        @JsonSetter(nulls = Nulls.FAIL) @Pattern(regexp = "Male|Female|Other", message = "Spol mora biti 'muško', 'žensko' ili 'drugo'") private String gender;
         @JsonSetter(nulls = Nulls.FAIL) @PastOrPresent private LocalDate birthDate;
         @JsonSetter(nulls = Nulls.FAIL) @Positive @Max(32767) private Short cityId;
         @JsonSetter(nulls = Nulls.FAIL) @Size(min = 1) private List<@Valid SportDto> sports;

@@ -2,17 +2,45 @@ package hr.fer.letsdosports.user;
 
 import hr.fer.letsdosports.sport.Sport;
 import hr.fer.letsdosports.sport.SportDto;
+import org.springframework.boot.jackson.autoconfigure.JacksonProperties;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.OffsetDateTime;
 import java.util.*;
 
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDate;
+
 @Repository
 public class UserRepository {
     private final JdbcClient jdbc;
-    public UserRepository(JdbcClient jdbc) {
-        this.jdbc = jdbc;
+    private final JsonMapper mapper;
+    public UserRepository(JdbcClient jdbc, JsonMapper mapper) {
+        this.jdbc = jdbc;this.mapper=mapper;
+    }
+
+    private UserResponse mapRow(ResultSet rs, int rowNum) throws SQLException {
+        List<SportDto> sports = mapper.readValue(
+                rs.getString("sports"), new TypeReference<List<SportDto>>() {});
+        return new UserResponse(
+                rs.getLong("id"),
+                rs.getString("name"),
+                rs.getString("username"),
+                rs.getString("profile_photo_url"),
+                rs.getString("gender"),
+                rs.getObject("birth_date", LocalDate.class),
+                rs.getObject("age", Integer.class),
+                rs.getObject("city_id", Short.class),
+                rs.getString("app_role_id"),   // works whether the column is text or smallint
+                sports,
+                rs.getObject("created_at", OffsetDateTime.class));
     }
 
     private static final String RESPONSE_SELECT = """
@@ -23,12 +51,11 @@ public class UserRepository {
                u.gender,
                u.date_of_birth AS birth_date,
                EXTRACT(YEAR FROM age(u.date_of_birth))::int AS age,
-               c.name AS city_name,
+               u.city_id,
                u.app_role_id,
                COALESCE(s.sports, '[]'::json) AS sports,
                u.created_at
         FROM users u
-        LEFT JOIN sif_city c ON c.id = u.city_id
         LEFT JOIN LATERAL (
             SELECT json_agg(json_build_object(
                        'sportId', sp.id,
@@ -80,31 +107,58 @@ public class UserRepository {
 
         sql.append(" ORDER BY u.id");
 
-        return jdbc.sql(sql.toString()).params(p).query(UserResponse.class).list();
+        return jdbc.sql(sql.toString()).params(p).query(this::mapRow).list();
     }
 
-    public UserResponse getById(Long id){
-        StringBuilder sql = new StringBuilder(RESPONSE_SELECT).append(" WHERE u.id=:id");
-        Map<String, Object> p = new HashMap<>();
-        p.put("id", id);
-        return jdbc.sql(sql.toString()).params(p).query(UserResponse.class).single();
+    public UserResponse getById(Long id) {
+        return jdbc.sql(RESPONSE_SELECT + " WHERE u.id = :id")
+                .param("id", id)
+                .query(this::mapRow)
+                .optional()
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Korisnik " + id + " ne postoji."));
     }
 
-    public Optional<User> getUserById(Long id){
+    public Optional<User> getUserById(Long id) {
         return jdbc.sql("""
-        SELECT * FROM users WHERE id = :id
-""" ).param("id", id).query(User.class).optional();
+            SELECT id, name, username, gender,
+                   date_of_birth AS birth_date,
+                   city_id
+            FROM users WHERE id = :id
+            """)
+                .param("id", id)
+                .query(User.class)
+                .optional();
     }
 
-    public Optional<User> update(User u){
-        User u2 = jdbc.sql("""
-        UPDATE users SET username = :username, name = :name, gender = :gender, date_of_birth = :birthDate, city_id = cityId WHERE id = :id RETURNING *
-""").paramSource(u).query(User.class).single();
-        for (SportDto s : u.getSports()){
-            jdbc.sql("""
-            UPDATE user_sports SET sport_id = :sportId, skill_level_id = :skillLevelId where id = :id
-        """);
+    public void update(User u) {
+        jdbc.sql("""
+            UPDATE users
+            SET username = :userName,
+                name = :name,
+                gender = :gender,
+                date_of_birth = :birthDate,
+                city_id = :cityId
+            WHERE id = :id
+            """)
+                .paramSource(u)
+                .update();
+
+        if (u.getSports() != null) {
+            jdbc.sql("DELETE FROM user_sports WHERE user_id = :id")
+                    .param("id", u.getId())
+                    .update();
+
+            for (SportDto s : u.getSports()) {
+                jdbc.sql("""
+                    INSERT INTO user_sports (user_id, sport_id, skill_level_id)
+                    VALUES (:userId, :sportId, :skillLevelId)
+                    """)
+                        .param("userId", u.getId())
+                        .param("sportId", s.sportId())
+                        .param("skillLevelId", s.skillLevelId())
+                        .update();
+            }
         }
-        return getUserById(u.getId());
     }
 }

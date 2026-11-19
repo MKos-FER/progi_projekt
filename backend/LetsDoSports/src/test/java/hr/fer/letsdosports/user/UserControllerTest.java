@@ -61,7 +61,7 @@ class UserControllerTest {
         m.put("name", "Ana Horvat");
         m.put("username", "ana");
         m.put("profilePhotoUrl", null);
-        m.put("gender", "žensko");
+        m.put("gender", "Female");
         m.put("birthDate", "2002-03-14");
         m.put("age", 24);
         m.put("cityId", 1);
@@ -74,7 +74,7 @@ class UserControllerTest {
         Map<String, Object> m = new HashMap<>();
         m.put("name", "Ana Horvat");
         m.put("username", "ana");
-        m.put("gender", "žensko");
+        m.put("gender", "Female");
         m.put("birthDate", "2002-03-14");
         m.put("cityId", 1);
         m.put("sports", List.of(Map.of("sportId", 1, "skillLevelId", 2)));
@@ -179,7 +179,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.id").value(ME))
                 .andExpect(jsonPath("$.name").value("Ana Horvat"))
                 .andExpect(jsonPath("$.username").value("ana"))
-                .andExpect(jsonPath("$.gender").value("žensko"))
+                .andExpect(jsonPath("$.gender").value("Female"))
                 .andExpect(jsonPath("$.birthDate").value("2002-03-14"))
                 .andExpect(jsonPath("$.cityId").value(1))
                 .andExpect(jsonPath("$.appRoleId").value("USER"))

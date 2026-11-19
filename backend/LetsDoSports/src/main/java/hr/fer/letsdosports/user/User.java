@@ -9,16 +9,13 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 
-@Getter
-@Setter
+@Getter @Setter
 public class User {
     private Long id;
     private String name;
     private String userName;
-    private String photoUrl;
     private String gender;
     private LocalDate birthDate;
     private Short cityId;
-    private Short appRoleId;
     private List<SportDto> sports;
 }

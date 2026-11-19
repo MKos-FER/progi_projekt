@@ -11,9 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class UserService {
@@ -26,12 +24,12 @@ public class UserService {
         this.jdbc=jdbc;
     }
 
-    public List<UserResponse> search(Short cityId,
-                                     Short sportId,
-                                     Short skillLevelId,
-                                     Short ageMin,
-                                     Short ageMax){
-        return users.search(cityId, sportId, skillLevelId,ageMin,ageMax);
+    public List<UserResponse> search(Short cityId, Short sportId, Short skillLevelId,
+                                     Short ageMin, Short ageMax) {
+        if (skillLevelId != null && sportId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "skillLevelId zahtijeva sportId.");
+        }
+        return users.search(cityId, sportId, skillLevelId, ageMin, ageMax);
     }
 
     public UserResponse getById(Long userId){
@@ -42,34 +40,39 @@ public class UserService {
         return users.getById(userId);
     }
 
-    private boolean exists(String sql, Object id) {
-        return jdbc.sql(sql).param(id).query(Boolean.class).single();
+    private boolean exists(String sql, Object... params) {
+        return jdbc.sql(sql).params(List.of(params)).query(Boolean.class).single();
     }
 
-
-    private void validateUser(String username, Short city_id, List<SportDto> sports){
+    private void validateUser(Long userId, UpdateUserRequest req) {
         Map<String, String> errors = new LinkedHashMap<>();
 
-        boolean usernameOk=!exists("SELECT EXISTS(SELECT 1 FROM users u WHERE u.username LIKE ?)", username);
-        if (!usernameOk){
-            errors.put("username", "Username zautet");
+        if (req.getUsername() != null) {
+            boolean taken = exists(
+                    "SELECT EXISTS(SELECT 1 FROM users WHERE username = ? AND id <> ?)",
+                    req.getUsername(), userId);
+            if (taken) throw new ResponseStatusException(HttpStatus.CONFLICT, "Username zauzet");
         }
 
-        boolean cityOk= exists("SELECT EXISTS (SELECT 1 FROM sif_city WHERE id=?)", city_id);
-        if (!cityOk){
-            errors.put("city_id", "Grad ne postoji");
+        if (req.getCityId() != null) {
+            boolean cityOk = exists("SELECT EXISTS(SELECT 1 FROM sif_city WHERE id = ?)", req.getCityId());
+            if (!cityOk) errors.put("cityId", "Grad ne postoji");
         }
 
-        for (SportDto sport : sports){
-            boolean sportOk=exists("SELECT EXISTS(SELECT 1 FROM sports WHERE id = ?)",sport.sportId());
-            if(!sportOk){
-                String err= "sportName:"+sport.sportName();
-                errors.put(err, "Sport "+sport.sportName()+" ne postoji.");
+        if (req.getSports() != null) {
+            Set<Short> seen = new HashSet<>();
+            for (SportDto s : req.getSports()) {
+                if (!seen.add(s.sportId())) {
+                    errors.put("sportId:" + s.sportId(), "Sport je naveden više puta.");
+                }
             }
-            boolean skillLevelOk=exists("SELECT EXISTS(SELECT 1 FROM sif_skill_level WHERE id = ?)",sport.skillLevelId());
-            if(!skillLevelOk){
-                String err= "SkillLevel:"+sport.skillLevelName();
-                errors.put(err, "Skill level "+sport.skillLevelName()+" ne postoji.");
+            for (SportDto sport : req.getSports()) {
+                if (!exists("SELECT EXISTS(SELECT 1 FROM sports WHERE id = ?)", sport.sportId())) {
+                    errors.put("sportId:" + sport.sportId(), "Sport " + sport.sportId() + " ne postoji.");
+                }
+                if (!exists("SELECT EXISTS(SELECT 1 FROM sif_skill_level WHERE id = ?)", sport.skillLevelId())) {
+                    errors.put("skillLevelId:" + sport.skillLevelId(), "Skill level " + sport.skillLevelId() + " ne postoji.");
+                }
             }
         }
 
@@ -84,8 +87,9 @@ public class UserService {
     }
 
     @Transactional
-    public User update(Long userId, UpdateUserRequest req){
+    public void update(Long userId, UpdateUserRequest req){
         lockUser(userId);
+        validateUser(userId, req);
         User u = users.getUserById(userId).orElseThrow();
 
         if(req.getName()!=null)u.setName(req.getName());
@@ -95,10 +99,7 @@ public class UserService {
         if(req.getCityId()!=null)u.setCityId(req.getCityId());
         if(req.getSports()!=null)u.setSports(req.getSports());
 
-        if(req.getName()!=null ||req.getUsername()!=null ||req.getGender()!=null ||req.getBirthDate()!=null ||req.getCityId()!=null ||req.getSports()!=null){
-            validateUser(u.getUserName(),u.getCityId(),u.getSports());
-        }
 
-        return users.update(u).orElseThrow();
+        users.update(u);
     }
 }

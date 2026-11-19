@@ -3,8 +3,10 @@ package hr.fer.letsdosports.user;
 import hr.fer.letsdosports.auth.CurrentUserId;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -26,6 +28,20 @@ public class UserController {
             @RequestParam(required = false) Short ageMin,
             @RequestParam(required = false) Short ageMax
     ){
+        if (ageMin != null && (ageMin < 0 || ageMin > 130)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid ageMin");
+        }
+
+        if (ageMax != null && (ageMax < 0 || ageMax > 130)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid ageMax");
+        }
+
+        if (ageMin != null && ageMax != null && ageMin > ageMax) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "ageMin cannot be greater than ageMax"
+            );
+        }
         return service.search(cityId,sportId,skillLevelId,ageMin,ageMax);
     }
 
@@ -35,12 +51,12 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    private UserResponse getMe(@CurrentUserId Long userId){
+    public UserResponse getMe(@CurrentUserId Long userId){
         return service.getMine(userId);
     }
 
     @PatchMapping("/me")
-    private UserResponse update(@CurrentUserId Long userId, @Valid @RequestBody UpdateUserRequest req){
+    public UserResponse update(@CurrentUserId Long userId, @Valid @RequestBody UpdateUserRequest req){
 
         service.update(userId, req);
         return service.getById(userId);
