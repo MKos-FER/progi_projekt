@@ -22,7 +22,7 @@ Opis tablica za korisnički profil i prijavu Googleom nakon migracija V4–V6. P
 | `app_role_id` | `text` | da | FK → `sif_app_role`, zadano `USER` |
 | `created_at` | `timestamptz` | da | zadano `now()` |
 
-Sportovi i razine korisnika su u tablici `user_sports` (V3), s `UNIQUE (user_id, sport_id)`.
+Sportovi i razine korisnika su u tablici `user_sports` (V3), s `UNIQUE (user_id, sport_id)`. Od V7 baza pri `COMMIT`-u odbija transakciju nakon koje postojeći korisnik nema nijedan sport (odgođeni okidač `user_sports_last_sport_guard`), pa zamjena cijelog popisa u jednoj transakciji prolazi, a brisanje posljednjeg sporta ne.
 
 ### `oauth_accounts`
 
@@ -61,7 +61,7 @@ Ovlasti `Own`, `Organizer` i `Participant` iz API ugovora ne spremaju se kao ulo
 Ova pravila baza ne može jednostavno provesti, pa ih provodi backend:
 
 - Korisnik, njegovi sportovi i Google račun upisuju se u **jednoj transakciji**, tek kad su uneseni svi obavezni podaci (F-001). Tako svaki korisnik ima Google račun.
-- Profil ima barem jedan sport, i pri stvaranju i pri uređivanju (F-004).
+- Profil ima barem jedan sport, i pri stvaranju i pri uređivanju (F-004). Backend to javlja kao `400`; V7 je samo zadnja zaštita u bazi.
 - Datum rođenja nije u budućnosti. Dob se računa u zoni `Europe/Zagreb`.
 - Korisnik se prepoznaje samo po paru `provider` + `provider_user_id`, nikad po e-pošti (F-002).
 - Unos koji krši ograničenje baze vraća `400` ili `409` s razumljivom porukom, a ne grešku poslužitelja. To vrijedi i za `UNIQUE` (zauzeto korisničko ime, već povezan račun) i za `CHECK` (spol izvan dopuštenih vrijednosti, datum rođenja prije 1900.).
