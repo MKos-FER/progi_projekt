@@ -2,47 +2,44 @@
 -- Pokrenuti nad odgovarajućom lokalnom/razvojnom bazom s ulogom koja ima ovlasti DELETE/INSERT i pristup sekvencama.
 
 BEGIN;
-SET LOCAL search_path = public;
 
 -- Brisanje povezanih i aplikacijskih podataka redoslijedom koji poštuje strane ključeve.
-DELETE FROM public.event_members;
-DELETE FROM public.events;
-DELETE FROM public.venue_sports;
-DELETE FROM public.user_sports;
-DELETE FROM public.oauth_accounts;
-DELETE FROM public.venues;
-DELETE FROM public.users;
-DELETE FROM public.app_role_has_permissions;
-DELETE FROM public.sif_permissions;
-DELETE FROM public.sif_skill_level;
-DELETE FROM public.sports;
-DELETE FROM public.sif_city;
-DELETE FROM public.sif_app_role;
+DELETE FROM event_members;
+DELETE FROM events;
+DELETE FROM venue_sports;
+DELETE FROM user_sports;
+DELETE FROM oauth_accounts;
+DELETE FROM venues;
+DELETE FROM users;
+DELETE FROM app_role_has_permissions;
+DELETE FROM sif_permissions;
+DELETE FROM sif_skill_level;
+DELETE FROM sports;
+DELETE FROM sif_city;
+DELETE FROM sif_app_role;
 
 -- Ponovno popunjavanje šifrarnika i referentnih podataka.
 
-INSERT INTO public.sif_app_role (id) VALUES
+INSERT INTO sif_app_role (id) VALUES
   ('USER'),
-  ('ADMIN'),
-  ('GUEST'),
-  ('MODERATOR');
+  ('ADMIN');
 
-INSERT INTO public.sif_permissions (id, description) VALUES
+INSERT INTO sif_permissions (id, description) VALUES
   ('VENUE_EDIT_ANY', 'Uređivanje bilo kojeg sportskog objekta'),
   ('VENUE_DELETE_ANY', 'Brisanje bilo kojeg sportskog objekta'),
   ('VENUE_REPORT_MANAGE', 'Pregled i upravljanje prijavama sportskih objekata');
 
-INSERT INTO public.app_role_has_permissions (app_role_id, permission_id) VALUES
+INSERT INTO app_role_has_permissions (app_role_id, permission_id) VALUES
   ('ADMIN', 'VENUE_EDIT_ANY'),
   ('ADMIN', 'VENUE_DELETE_ANY'),
   ('ADMIN', 'VENUE_REPORT_MANAGE');
 
-INSERT INTO public.sif_skill_level (id, name, rank) VALUES
+INSERT INTO sif_skill_level (id, name, rank) VALUES
   (1, 'Amater', 1),
   (2, 'Srednja razina', 2),
   (3, 'Profesionalac', 3);
 
-INSERT INTO public.sif_city (name) VALUES
+INSERT INTO sif_city (name) VALUES
   ('Zagreb'),
   ('Split'),
   ('Rijeka'),
@@ -50,7 +47,7 @@ INSERT INTO public.sif_city (name) VALUES
   ('Zadar'),
   ('Slavonski Brod');
 
-INSERT INTO public.sports (name, description) VALUES
+INSERT INTO sports (name, description) VALUES
   ('Nogomet', 'Probni sport: nogomet'),
   ('Košarka', 'Probni sport: košarka'),
   ('Tenis', 'Probni sport: tenis'),
@@ -58,6 +55,8 @@ INSERT INTO public.sports (name, description) VALUES
   ('Odbojka', 'Probni sport: odbojka'),
   ('Badminton', 'Probni sport: badminton'),
   ('Biciklizam', 'Probni sport: biciklizam'),
+  ('Minecraft', 'Probni esport: minecraft'),
+  ('Bela', 'Probna društvena igra: Bela'),
   ('Stolni tenis', 'Probni sport: stolni tenis');
 
 -- Privremene pomoćne tablice omogućuju povezivanje pomoću ID-jeva koje generira baza.
@@ -88,7 +87,7 @@ CREATE TEMP TABLE seed_event_participants (source_event_id integer, source_user_
 -- Korisnici (32 probna korisnika)
 
 INSERT INTO seed_users (source_id, username, name, dob, city_name, gender, role_id, created_at, profile_photo_url) VALUES
-  (1, 'mateo', 'Mateo Horvat', '1991-02-02', 'Slavonski Brod', 'Male', 'USER', '2026-10-02 10:00:00', NULL),
+  (1, 'mateo', 'Mateo Horvat', '1991-02-02', 'Zagreb', 'Male', 'USER', '2026-10-02 10:00:00', NULL),
   (2, 'ivan', 'Ivan Kovač', '1992-03-03', 'Slavonski Brod', 'Male', 'USER', '2026-10-03 10:00:00', NULL),
   (3, 'ana', 'Ana Babić', '1993-04-04', 'Slavonski Brod', 'Female', 'USER', '2026-10-04 10:00:00', NULL),
   (4, 'luka', 'Luka Marić', '1994-05-05', 'Slavonski Brod', 'Male', 'USER', '2026-10-05 10:00:00', NULL),
@@ -98,7 +97,7 @@ INSERT INTO seed_users (source_id, username, name, dob, city_name, gender, role_
   (8, 'filip', 'Filip Božić', '1998-09-09', 'Zagreb', 'Male', 'USER', '2026-10-09 10:00:00', NULL),
   (9, 'nikola', 'Nikola Radić', '1999-10-10', 'Zagreb', 'Male', 'USER', '2026-10-10 10:00:00', NULL),
   (10, 'lucija', 'Lucija Perić', '1990-11-11', 'Zagreb', 'Female', 'USER', '2026-10-11 10:00:00', NULL),
-  (11, 'dominik', 'Dominik Šimić', '1991-12-12', 'Zagreb', 'Male', 'USER', '2026-10-12 10:00:00', NULL),
+  (11, 'dominik', 'Dominik Šimić', '1991-12-12', 'Slavonski Brod', 'Male', 'USER', '2026-10-12 10:00:00', NULL),
   (12, 'marija', 'Marija Kralj', '1992-01-13', 'Zagreb', 'Female', 'USER', '2026-10-13 10:00:00', NULL),
   (13, 'ante', 'Ante Vuković', '1993-02-14', 'Split', 'Male', 'USER', '2026-10-14 10:00:00', NULL),
   (14, 'lea', 'Lea Matić', '1994-03-15', 'Split', 'Female', 'USER', '2026-10-15 10:00:00', NULL),
@@ -117,15 +116,15 @@ INSERT INTO seed_users (source_id, username, name, dob, city_name, gender, role_
   (27, 'dorotea', 'Dorotea Cindrić', '1997-04-01', 'Zagreb', 'Female', 'USER', '2026-10-28 10:00:00', NULL),
   (28, 'stjepan', 'Stjepan Lovrić', '1998-05-02', 'Zagreb', 'Male', 'USER', '2026-10-01 10:00:00', NULL),
   (29, 'klara', 'Klara Zelić', '1999-06-03', 'Zagreb', 'Female', 'USER', '2026-10-02 10:00:00', NULL),
-  (30, 'guest_ana', 'Ana (gost)', '1995-01-01', 'Zagreb', 'Other', 'GUEST', '2026-10-30 10:00:00', NULL),
-  (31, 'guest_marko', 'Marko (gost)', '1995-01-01', 'Zagreb', 'Other', 'GUEST', '2026-10-30 10:00:00', NULL),
-  (32, 'moderator_iva', 'Iva (moderatorica)', '1995-01-01', 'Zagreb', 'Other', 'MODERATOR', '2026-10-30 10:00:00', NULL);
+  (30, 'ana2', 'Ana Vukotić', '1995-01-01', 'Zagreb', 'Other', 'USER', '2026-10-30 10:00:00', NULL),
+  (31, 'moderator_marko', 'Marko', '1995-01-01', 'Zagreb', 'Other', 'ADMIN', '2026-10-30 10:00:00', NULL),
+  (32, 'moderator_iva', 'Iva', '1995-01-01', 'Zagreb', 'Other', 'ADMIN', '2026-10-30 10:00:00', NULL);
 
-INSERT INTO public.users (username, name, date_of_birth, city_id, created_at, profile_photo_url, gender, app_role_id)
+INSERT INTO users (username, name, date_of_birth, city_id, created_at, profile_photo_url, gender, app_role_id)
 SELECT su.username, su.name, su.dob, c.id, su.created_at, su.profile_photo_url, su.gender, su.role_id
-FROM seed_users su JOIN public.sif_city c ON c.name = su.city_name;
+FROM seed_users su JOIN sif_city c ON c.name = su.city_name;
 INSERT INTO seed_user_map (source_id, actual_id)
-SELECT su.source_id, u.id FROM seed_users su JOIN public.users u ON u.username = su.username;
+SELECT su.source_id, u.id FROM seed_users su JOIN users u ON u.username = su.username;
 
 -- Sportske preferencije korisnika
 
@@ -135,6 +134,7 @@ INSERT INTO seed_user_sports (source_user_id, sport_name, skill_level_id) VALUES
   (1, 'Tenis', 2),
   (1, 'Odbojka', 1),
   (1, 'Biciklizam', 2),
+  (1, 'Minecraft', 2),
   (2, 'Nogomet', 1),
   (2, 'Košarka', 2),
   (2, 'Trčanje', 1),
@@ -166,12 +166,14 @@ INSERT INTO seed_user_sports (source_user_id, sport_name, skill_level_id) VALUES
   (9, 'Badminton', 1),
   (9, 'Biciklizam', 2),
   (10, 'Nogomet', 1),
-  (10, 'Trčanje', 1),
+  (10, 'Bela', 2),
   (11, 'Košarka', 1),
   (11, 'Odbojka', 2),
   (12, 'Nogomet', 1),
   (13, 'Odbojka', 1),
+  (14, 'Bela', 3),
   (14, 'Odbojka', 1),
+  (15, 'Trčanje', 1),
   (15, 'Odbojka', 2),
   (16, 'Trčanje', 2),
   (17, 'Trčanje', 1),
@@ -188,86 +190,94 @@ INSERT INTO seed_user_sports (source_user_id, sport_name, skill_level_id) VALUES
   (28, 'Nogomet', 1),
   (29, 'Nogomet', 1);
 
-INSERT INTO public.user_sports (user_id, sport_id, skill_level_id)
+INSERT INTO user_sports (user_id, sport_id, skill_level_id)
 SELECT um.actual_id, sp.id, sus.skill_level_id
 FROM seed_user_sports sus
 JOIN seed_user_map um ON um.source_id = sus.source_user_id
-JOIN public.sports sp ON sp.name = sus.sport_name;
+JOIN sports sp ON sp.name = sus.sport_name;
 
-INSERT INTO public.oauth_accounts (user_id, provider, provider_user_id, email)
+INSERT INTO oauth_accounts (user_id, provider, provider_user_id, email)
 SELECT actual_id, 'google', 'dev-seed-' || su.username, su.username || '@example.test'
 FROM seed_user_map um JOIN seed_users su ON su.source_id = um.source_id;
 
 -- Sportski tereni / mjesta događanja
 
 INSERT INTO seed_venues (venue_key, name, city_name, latitude, longitude, created_by_source_id) VALUES
-  ('event-1', 'Sportski park Klasije', 'Slavonski Brod', 45.1603, 18.0156, 1),
-  ('event-2', 'Sportska dvorana Vijuš', 'Slavonski Brod', 45.1589, 18.0121, 3),
-  ('event-3', 'Teniski centar Slavonski Brod', 'Slavonski Brod', 45.1575, 18.018, 1),
-  ('event-4', 'Šetnica uz Savu', 'Slavonski Brod', 45.1518, 18.0165, 5),
-  ('Sportska dvorana Trešnjevka, Zagreb|Zagreb', 'Sportska dvorana Trešnjevka, Zagreb', 'Zagreb', 45.79636, 15.94207, 4),
-  ('Sportski centar Zagi, Zagrebački velesajam|Zagreb', 'Sportski centar Zagi, Zagrebački velesajam', 'Zagreb', 45.777922, 15.969492, 6),
-  ('Sportski centar Dubrava, Zagreb|Zagreb', 'Sportski centar Dubrava, Zagreb', 'Zagreb', 45.828229, 16.053652, 8),
-  ('ŠRC Jarun, Zagreb|Zagreb', 'ŠRC Jarun, Zagreb', 'Zagreb', 45.78121, 15.92309, 7),
-  ('Bundek, Zagreb|Zagreb', 'Bundek, Zagreb', 'Zagreb', 45.785385, 15.98603, 9),
-  ('Sportski centar Sava, Sesvete|Zagreb', 'Sportski centar Sava, Sesvete', 'Zagreb', 45.835494, 16.118921, 10),
-  ('Plaža Bačvice, Split|Split', 'Plaža Bačvice, Split', 'Split', 43.50247, 16.446767, 13),
-  ('Korzo, Rijeka|Rijeka', 'Korzo, Rijeka', 'Rijeka', 45.324234, 14.443, 16),
-  ('Športska dvorana Zrinjevac, Osijek|Osijek', 'Športska dvorana Zrinjevac, Osijek', 'Osijek', 45.55532, 18.68039, 20),
-  ('Teniski tereni Sutomiška 1, Zadar|Zadar', 'Teniski tereni Sutomiška 1, Zadar', 'Zadar', 44.12239, 15.24539, 23),
-  ('Sportski centar Šalata, Zagreb|Zagreb', 'Sportski centar Šalata, Zagreb', 'Zagreb', 45.83112, 15.97985, 25);
+  ('neodređeno|ZG', 'negdje u Zagrebu', 'Zagreb', 45.785385, 15.98603, null),
+  ('neodređeno|SB', 'negdje u Slavnoskom Brodu', 'Slavonski Brod', 45.1575, 18.018, null),
+  ('neodređeno|SP', 'negdje u Splitu', 'Split', 43.50247, 16.446767, null),
+  ('neodređeno|RI', 'negdje u Rijeci', 'Rijeka', 45.324234, 14.443, null),
+  ('neodređeno|OS', 'negdje u Osijeku', 'Osijek', 45.55532, 18.68039, null),
+  ('neodređeno|ZD', 'negdje u Zadru', 'Zadar', 44.12239, 15.24539, null),
 
-INSERT INTO public.venues (created_by_id, name, city_id, latitude, longitude, description, is_paid, supports_booking)
+  ('Klasije|SB', 'Sportski park Klasije', 'Slavonski Brod', 45.1603, 18.0156, null),
+  ('Vijuš|SB', 'Sportska dvorana Vijuš', 'Slavonski Brod', 45.1589, 18.0121, null),
+  ('TeniskiCentar|SB', 'Teniski centar Slavonski Brod', 'Slavonski Brod', 45.1575, 18.018, null),
+  ('ŠetnjicaUzSavu|SB', 'Šetnica uz Savu', 'Slavonski Brod', 45.1518, 18.0165, null),
+  ('SDTrešnjevka|ZG', 'Sportska dvorana Trešnjevka, Zagreb', 'Zagreb', 45.79636, 15.94207, null),
+  ('SportskiCentarZagi|ZG, Zagrebački velesajam|Zagreb', 'Sportski Centar Zagi, Zagrebački velesajam', 'Zagreb', 45.777922, 15.969492, 6),
+  ('SportskiCentar Dubrava|ZG', 'Sportski centar Dubrava, Zagreb', 'Zagreb', 45.828229, 16.053652, null),
+  ('ŠRCJarun|ZG', 'ŠRC Jarun, Zagreb', 'Zagreb', 45.78121, 15.92309, null),
+  ('Bundek|ZG', 'Bundek, Zagreb', 'Zagreb', 45.785385, 15.98603, null),
+  ('SportskiCentarSava,Sesvete|ZG', 'Sportski centar Sava, Sesvete', 'Zagreb', 45.835494, 16.118921, null),
+  ('Bačvice|SP', 'Plaža Bačvice, Split', 'Split', 43.50247, 16.446767, 13),
+  ('Korzo|RI', 'Korzo, Rijeka', 'Rijeka', 45.324234, 14.443, null),
+  ('ŠportskaDvoranaZrinjevac|Osijek', 'Športska dvorana Zrinjevac, Osijek', 'Osijek', 45.55532, 18.68039, null),
+  ('TeniskiTereni|ZD', 'Teniski tereni Sutomiška 1, Zadar', 'Zadar', 44.12239, 15.24539, null),
+  ('SportskiCentarŠalata|ZG', 'Sportski centar Šalata, Zagreb', 'Zagreb', 45.83112, 15.97985, null);
+
+INSERT INTO venues (created_by_id, name, city_id, latitude, longitude, description, is_paid, supports_booking)
 SELECT um.actual_id, sv.name, c.id, sv.latitude, sv.longitude,
        'Probni sportski objekt za lokalni razvoj.', FALSE, FALSE
 FROM seed_venues sv
-JOIN public.sif_city c ON c.name = sv.city_name
+JOIN sif_city c ON c.name = sv.city_name
 LEFT JOIN seed_user_map um ON um.source_id = sv.created_by_source_id;
 INSERT INTO seed_venue_map (venue_key, actual_id)
 SELECT sv.venue_key, v.id
 FROM seed_venues sv
-JOIN public.sif_city c ON c.name = sv.city_name
-JOIN public.venues v ON v.name = sv.name AND v.city_id = c.id;
+JOIN sif_city c ON c.name = sv.city_name
+JOIN venues v ON v.name = sv.name AND v.city_id = c.id;
 
 -- Događaji
 
 INSERT INTO seed_events (source_id, sport_name, venue_key, organizer_source_id, name, description, scheduled_at, cancelled_at, expected_duration_min, max_participants, min_age, max_age, min_skill_level_id, created_at) VALUES
-  (1, 'Nogomet', 'event-1', 1, 'Nedjeljni nogometni turnir', 'Rekreativni malonogometni turnir 5 na 5. Dobrodošli su igrači svih razina znanja.', CURRENT_TIMESTAMP + INTERVAL '2 days', NULL, 120, 20, 16, 45, 1, '2026-10-20 12:30:00'),
-  (2, 'Košarka', 'event-2', 3, 'Večernja košarka', 'Opuštena košarkaška utakmica. Povedite prijatelje i uživajte u prijateljskom nadmetanju.', CURRENT_TIMESTAMP - INTERVAL '30 minutes', NULL, 90, 10, 16, 40, 1, '2026-10-22 09:15:00'),
-  (3, 'Tenis', 'event-3', 1, 'Teniski meč za srednju razinu', 'Prijateljski pojedinačni teniski meč za igrače srednje razine. Ponesite vlastiti reket.', CURRENT_TIMESTAMP + INTERVAL '1 day', NULL, 90, 2, 18, 50, 2, '2026-10-23 15:00:00'),
-  (4, 'Trčanje', 'event-4', 5, 'Subotnje jutarnje trčanje', 'Započnite vikend opuštenim grupnim trčanjem od 5 km kroz park Maksimir.', CURRENT_TIMESTAMP + INTERVAL '3 days', NULL, 60, 15, 15, 65, 1, '2026-10-24 11:20:00'),
-  (5, 'Odbojka', 'Sportska dvorana Trešnjevka, Zagreb|Zagreb', 4, 'Okupljanje za dvoransku odbojku', 'Rekreativno okupljanje za odbojku. Profesionalno iskustvo nije potrebno.', CURRENT_TIMESTAMP + INTERVAL '5 days', NULL, 120, 12, 16, 45, 1, '2026-10-25 17:45:00'),
-  (6, 'Badminton', 'Sportski centar Zagi, Zagrebački velesajam|Zagreb', 6, 'Badminton u parovima', 'Opušteni mečevi u parovima. Reketi su dostupni u objektu.', CURRENT_TIMESTAMP + INTERVAL '6 days', NULL, 90, 8, 14, 55, 1, '2026-10-26 13:10:00'),
-  (7, 'Nogomet', 'Sportski centar Dubrava, Zagreb|Zagreb', 2, 'Mali nogomet 5 na 5', 'Večernji mali nogomet u dvorani. Tražimo još nekoliko igrača.', CURRENT_TIMESTAMP - INTERVAL '15 minutes', NULL, 90, 10, 18, 40, 2, '2026-10-27 08:00:00'),
-  (8, 'Biciklizam', 'ŠRC Jarun, Zagreb|Zagreb', 7, 'Bicikliranje oko Jaruna', 'Opuštena grupna vožnja biciklom oko Jarunskog jezera. Prikladno za rekreativne bicikliste.', CURRENT_TIMESTAMP + INTERVAL '4 days', NULL, 120, 12, 16, 60, 1, '2026-10-27 16:30:00'),
-  (9, 'Stolni tenis', 'Sportski centar Dubrava, Zagreb|Zagreb', 8, 'Okupljanje za stolni tenis', 'Prijateljske partije stolnog tenisa. Početnici su dobrodošli.', CURRENT_TIMESTAMP + INTERVAL '7 days', NULL, 90, 8, 12, 70, 1, '2026-10-28 10:00:00'),
-  (10, 'Košarka', 'Bundek, Zagreb|Zagreb', 9, 'Košarka na otvorenom kod Bundeka', 'Neformalna košarkaška utakmica na vanjskim terenima. Sudjelovanje je prema redoslijedu dolaska.', CURRENT_TIMESTAMP + INTERVAL '8 days', NULL, 90, 10, 16, 40, 1, '2026-10-28 18:20:00'),
-  (11, 'Nogomet', 'Sportski centar Sava, Sesvete|Zagreb', 10, 'Nedjeljni nogomet u Sesvetama', 'Tjedno rekreativno okupljanje za nogomet. Odlična prilika za upoznavanje novih igrača.', CURRENT_TIMESTAMP + INTERVAL '10 days', NULL, 120, 14, 18, 50, 1, '2026-10-29 09:45:00'),
-  (12, 'Odbojka', 'Plaža Bačvice, Split|Split', 13, 'Okupljanje za odbojku na pijesku', 'Okupljanje za odbojku na pijesku na Bačvicama. Uživajte u prijateljskoj igri uz more.', CURRENT_TIMESTAMP - INTERVAL '3 days', NULL, 120, 8, 16, 45, 1, '2026-10-24 14:00:00'),
-  (13, 'Trčanje', 'Korzo, Rijeka|Rijeka', 16, 'Trčanje uz riječku rivu', 'Grupno trčanje uz riječku obalu. Oko 6 km laganim tempom.', CURRENT_TIMESTAMP - INTERVAL '2 days', NULL, 75, 12, 15, 65, 1, '2026-10-25 08:30:00'),
-  (14, 'Košarka', 'Športska dvorana Zrinjevac, Osijek|Osijek', 20, 'Košarkaško okupljanje u Osijeku', 'Opuštena košarkaška utakmica za lokalne igrače. Dobrodošli su igrači svih razina iskustva.', CURRENT_TIMESTAMP + INTERVAL '1 day', NULL, 90, 10, 16, 45, 1, '2026-10-26 12:00:00'),
-  (15, 'Tenis', 'Teniski tereni Sutomiška 1, Zadar|Zadar', 23, 'Vikend-tenis u Zadru', 'Prijateljsko vikend-okupljanje za tenis. Dobrodošli su igrači svih razina.', CURRENT_TIMESTAMP + INTERVAL '9 days', NULL, 90, 4, 18, 55, 2, '2026-10-27 11:00:00'),
-  (16, 'Nogomet', 'Sportski centar Šalata, Zagreb|Zagreb', 25, 'Vikend-okupljanje za nogomet u Zagrebu', 'Pridružite nam se na prijateljskom vikend-okupljanju za nogomet u Zagrebu! Događaj je otvoren igračima svih razina iskustva, bilo da ste potpuni početnik ili igrate već godinama. Ekipe ćemo organizirati ovisno o broju sudionika, odigrati nekoliko kraćih utakmica i pobrinuti se da svi dobiju dovoljno vremena na terenu. Ponesite sportsku odjeću, udobne nogometne tenisice i dovoljno vode. Cilj je dobro se zabaviti, upoznati nove ljude, unaprijediti vještine i uživati u prijateljskom nadmetanju. Slobodno pozovite i prijatelje!', CURRENT_TIMESTAMP + INTERVAL '12 days', CURRENT_TIMESTAMP, 120, 19, 16, 40, 1, '2026-10-28 14:00:00');
+  (1, 'Nogomet', 'Klasije|SB', 1, 'Nedjeljni nogometni turnir', 'Rekreativni malonogometni turnir 5 na 5. Dobrodošli su igrači svih razina znanja.', CURRENT_TIMESTAMP + INTERVAL '4 days', NULL, 120, 20, 16, 45, 1, '2026-10-20 12:30:00'),
+  (2, 'Košarka', 'Vijuš|SB', 3, 'Večernja košarka', 'Opuštena košarkaška utakmica. Povedite prijatelje i uživajte u prijateljskom nadmetanju.', CURRENT_TIMESTAMP - INTERVAL '30 minutes', NULL, 90, 10, 16, 40, 1, '2026-10-22 09:15:00'),
+  (3, 'Tenis', 'TeniskiCentar|SB', 1, 'Teniski meč za srednju razinu', 'Prijateljski pojedinačni teniski meč za igrače srednje razine. Ponesite vlastiti reket.', CURRENT_TIMESTAMP + INTERVAL '1 day', NULL, 90, 2, 18, 50, 2, '2026-10-23 15:00:00'),
+  (4, 'Trčanje', 'ŠetnjicaUzSavu|SB', 5, 'Subotnje jutarnje trčanje', 'Započnite vikend opuštenim grupnim trčanjem od 5 km kroz park Maksimir.', CURRENT_TIMESTAMP + INTERVAL '6 days', NULL, 60, 15, 15, 65, 1, '2026-10-24 11:20:00'),
+  (5, 'Odbojka', 'SDTrešnjevka|ZG', 4, 'Okupljanje za dvoransku odbojku', 'Rekreativno okupljanje za odbojku. Profesionalno iskustvo nije potrebno.', CURRENT_TIMESTAMP + INTERVAL '10 days', NULL, 120, 12, 16, 45, 1, '2026-10-25 17:45:00'),
+  (6, 'Badminton', 'SportskiCentarZagi|ZG, Zagrebački velesajam|Zagreb', 6, 'Badminton u parovima', 'Opušteni mečevi u parovima. Reketi su dostupni u objektu.', CURRENT_TIMESTAMP + INTERVAL '12 days', NULL, 90, 8, 14, 55, 1, '2026-10-26 13:10:00'),
+  (7, 'Nogomet', 'SportskiCentar Dubrava|ZG', 2, 'Mali nogomet 5 na 5', 'Večernji mali nogomet u dvorani. Tražimo još nekoliko igrača.', CURRENT_TIMESTAMP - INTERVAL '30 minutes', NULL, 90, 10, 18, 40, 2, '2026-10-27 08:00:00'),
+  (8, 'Biciklizam', 'ŠRCJarun|ZG', 7, 'Bicikliranje oko Jaruna', 'Opuštena grupna vožnja biciklom oko Jarunskog jezera. Prikladno za rekreativne bicikliste.', CURRENT_TIMESTAMP + INTERVAL '8 days', NULL, 120, 12, 16, 60, 1, '2026-10-27 16:30:00'),
+  (9, 'Stolni tenis', 'SportskiCentar Dubrava|ZG', 8, 'Okupljanje za stolni tenis', 'Prijateljske partije stolnog tenisa. Početnici su dobrodošli.', CURRENT_TIMESTAMP + INTERVAL '14 days', NULL, 90, 8, 12, 70, 1, '2026-10-28 10:00:00'),
+  (10, 'Košarka', 'Bundek|ZG', 9, 'Košarka na otvorenom kod Bundeka', 'Neformalna košarkaška utakmica na vanjskim terenima. Sudjelovanje je prema redoslijedu dolaska.', CURRENT_TIMESTAMP + INTERVAL '16 days', NULL, 90, 10, 16, 40, 1, '2026-10-28 18:20:00'),
+  (11, 'Nogomet', 'SportskiCentarSava,Sesvete|ZG', 10, 'Nedjeljni nogomet u Sesvetama', 'Tjedno rekreativno okupljanje za nogomet. Odlična prilika za upoznavanje novih igrača.', CURRENT_TIMESTAMP + INTERVAL '20 days', NULL, 120, 14, 18, 50, 1, '2026-10-29 09:45:00'),
+  (12, 'Odbojka', 'Bačvice|SP', 13, 'Okupljanje za odbojku na pijesku', 'Okupljanje za odbojku na pijesku na Bačvicama. Uživajte u prijateljskoj igri uz more.', CURRENT_TIMESTAMP - INTERVAL '6 days', NULL, 120, 8, 16, 45, 1, '2026-10-24 14:00:00'),
+  (13, 'Trčanje', 'Korzo|RI', 16, 'Trčanje uz riječku rivu', 'Grupno trčanje uz riječku obalu. Oko 6 km laganim tempom.', CURRENT_TIMESTAMP - INTERVAL '4 days', NULL, 75, 12, 15, 65, 1, '2026-10-25 08:30:00'),
+  (14, 'Košarka', 'ŠportskaDvoranaZrinjevac|Osijek', 20, 'Košarkaško okupljanje u Osijeku', 'Opuštena košarkaška utakmica za lokalne igrače. Dobrodošli su igrači svih razina iskustva.', CURRENT_TIMESTAMP + INTERVAL '3 day', NULL, 90, 10, 16, 45, 1, '2026-10-26 12:00:00'),
+  (15, 'Tenis', 'TeniskiTereni|ZD', 23, 'Vikend-tenis u Zadru', 'Prijateljsko vikend-okupljanje za tenis. Dobrodošli su igrači svih razina.', CURRENT_TIMESTAMP + INTERVAL '18 days', NULL, 90, 4, 18, 55, 2, '2026-10-27 11:00:00'),
+  (16, 'Nogomet', 'SportskiCentarŠalata|ZG', 25, 'Vikend-okupljanje za nogomet u Zagrebu', 'Pridružite nam se na prijateljskom vikend-okupljanju za nogomet u Zagrebu! Događaj je otvoren igračima svih razina iskustva, bilo da ste potpuni početnik ili igrate već godinama. Ekipe ćemo organizirati ovisno o broju sudionika, odigrati nekoliko kraćih utakmica i pobrinuti se da svi dobiju dovoljno vremena na terenu. Ponesite sportsku odjeću, udobne nogometne tenisice i dovoljno vode. Cilj je dobro se zabaviti, upoznati nove ljude, unaprijediti vještine i uživati u prijateljskom nadmetanju. Slobodno pozovite i prijatelje!', CURRENT_TIMESTAMP + INTERVAL '12 days', CURRENT_TIMESTAMP, 120, 19, 16, 40, 1, '2026-10-28 14:00:00'),
+  (17, 'Bela', 'neodređeno|SP', 14, 'Fali 1 za belu', 'Ne znam još di ćemo igrat pa sam samo stavila u splitu, dogovorimo se kasnije.', CURRENT_TIMESTAMP + INTERVAL '18 days', NULL, 60, 2, 18, null, 1, '2026-10-27 11:00:00');
 
-INSERT INTO public.venue_sports (venue_id, sport_id)
+INSERT INTO venue_sports (venue_id, sport_id)
 SELECT DISTINCT vm.actual_id, sp.id
 FROM seed_events se JOIN seed_venue_map vm ON vm.venue_key = se.venue_key
-JOIN public.sports sp ON sp.name = se.sport_name;
+JOIN sports sp ON sp.name = se.sport_name;
 
 -- Događaji koriste ID-jeve objekata, korisnika i sportova koje generira baza; izvorni ID-jevi služe samo za povezivanje probnih podataka.
-INSERT INTO public.events (sport_id, venue_id, created_by_id, name, description, scheduled_at, cancelled_at,
+INSERT INTO events (sport_id, venue_id, created_by_id, name, description, scheduled_at, cancelled_at,
                            expected_duration_min, max_participants, min_age, max_age,
                            min_skill_level_id, created_at)
 SELECT sp.id, vm.actual_id, organizer.actual_id, se.name, se.description, se.scheduled_at, se.cancelled_at,
        se.expected_duration_min, se.max_participants, se.min_age, se.max_age,
        se.min_skill_level_id, se.created_at
 FROM seed_events se
-JOIN public.sports sp ON sp.name = se.sport_name
+JOIN sports sp ON sp.name = se.sport_name
 JOIN seed_venue_map vm ON vm.venue_key = se.venue_key
 JOIN seed_user_map organizer ON organizer.source_id = se.organizer_source_id;
 INSERT INTO seed_event_map (source_id, actual_id)
 SELECT se.source_id, ev.id
-FROM seed_events se JOIN public.events ev ON ev.name = se.name;
+FROM seed_events se JOIN events ev ON ev.name = se.name;
 
 -- Sudionici događaja
 
@@ -344,27 +354,41 @@ INSERT INTO seed_event_participants (source_event_id, source_user_id) VALUES
   (16, 26),
   (16, 27),
   (16, 28),
-  (16, 29);
+  (16, 29),
+  (17, 14);
 
-INSERT INTO public.event_members (event_id, user_id, joined_at)
+INSERT INTO event_members (event_id, user_id, joined_at)
 SELECT DISTINCT em.actual_id, um.actual_id, se.created_at
 FROM seed_event_participants sep
 JOIN seed_event_map em ON em.source_id = sep.source_event_id
 JOIN seed_user_map um ON um.source_id = sep.source_user_id
 JOIN seed_events se ON se.source_id = sep.source_event_id;
 
--- Provjera ispravnosti. Očekuje se 32 korisnika i 16 događaja.
+-- Provjera ispravnosti. Očekuje se 32 korisnika i 17 događaja.
 DO $$
 DECLARE user_count integer; event_count integer; sb_user_count integer; sb_event_count integer;
 BEGIN
-  SELECT count(*) INTO user_count FROM public.users;
-  SELECT count(*) INTO event_count FROM public.events;
-  SELECT count(*) INTO sb_user_count FROM public.users u JOIN public.sif_city c ON c.id = u.city_id WHERE c.name = 'Slavonski Brod';
-  SELECT count(*) INTO sb_event_count FROM public.events e JOIN public.venues v ON v.id = e.venue_id JOIN public.sif_city c ON c.id = v.city_id WHERE c.name = 'Slavonski Brod';
+  SELECT count(*) INTO user_count FROM users;
+  SELECT count(*) INTO event_count FROM events;
+  SELECT count(*) INTO sb_user_count FROM users u JOIN sif_city c ON c.id = u.city_id WHERE c.name = 'Slavonski Brod';
+  SELECT count(*) INTO sb_event_count FROM events e JOIN venues v ON v.id = e.venue_id JOIN sif_city c ON c.id = v.city_id WHERE c.name = 'Slavonski Brod';
   IF user_count <> 32 THEN RAISE EXCEPTION 'Očekivano je 32 korisnika, pronađeno: %', user_count; END IF;
-  IF event_count <> 16 THEN RAISE EXCEPTION 'Očekivano je 16 događaja, pronađeno: %', event_count; END IF;
+  IF event_count <> 17 THEN RAISE EXCEPTION 'Očekivano je 17 događaja, pronađeno: %', event_count; END IF;
   IF sb_user_count <> 4 THEN RAISE EXCEPTION 'Očekivana su 4 korisnika u Slavonskom Brodu, pronađeno: %', sb_user_count; END IF;
   IF sb_event_count <> 4 THEN RAISE EXCEPTION 'Očekivana su 4 događaja u Slavonskom Brodu, pronađeno: %', sb_event_count; END IF;
+END $$;
+
+
+-- Očekuje se da svaki događaj ima organizatora u listi membera
+DO $$
+DECLARE event_count integer; events_with_organiser_member_count integer;
+BEGIN
+  SELECT COUNT(*) INTO event_count FROM events;
+  SELECT COUNT(e.created_by_id) INTO events_with_organiser_member_count
+  FROM events e
+  JOIN event_members m ON m.event_id = e.id
+  WHERE e.created_by_id = m.user_id;
+  IF event_count <> events_with_organiser_member_count THEN RAISE EXCEPTION 'Očekivano je da svaki event ima organizatora u listi sudionika (Takvih eventova je % a očekivano je %)', events_with_organiser_member_count, event_count; END IF;
 END $$;
 
 COMMIT;
