@@ -30,26 +30,26 @@ public class UserRepository {
         List<SportDto> sports = mapper.readValue(
                 rs.getString("sports"), new TypeReference<List<SportDto>>() {});
         return new UserResponse(
-                rs.getLong("id"),
+                rs.getLong("user_id"),
                 rs.getString("name"),
                 rs.getString("username"),
                 rs.getString("profile_photo_url"),
                 rs.getString("gender"),
-                rs.getObject("birth_date", LocalDate.class),
+                rs.getObject("date_of_birth", LocalDate.class),
                 rs.getObject("age", Integer.class),
                 rs.getObject("city_id", Short.class),
-                rs.getString("app_role_id"),   // works whether the column is text or smallint
+                rs.getString("app_role_id"),
                 sports,
                 rs.getObject("created_at", OffsetDateTime.class));
     }
 
     private static final String RESPONSE_SELECT = """
-        SELECT u.id,
+        SELECT u.id as user_id,
                u.name,
                u.username,
                u.profile_photo_url,
                u.gender,
-               u.date_of_birth AS birth_date,
+               u.date_of_birth,
                EXTRACT(YEAR FROM age(u.date_of_birth))::int AS age,
                u.city_id,
                u.app_role_id,
@@ -121,8 +121,8 @@ public class UserRepository {
 
     public Optional<User> getUserById(Long id) {
         return jdbc.sql("""
-            SELECT id, name, username, gender,
-                   date_of_birth AS birth_date,
+            SELECT id as user_id, name, username, gender,
+                   date_of_birth AS date_of_birth,
                    city_id
             FROM users WHERE id = :id
             """)
@@ -134,14 +134,19 @@ public class UserRepository {
     public void update(User u) {
         jdbc.sql("""
             UPDATE users
-            SET username = :userName,
+            SET username = :username,
                 name = :name,
                 gender = :gender,
-                date_of_birth = :birthDate,
+                date_of_birth = :dateOfBirth,
                 city_id = :cityId
-            WHERE id = :id
+            WHERE id = :userId
             """)
-                .paramSource(u)
+                .param("username", u.getUsername())
+                .param("name", u.getName())
+                .param("gender", u.getGender())
+                .param("dateOfBirth", u.getDateOfBirth())
+                .param("cityId", u.getCityId())
+                .param("userId", u.getId())
                 .update();
 
         if (u.getSports() != null) {

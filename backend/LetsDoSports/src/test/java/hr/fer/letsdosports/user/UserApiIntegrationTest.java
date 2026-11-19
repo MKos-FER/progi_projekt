@@ -109,7 +109,7 @@ class UserApiIntegrationTest {
     void search_noFilters_returnsAllUsersWithTheirSports() throws Exception {
         List<UserResponse> result = search(Map.of());
 
-        assertThat(result).extracting(UserResponse::id).contains(ana, ivan);
+        assertThat(result).extracting(UserResponse::userId).contains(ana, ivan);
         UserResponse a = byId(result, ana);
         assertThat(a.username()).isEqualTo("ana_it");
         assertThat(a.sports()).hasSize(2);
@@ -123,7 +123,7 @@ class UserApiIntegrationTest {
     void search_byCity_returnsOnlyUsersFromThatCity() throws Exception {
         List<UserResponse> result = search(Map.of("cityId", city1));
 
-        assertThat(result).extracting(UserResponse::id).contains(ana).doesNotContain(ivan);
+        assertThat(result).extracting(UserResponse::userId).contains(ana).doesNotContain(ivan);
         assertThat(result).allSatisfy(u -> assertThat(u.cityId()).isEqualTo(city1));
     }
 
@@ -136,18 +136,18 @@ class UserApiIntegrationTest {
 
     @Test
     void search_bySport_returnsEveryoneWhoPlaysIt() throws Exception {
-        assertThat(search(Map.of("sportId", sport1))).extracting(UserResponse::id).contains(ana, ivan);
-        assertThat(search(Map.of("sportId", sport2))).extracting(UserResponse::id).contains(ana).doesNotContain(ivan);
+        assertThat(search(Map.of("sportId", sport1))).extracting(UserResponse::userId).contains(ana, ivan);
+        assertThat(search(Map.of("sportId", sport2))).extracting(UserResponse::userId).contains(ana).doesNotContain(ivan);
     }
 
     @Test
     void search_bySportAndSkill_matchesOnTheSameSportRow() throws Exception {
 
         assertThat(search(Map.of("sportId", sport1, "skillLevelId", level2)))
-                .extracting(UserResponse::id).contains(ivan).doesNotContain(ana);
+                .extracting(UserResponse::userId).contains(ivan).doesNotContain(ana);
 
         assertThat(search(Map.of("sportId", sport2, "skillLevelId", level1)))
-                .extracting(UserResponse::id).doesNotContain(ana, ivan);
+                .extracting(UserResponse::userId).doesNotContain(ana, ivan);
     }
 
     @Test
@@ -170,13 +170,13 @@ class UserApiIntegrationTest {
         long turns18Tomorrow = insertUser("Almost18", "almost18_it", today.minusYears(18).plusDays(1), city1);
 
 
-        assertThat(search(Map.of("ageMin", 18))).extracting(UserResponse::id)
+        assertThat(search(Map.of("ageMin", 18))).extracting(UserResponse::userId)
                 .contains(turned18Today).doesNotContain(turns18Tomorrow);
-        assertThat(search(Map.of("ageMax", 18))).extracting(UserResponse::id)
+        assertThat(search(Map.of("ageMax", 18))).extracting(UserResponse::userId)
                 .contains(turned18Today, turns18Tomorrow);
-        assertThat(search(Map.of("ageMin", 18, "ageMax", 18))).extracting(UserResponse::id)
+        assertThat(search(Map.of("ageMin", 18, "ageMax", 18))).extracting(UserResponse::userId)
                 .contains(turned18Today).doesNotContain(turns18Tomorrow, ana, ivan);
-        assertThat(search(Map.of("ageMax", 17))).extracting(UserResponse::id)
+        assertThat(search(Map.of("ageMax", 17))).extracting(UserResponse::userId)
                 .contains(turns18Tomorrow).doesNotContain(turned18Today);
 
 
@@ -187,7 +187,7 @@ class UserApiIntegrationTest {
     void search_ageRangeNarrowsResults() throws Exception {
         int anaAge = byId(search(Map.of()), ana).age();
         assertThat(search(Map.of("ageMin", anaAge, "ageMax", anaAge)))
-                .extracting(UserResponse::id).contains(ana).doesNotContain(ivan);
+                .extracting(UserResponse::userId).contains(ana).doesNotContain(ivan);
     }
 
     @Test
@@ -213,11 +213,11 @@ class UserApiIntegrationTest {
     void getOne_existing_returnsFullProfile() throws Exception {
         mvc.perform(get(BASE + "/" + ana))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value((int) ana))
+                .andExpect(jsonPath("$.userId").value((int) ana))
                 .andExpect(jsonPath("$.name").value("Ana Horvat"))
                 .andExpect(jsonPath("$.username").value("ana_it"))
                 .andExpect(jsonPath("$.gender").value("Female"))
-                .andExpect(jsonPath("$.birthDate").value("2000-01-01"))
+                .andExpect(jsonPath("$.dateOfBirth").value("2000-01-01"))
                 .andExpect(jsonPath("$.cityId").value((int) city1))
                 .andExpect(jsonPath("$.age").isNumber())
                 .andExpect(jsonPath("$.createdAt").exists())
@@ -256,7 +256,7 @@ class UserApiIntegrationTest {
 
         mvc.perform(get(BASE + "/me"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value((int) ivan))
+                .andExpect(jsonPath("$.userId").value((int) ivan))
                 .andExpect(jsonPath("$.username").value("ivan_it"));
     }
 
@@ -273,10 +273,10 @@ class UserApiIntegrationTest {
     void patch_partialUpdate_changesOnlyGivenFieldsAndPersists() throws Exception {
         patchMe(Map.of("name", "Ana Novak"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value((int) ana))
+                .andExpect(jsonPath("$.userId").value((int) ana))
                 .andExpect(jsonPath("$.name").value("Ana Novak"))
                 .andExpect(jsonPath("$.username").value("ana_it"))
-                .andExpect(jsonPath("$.birthDate").value("2000-01-01"))
+                .andExpect(jsonPath("$.dateOfBirth").value("2000-01-01"))
                 .andExpect(jsonPath("$.cityId").value((int) city1))
                 .andExpect(jsonPath("$.sports.length()").value(2));
 
@@ -290,7 +290,7 @@ class UserApiIntegrationTest {
         body.put("name", "Ana Nova");
         body.put("username", "ana_new_it");
         body.put("gender", "Other");
-        body.put("birthDate", "1999-12-31");
+        body.put("dateOfBirth", "1999-12-31");
         body.put("cityId", city2);
         body.put("sports", List.of(Map.of("sportId", sport3, "skillLevelId", level2)));
 
@@ -299,7 +299,7 @@ class UserApiIntegrationTest {
                 .andExpect(jsonPath("$.name").value("Ana Nova"))
                 .andExpect(jsonPath("$.username").value("ana_new_it"))
                 .andExpect(jsonPath("$.gender").value("Other"))
-                .andExpect(jsonPath("$.birthDate").value("1999-12-31"))
+                .andExpect(jsonPath("$.dateOfBirth").value("1999-12-31"))
                 .andExpect(jsonPath("$.cityId").value((int) city2))
                 .andExpect(jsonPath("$.sports.length()").value(1))
                 .andExpect(jsonPath("$.sports[0].sportId").value((int) sport3))
@@ -401,7 +401,7 @@ class UserApiIntegrationTest {
 
     @Test
     void patch_explicitNullOnAnyField_returns400() throws Exception {
-        for (String field : List.of("name", "username", "gender", "birthDate", "cityId", "sports")) {
+        for (String field : List.of("name", "username", "gender", "dateOfBirth", "cityId", "sports")) {
             Map<String, Object> body = new HashMap<>();
             body.put(field, null);
             patchMe(body).andExpect(status().isBadRequest());
@@ -418,9 +418,9 @@ class UserApiIntegrationTest {
 
     @Test
     void patch_futureBirthDate_returns400() throws Exception {
-        patchMe(Map.of("birthDate", LocalDate.now().plusDays(1).toString()))
+        patchMe(Map.of("dateOfBirth", LocalDate.now().plusDays(1).toString()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors.birthDate").exists());
+                .andExpect(jsonPath("$.errors.dateOfBirth").exists());
     }
 
     @Test
@@ -432,7 +432,7 @@ class UserApiIntegrationTest {
         patchMe(Map.of("cityId", "abc")).andExpect(status().isBadRequest());
         patchMe(Map.of("cityId", 99999)).andExpect(status().isBadRequest());
         patchMe(Map.of("cityId", 0)).andExpect(status().isBadRequest());
-        patchMe(Map.of("birthDate", "14.03.2002")).andExpect(status().isBadRequest());
+        patchMe(Map.of("dateOfBirth", "14.03.2002")).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -489,7 +489,7 @@ class UserApiIntegrationTest {
     }
 
     private static UserResponse byId(List<UserResponse> users, long id) {
-        return users.stream().filter(u -> u.id() == id).findFirst()
+        return users.stream().filter(u -> u.userId() == id).findFirst()
                 .orElseThrow(() -> new AssertionError("user " + id + " not in result"));
     }
 
@@ -502,15 +502,15 @@ class UserApiIntegrationTest {
     }
 
 
-    private long insertUser(String name, String username, LocalDate birthDate, short cityId) {
+    private long insertUser(String name, String username, LocalDate dateOfBirth, short cityId) {
         return jdbc.sql("""
                 INSERT INTO users (name, username, gender, date_of_birth, city_id, app_role_id)
-                VALUES (:name, :username, 'Female', :dob, :cityId, :role)
+                VALUES (:name, :username, 'Female', :dateOfBirth, :cityId, :role)
                 RETURNING id
                 """)
                 .param("name", name)
                 .param("username", username)
-                .param("dob", birthDate)
+                .param("dateOfBirth", dateOfBirth)
                 .param("cityId", cityId)
                 .param("role", APP_ROLE)
                 .query(Long.class).single();
@@ -522,12 +522,12 @@ class UserApiIntegrationTest {
     }
 
     private String dbString(String column, long userId) {
-        return jdbc.sql("SELECT " + column + " FROM users WHERE id = :id")
-                .param("id", userId).query(String.class).single();
+        return jdbc.sql("SELECT " + column + " FROM users WHERE id = :userId")
+                .param("userId", userId).query(String.class).single();
     }
 
     private List<Short> dbSportIds(long userId) {
-        return jdbc.sql("SELECT sport_id FROM user_sports WHERE user_id = :id")
-                .param("id", userId).query(Short.class).list();
+        return jdbc.sql("SELECT sport_id FROM user_sports WHERE user_id = :userId")
+                .param("userId", userId).query(Short.class).list();
     }
 }

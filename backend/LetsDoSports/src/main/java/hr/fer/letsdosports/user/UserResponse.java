@@ -8,12 +8,12 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 public record UserResponse(
-        Long id,
+        Long userId,
         String name,
         String username,
         String profilePhotoUrl,
         String gender,
-        LocalDate birthDate,
+        LocalDate dateOfBirth,
         Integer age,
         Short cityId,
         String appRoleId,

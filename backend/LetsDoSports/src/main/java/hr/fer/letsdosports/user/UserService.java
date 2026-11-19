@@ -91,11 +91,11 @@ public class UserService {
         lockUser(userId);
         validateUser(userId, req);
         User u = users.getUserById(userId).orElseThrow();
-
+        u.setId(userId);
         if(req.getName()!=null)u.setName(req.getName());
-        if(req.getUsername()!=null)u.setUserName(req.getUsername());
+        if(req.getUsername()!=null)u.setUsername(req.getUsername());
         if(req.getGender()!=null)u.setGender(req.getGender());
-        if(req.getBirthDate()!=null)u.setBirthDate(req.getBirthDate());
+        if(req.getDateOfBirth()!=null)u.setDateOfBirth(req.getDateOfBirth());
         if(req.getCityId()!=null)u.setCityId(req.getCityId());
         if(req.getSports()!=null)u.setSports(req.getSports());
 

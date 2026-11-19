@@ -13,9 +13,9 @@ import java.util.List;
 public class User {
     private Long id;
     private String name;
-    private String userName;
+    private String username;
     private String gender;
-    private LocalDate birthDate;
+    private LocalDate dateOfBirth;
     private Short cityId;
     private List<SportDto> sports;
 }

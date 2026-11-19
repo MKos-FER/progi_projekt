@@ -57,12 +57,12 @@ class UserControllerTest {
 
     private UserResponse response(long id) {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id", id);
+        m.put("userId", id);
         m.put("name", "Ana Horvat");
         m.put("username", "ana");
         m.put("profilePhotoUrl", null);
         m.put("gender", "Female");
-        m.put("birthDate", "2002-03-14");
+        m.put("dateOfBirth", "2002-03-14");
         m.put("age", 24);
         m.put("cityId", 1);
         m.put("appRoleId", "USER");
@@ -75,7 +75,7 @@ class UserControllerTest {
         m.put("name", "Ana Horvat");
         m.put("username", "ana");
         m.put("gender", "Female");
-        m.put("birthDate", "2002-03-14");
+        m.put("dateOfBirth", "2002-03-14");
         m.put("cityId", 1);
         m.put("sports", List.of(Map.of("sportId", 1, "skillLevelId", 2)));
         return m;
@@ -94,8 +94,8 @@ class UserControllerTest {
         mvc.perform(get(BASE))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[1].id").value(2));
+                .andExpect(jsonPath("$[0].userId").value(1))
+                .andExpect(jsonPath("$[1].userId").value(2));
 
         verify(service).search(null, null, null, null, null);
     }
@@ -150,7 +150,7 @@ class UserControllerTest {
 
         mvc.perform(get(BASE + "/12"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(12))
+                .andExpect(jsonPath("$.userId").value(12))
                 .andExpect(jsonPath("$.username").value("ana"));
     }
 
@@ -176,18 +176,18 @@ class UserControllerTest {
 
         mvc.perform(get(BASE + "/me"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(ME))
+                .andExpect(jsonPath("$.userId").value(ME))
                 .andExpect(jsonPath("$.name").value("Ana Horvat"))
                 .andExpect(jsonPath("$.username").value("ana"))
                 .andExpect(jsonPath("$.gender").value("Female"))
-                .andExpect(jsonPath("$.birthDate").value("2002-03-14"))
+                .andExpect(jsonPath("$.dateOfBirth").value("2002-03-14"))
                 .andExpect(jsonPath("$.cityId").value(1))
                 .andExpect(jsonPath("$.appRoleId").value("USER"))
                 .andExpect(jsonPath("$.sports[0].sportId").value(1))
                 .andExpect(jsonPath("$.sports[0].skillLevelId").value(2));
 
         verify(service).getMine(ME);
-        verify(service, never()).getById(any());   // "me" must not be treated as {id}
+        verify(service, never()).getById(any());
     }
 
 
@@ -201,7 +201,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body(Map.of("name", "Ana Novak"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(ME));
+                .andExpect(jsonPath("$.userId").value(ME));
 
         verify(service).update(eq(ME), any(UpdateUserRequest.class));
         verify(service).getById(ME);
@@ -231,7 +231,7 @@ class UserControllerTest {
 
     @Test
     void patchMe_nullForRequiredFields_returns400() throws Exception {
-        for (String field : List.of("name", "username", "gender", "birthDate", "cityId", "sports")) {
+        for (String field : List.of("name", "username", "gender", "dateOfBirth", "cityId", "sports")) {
             Map<String, Object> b = new HashMap<>();
             b.put(field, null);
 
@@ -253,7 +253,7 @@ class UserControllerTest {
     void patchMe_futureBirthDate_returns400() throws Exception {
         mvc.perform(patch(BASE + "/me")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body(Map.of("birthDate", LocalDate.now().plusDays(1).toString()))))
+                        .content(body(Map.of("dateOfBirth", LocalDate.now().plusDays(1).toString()))))
                 .andExpect(status().isBadRequest());
     }
 
