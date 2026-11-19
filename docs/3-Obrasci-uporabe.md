@@ -20,6 +20,36 @@ Akteri A-01 - A-07 preuzeti su iz [analize zahtjeva](2-Analiza-zahtjeva.md#23-di
 
 Google sudjeluje u registraciji i prijavi, a kartografski servis u pregledu karte. Vanjska stranica za rezervaciju samo je odredište poveznice, bez razmjene podataka o rezervacijama s aplikacijom. Studentski tim i nastavnici dionici su projekta, a ne akteri ovog dijagrama. Prijava je preduvjet zaštićenih radnji, pa nije ponavljana odnosom `<<include>>`.
 
+### 3.1.1 Uključivanje i proširenje
+
+Veze slijede skriptu *Modeliranje programske potpore UML dijagramima*, poglavlje 3, odjeljke 3.1.2.2 i 3.1.2.3 (primjeri na tiskanim stranicama 49–52). Oznaka `<<include>>` znači obavezno uključeno ponašanje, a strelica vodi od glavnog prema uključenom UC-u. Oznaka `<<extend>>` znači opcionalno ponašanje, a strelica vodi od proširenja prema osnovnom UC-u. Te veze ne određuju redoslijed svih radnji u aplikaciji.
+
+**Obavezno uključivanje:**
+
+| Veza | Obrazloženje |
+| :--- | :--- |
+| UC-023 `<<include>>` UC-013 | Odgovor se objavljuje istim postupkom kao komentar: unos teksta, provjera prava i nepraznog sadržaja, spremanje i prikaz. UC-023 dodatno određuje i provjerava izvorni komentar. Nastaje jedan odgovor povezan s izvornikom. |
+| UC-021 `<<include>>` UC-016 | Administrator pri obradi prijave pregledava podatke prijavljenog terena prije odluke o ispravku, uklanjanju ili odbijanju prijave. Pregled je obavezan i kada se prijava odbije. |
+
+**Opcionalna proširenja:** uvjet je korisnikov odabir radnje na navedenoj točki proširenja. Za zaštićenu radnju vrijede prijava, uloga i ostali preduvjeti njezine specifikacije; status, unos i ovlasti provjeravaju se pri izvršavanju.
+
+| Osnovni UC i točka proširenja | Proširujući UC → osnovni UC (`<<extend>>`) | Odabir koji pokreće proširenje |
+| :--- | :--- | :--- |
+| UC-006, prikazani detalji događaja (korak 4) | UC-008 → UC-006 | Organizator odabire uređivanje svojeg događaja. |
+| UC-006, prikazani detalji događaja (korak 4) | UC-009 → UC-006 | Organizator odabire otkazivanje svojeg događaja. |
+| UC-006, prikazani detalji događaja (korak 4) | UC-010 → UC-006 | Registrirani korisnik odabire prijavu na događaj. |
+| UC-006, prikazani detalji događaja (korak 4) | UC-011 → UC-006 | Sudionik koji nije organizator odabire odjavu sudjelovanja. |
+| UC-012, prikazana oglasna ploča (korak 2) | UC-013 → UC-012 | Organizator ili sudionik odabire objavu novog komentara. |
+| UC-012, prikazana oglasna ploča (korak 2) | UC-014 → UC-012 | Autor odabire brisanje svojeg komentara ili odgovora. |
+| UC-012, prikazana oglasna ploča (korak 2) | UC-023 → UC-012 | Organizator ili sudionik odabire „Reply” uz postojeći komentar. |
+| UC-015, prikazana karta s oznakama (korak 2) | UC-016 → UC-015 | Akter odabire oznaku terena radi pregleda njegovih podataka. |
+| UC-016, prikazani podaci terena (korak 2) | UC-018 → UC-016 | Autor odabire uređivanje svojeg terena. |
+| UC-016, prikazani podaci terena (korak 2) | UC-019 → UC-016 | Registrirani korisnik odabire dodavanje fotografije. |
+| UC-016, prikazani podaci terena (korak 2) | UC-020 → UC-016 | Registrirani korisnik odabire prijavu netočnih podataka. |
+| UC-016, prikazani podaci terena (korak 2) | UC-022 → UC-016 | Akter odabire postojeću vanjsku poveznicu za rezervaciju. |
+
+Osnovni pregled može završiti bez ijednog proširenja: korisnik može samo pročitati događaj, komentare ili podatke terena. Prijava na događaj ne uključuje odjavu, a stvaranje događaja ne uključuje UC-010: organizator se dodaje automatski. Početna fotografija u UC-017 ostaje dio stvaranja terena; UC-019 odnosi se na dodavanje fotografije već postojećem terenu. Nisu dodani novi UC-ovi ni promijenjene ovlasti aktera.
+
 ## 3.2 Specifikacije obrazaca uporabe
 
 Kod svake zaštićene radnje sustav na poslužitelju provjerava prijavu i ovlasti nad konkretnim zapisom (NF-01, NF-02). Ako prijava nedostaje ili istekne, radnja se odbija do ponovne prijave. Ako akter nema ovlast, promjena se odbija bez izmjene podataka. Nepostojeći zapis prijavljuje se razumljivom porukom.
@@ -217,7 +247,7 @@ Pri neuspješnoj pohrani sustav ne prikazuje potvrdu uspjeha; povezane promjene 
 | **Primarni akter** | A-01 Posjetitelj ili A-02 Registrirani korisnik; sekundarni akter: A-06 Kartografski servis. |
 | **Povezani zahtjevi** | F-015; prikaz oglednih oglasa: F-023. |
 | **Preduvjeti** | Prijava nije potrebna. |
-| **Glavni uspješni tok** | 1. Akter otvara kartu terena.<br>2. Aplikacija prikazuje kartu s podacima OpenStreetMapa, oznaku izvora podataka i oznake terena na spremljenim koordinatama.<br>3. Akter odabire oznaku i otvara podatke terena kroz UC-016. |
+| **Glavni uspješni tok** | 1. Akter otvara kartu terena.<br>2. Aplikacija prikazuje kartu s podacima OpenStreetMapa, oznaku izvora podataka i oznake terena na spremljenim koordinatama.<br>3. Po želji akter odabire oznaku i otvara podatke terena kroz proširenje UC-016; pregled karte može završiti bez tog odabira. |
 | **Alternativni tokovi / Iznimke** | **2a - Nema terena:** Karta nema oznake i aplikacija prikazuje poruku.<br>**2b - Karta nije dostupna:** Aplikacija objašnjava da se karta ne može učitati i omogućuje ponovni pokušaj; ne prikazuje netočne lokacije. |
 | **Posljedice (ishod)** | Akter pronalazi teren i može pregledati njegove podatke. U sučelju se na predviđenim mjestima prikazuju označeni ogledni oglasi, bez povezivanja s oglasnom mrežom. |
 
@@ -295,7 +325,7 @@ Pri neuspješnoj pohrani sustav ne prikazuje potvrdu uspjeha; povezane promjene 
 | **Primarni akter** | A-05 Administrator. |
 | **Povezani zahtjevi** | F-021. |
 | **Preduvjeti** | Administrator je prijavljen i ima ovlasti za obradu prijava; postoji prijava netočnosti. |
-| **Glavni uspješni tok** | 1. Administrator otvara pregled prijava i odabire prijavu.<br>2. Aplikacija prikazuje teren i opis problema.<br>3. Administrator ispravlja podatke ili odabire uklanjanje neispravnog terena; aplikacija provjerava ovlasti, podatke i povezanost s događajima te provodi dopuštenu radnju.<br>4. Nakon uspješne obrade administrator označava prijavu riješenom, a aplikacija sprema i prikazuje njezino stanje. |
+| **Glavni uspješni tok** | 1. Administrator otvara pregled prijava i odabire prijavu.<br>2. Aplikacija prikazuje opis problema, a administrator pregledava podatke prijavljenog terena kroz uključeni UC-016.<br>3. Administrator ispravlja podatke ili odabire uklanjanje neispravnog terena; aplikacija provjerava ovlasti, podatke i povezanost s događajima te provodi dopuštenu radnju.<br>4. Nakon uspješne obrade administrator označava prijavu riješenom, a aplikacija sprema i prikazuje njezino stanje. |
 | **Alternativni tokovi / Iznimke** | **3a - Neosnovana prijava:** Administrator je označava odbijenom bez promjene terena.<br>**3b - Teren je povezan s događajima:** Brisanje se odbija bez promjene terena ili događaja; aplikacija objašnjava razlog i nudi ispravak podataka.<br>**3c - Ispravak nije valjan ili pohrana nije uspjela:** Radnja se ne potvrđuje kao uspješna; prijava se ne označava riješenom na temelju neuspjele radnje.<br>**4a - Spremanje stanja prijave nije uspjelo:** Aplikacija objašnjava problem; prethodno uspješan ispravak ili uklanjanje ostaje proveden, a administrator može ponoviti označavanje prijave. |
 | **Posljedice (ishod)** | Prijava je riješena nakon dopuštenog ispravka ili uklanjanja, odnosno odbijena ako je neosnovana. Događaji se ne brišu radi uklanjanja terena. |
 
@@ -321,13 +351,15 @@ Pri neuspješnoj pohrani sustav ne prikazuje potvrdu uspjeha; povezane promjene 
 | **Primarni akter** | A-03 Organizator ili A-04 Sudionik događaja. |
 | **Povezani zahtjevi** | F-024, F-013. |
 | **Preduvjeti** | Akter je prijavljen i organizator je ili trenutačni sudionik događaja; odabrani komentar pripada istom događaju. |
-| **Glavni uspješni tok** | 1. Akter uz komentar odabire gumb „Reply”.<br>2. Aplikacija iznad polja za pisanje prikazuje autora i tekst odabranog komentara.<br>3. Akter upisuje odgovor i odabire objavu.<br>4. Aplikacija provjerava pravo objave, neprazan tekst i pripadnost izvornog komentara istom događaju te sprema odgovor povezan s njim.<br>5. Odgovor se prikazuje u zajedničkom kronološkom popisu uz oznaku komentara na koji se odnosi. |
+| **Glavni uspješni tok** | 1. Akter uz komentar odabire gumb „Reply”.<br>2. Aplikacija iznad polja za pisanje prikazuje autora i tekst odabranog komentara.<br>3. Pokreće se uključeni UC-013: akter upisuje tekst odgovora i odabire objavu.<br>4. U sklopu provjere i spremanja iz UC-013 aplikacija provjerava pravo objave i neprazan tekst; UC-023 dodatno provjerava pripadnost izvornog komentara istom događaju. Sprema se jedan odgovor povezan s izvornim komentarom.<br>5. Odgovor se prikazuje u zajedničkom kronološkom popisu uz oznaku komentara na koji se odnosi. |
 | **Alternativni tokovi / Iznimke** | **4a - Prazan odgovor:** Aplikacija odbija objavu i traži dopunu teksta.<br>**4b - Nema ovlasti ili referenca nije valjana:** Objava se odbija ako je prestalo sudjelovanje, komentar ne postoji ili pripada drugom događaju.<br>**5a - Izvornik je naknadno obrisan:** Odgovor ostaje dostupan uz neutralnu oznaku obrisanog izvornika. |
 | **Posljedice (ishod)** | Odgovor je pohranjen s autorom, vremenom i vezom na izvorni komentar. Povezanost je vidljiva i nakon osvježavanja; ne stvaraju se zasebne rasprave izvan kronološke ploče. |
 
 ## 3.3 Provjera dosljednosti obrazaca uporabe
 
 Dijagram i specifikacije sadrže iste oznake UC-001 - UC-023. Organizator i sudionik zadržavaju mogućnosti registriranog korisnika; prava uređivanja i brisanja ovise o vlasništvu nad konkretnim sadržajem. Google i kartografski servis imaju ulogu sekundarnih aktera, dok rezervacijska stranica ostaje odredište vanjske poveznice.
+
+Dijagram sadrži 2 veze `<<include>>` i 12 veza `<<extend>>`. Njihov smjer, uključeno ponašanje te uvjeti i točke proširenja navedeni su u odjeljku 3.1.1. Registracija i prijava ostaju odvojene zbog različitih preduvjeta; sama potreba da je korisnik već prijavljen ne znači ponovno izvođenje Google prijave pri svakoj radnji.
 
 Poveznice zahtjev -> obrazac uporabe -> planirana provjera održavaju se u [matrici sljedivosti zahtjeva](2-Analiza-zahtjeva.md#26-sljedivost-zahtjeva). F-023 ostvaruje se prikazom označenih oglednih oglasa pri javnim pregledima; nema zaseban korisnički cilj ni vanjsku oglasnu mrežu. Nefunkcijski zahtjevi primjenjuju se kroz zajednička pravila i provjere tokova, bez izmišljanja zasebnih aktera ili obrazaca za pohranu i sigurnost.
 
