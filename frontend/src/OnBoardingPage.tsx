@@ -23,28 +23,14 @@ import { useCreateUser } from "@/apiStore/useUsers";
 import { ApiError } from "@/types/auth";
 
 import type { UserCreateDetails, UserSportDetails } from "@/types/user";
+import { useSports, useSkillLevels } from "@/apiStore/useSif";
 
-const SPORTS = [
-  { id: 1, name: "Football" },
-  { id: 2, name: "Basketball" },
-  { id: 3, name: "Tennis" },
-  { id: 4, name: "Volleyball" },
-];
-
-const SKILL_LEVELS = [
-  { id: 1, name: "Beginner" },
-  { id: 2, name: "Intermediate" },
-  { id: 3, name: "Advanced" },
-  { id: 4, name: "Expert" },
-];
 
 type FormErrors = Partial<Record<keyof UserCreateDetails, string>>;
 
 function createEmptySport(): UserSportDetails {
   return {
-    id: 0,
     sportId: 0,
-    sportName: "",
     skillLevelId: 0,
   };
 }
@@ -197,6 +183,19 @@ export default function RegistrationForm() {
     }
   }
 
+  const {data: SPORTS, isLoading: sportsIsLoading, error: sportsError} = useSports();
+  const {data: SKILL_LEVELS, isLoading: skillsIsLoading, error: skillsError} = useSkillLevels();
+
+  if (!SPORTS || !SKILL_LEVELS || sportsIsLoading || skillsIsLoading || sportsError || skillsError) {
+    return(
+      <div>
+        ERROR:
+        {sportsError && sportsError.message}
+        {skillsError && skillsError.message}
+      </div>
+    )
+  }
+
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="mx-auto w-full max-w-md space-y-4">
       {serverError && (
@@ -325,7 +324,6 @@ export default function RegistrationForm() {
                 updated[index] = {
                   ...sport,
                   sportId: selectedSport.id,
-                  sportName: selectedSport.name,
                 };
 
                 update("sports", updated);

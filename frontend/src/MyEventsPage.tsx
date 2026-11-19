@@ -467,6 +467,8 @@ export function EventCard({ eventId }: { eventId: number }) {
     eventStatusText = "otkazan";
   }
 
+  console.log(event)
+
   return (
     // <Link to={`/events/${eventId}`} className="select-auto">
     <Card className={"transition-all duration-200 hover:scale-101 active:scale-99 p-0 " + eventCardOpacity}
