@@ -60,33 +60,33 @@ Putanje osim prve dvije imaju prefiks `/api/v1`. Šifrarnici su u [§4 API ugovo
 | POST | `/auth/register` | registracija u tijeku | JSON (§4), `X-XSRF-TOKEN` | `201 {"id": …}` | `400`, `401`, `403`, `409` | ✓ |
 | POST | `/auth/logout` | svi | `X-XSRF-TOKEN` | `204` | `403` CSRF | ✓ |
 | GET, PATCH | `/users/me` | prijavljen | PATCH: promijenjena polja | `200` profil | `400`, `401`, `403`, `409` | #63 |
-| PUT | `/users/me/photo` | prijavljen | `multipart/form-data`, polje `file` | `200` profil | `400`, `401`, `403`, `413` | #67, Prijedlog |
-| GET | `/photos/{fileName}` | svi | – | `200` slika | `404` | #67, Prijedlog |
+| GET, PUT | `/users/me/photo` | prijavljen | PUT: `multipart/form-data`, dio `file` | `200 {profilePhotoUrl, csrfToken, csrfHeaderName}` | `400`, `401`, `403`, `413`, `503` | ✓ (#77) |
+| GET | `/profile-photos/{name}` | prijavljen | – | `200` JPEG ili PNG | `404` | ✓ (#77) |
 | GET | `/sports`, `/cities`, `/skill-levels` | svi | – | `200` popis | – | #64 |
 
-**Prijedlog (fotografija, #67):** `image/jpeg`, `image/png` ili `image/webp`, najviše 5 MB, vrstu provjerava backend (`400 errors.file`). Datoteke idu u `${APP_UPLOAD_DIR}` pod imenom `<UUID>.<ekstenzija>`, a poslužuje ih javni `GET /api/v1/photos/{fileName}`. `profilePhotoUrl` je relativna putanja, npr. `/api/v1/photos/3f2a….jpg`. Pri zamjeni se stara datoteka briše.
+**Fotografija (#67, ✓ #77):** JPEG ili PNG do 5 MiB i 4096 × 4096 piksela. Sprema se pod UUID imenom u `${PROFILE_PHOTO_DIRECTORY}`, a `profilePhotoUrl` pokazuje na `/api/v1/profile-photos/{name}`. Detalji su u [profile-photo.md](../profile-photo.md).
 
-Rute `/cities`, `/skill-levels` i `/photos/*` treba dodati u javne `GET` rute u `SecurityConfig`.
+Rute `/cities` i `/skill-levels` postaju javne u PR-u #84.
 
 ## 4. JSON
 
 `POST /api/v1/auth/register`:
 
 ```json
-{"name": "Ana Horvat", "username": "ana", "gender": "Female", "birthDate": "2002-03-14",
+{"name": "Ana Horvat", "username": "ana", "gender": "Female", "dateOfBirth": "2002-03-14",
  "cityId": 1, "sports": [{"sportId": 1, "skillLevelId": 2}, {"sportId": 3, "skillLevelId": 1}]}
 ```
 
 Odgovor `201`: `{"id": 12}`. `sub` i e-pošta dolaze iz sesije, nikad iz tijela zahtjeva.
 
-> **Za ispraviti:** `RegisterRequest` trenutno prima `dateOfBirth`, a ugovor ([§3.1](api-endpoints.md#31-json-model-i-pravila-za-f-004), tablica 2.5 analize zahtjeva) i `RegistrationIntegrationTest` šalju `birthDate`. Zato 3 od 6 testova registracije padaju s `400 {"errors": {"dateOfBirth": "Datum rođenja je obavezan."}}`. Polje u `RegisterRequest` treba preimenovati u `birthDate`.
+> **Naziv polja:** datum rođenja je `dateOfBirth` u svim JSON-ima, kao `users.date_of_birth`, `RegisterRequest` i frontend (dogovor na reviewu #75). `RegistrationIntegrationTest` još šalje `birthDate`, pa 3 od 6 testova padaju dok se test ne uskladi.
 
 | Polje | Pravilo | Greška |
 | --- | --- | --- |
 | `name` | nije prazno, sprema se bez razmaka na rubovima ✓ | `400 errors.name` |
 | `username` | nije prazno, jedinstveno (razlikuje velika i mala slova), bez razmaka na rubovima ✓ | `400 errors.username`, `409 "Korisničko ime je zauzeto."` |
 | `gender` | `Male`, `Female` ili `Other` ✓ | `400 errors.gender` |
-| `birthDate` | obavezan, nije u budućnosti ✓; od `1900-01-01` (V6) | `400 errors.birthDate` |
+| `dateOfBirth` | obavezan, nije u budućnosti ✓; od `1900-01-01` (V6) | `400 errors.dateOfBirth` |
 | `cityId` | postojeći grad ✓ | `400 errors.cityId` |
 | `sports` | barem jedan, postojeći ID-evi, sport se ne ponavlja ✓ | `400 errors.sports` |
 
@@ -99,13 +99,13 @@ type Gender = 'Male' | 'Female' | 'Other';   // sučelje: "Muško", "Žensko", "
 type AppRole = 'USER' | 'ADMIN';
 interface UserSport { sportId: number; skillLevelId: number; }
 interface MyProfile { id: number; name: string; username: string; profilePhotoUrl: string | null;
-  gender: Gender; birthDate: string; age: number; cityId: number; appRoleId: AppRole; sports: UserSport[]; }
-interface RegisterRequest { name: string; username: string; gender: Gender; birthDate: string;
+  gender: Gender; dateOfBirth: string; age: number; cityId: number; appRoleId: AppRole; sports: UserSport[]; }
+interface RegisterRequest { name: string; username: string; gender: Gender; dateOfBirth: string;
   cityId: number; sports: UserSport[]; }
 interface ApiError { message?: string; errors?: Record<string, string>; }
 ```
 
-`frontend/src/types/user.ts` zamjenjuje se ovim tipovima: `camelCase`, `AppRole` samo `USER`/`ADMIN`, obavezni `gender`, `birthDate` i `cityId`.
+`frontend/src/types/user.ts` zamjenjuje se ovim tipovima: `camelCase`, `AppRole` samo `USER`/`ADMIN`, obavezni `gender`, `dateOfBirth` i `cityId`.
 
 ## 5. Statusni kodovi
 
@@ -117,7 +117,7 @@ interface ApiError { message?: string; errors?: Record<string, string>; }
 | `403` | `"Registracija nije dovršena."`; bez `message` kad nedostaje ili ne vrijedi `X-XSRF-TOKEN`; prijavljen, ali bez ovlasti |
 | `404` | resurs ne postoji |
 | `409` | `"Korisničko ime je zauzeto."` ili `"Registracija je već dovršena."` |
-| `413` | fotografija veća od 5 MB (Prijedlog, #67) |
+| `413` | fotografija veća od 5 MiB ✓ (#77) |
 
 **Prijedlog: baza nikad ne vraća `500`.** `RegistrationService` prvo sam provjerava pravila. Kod istodobnih zahtjeva ograničenje baze ipak može puknuti (`users_username_key`, `oauth_accounts_provider_provider_user_id_key`, `oauth_accounts_user_provider_key`), a `CHECK` iz V6 hvata datum rođenja prije 1900. `ApiExceptionHandler` treba `DataIntegrityViolationException` preslikati u `409` ili `400`.
 
@@ -156,21 +156,21 @@ server: { proxy: { '/api': 'http://localhost:8080', '/oauth2': 'http://localhost
 
 | Zadatak | Dio ugovora |
 | --- | --- |
-| #54 – #56 REG (backend) | osnova je u #76 ✓; ostaje `birthDate` (§4) i `409`/`400` umjesto `500` (§5) |
+| #54 – #56 REG (backend) | osnova je u #76 ✓; ostaje test s `dateOfBirth` (§4) i `409`/`400` umjesto `500` (§5) |
 | #57, #65 REG (frontend) | `/login?loginError`, `/register` s pravilima iz §4, "Odustani", §7 |
 | #58, #59 LOGIN | preusmjeravanja ✓; stanje preko `['me']`, navigacijska traka, `api_v1.ts`, Vite proxy |
 | #60 LOGIN-03 | testovi po uzoru na `RegistrationIntegrationTest` (`oauth2Login().clientRegistration(...).attributes(...)`), za sva tri stanja iz §2 |
 | #61, #62 LOGOUT | backend ✓; gumb s `X-XSRF-TOKEN` i čišćenje `['me']` |
 | #63, #66 PROFILE | `GET`/`PATCH /users/me` s `@CurrentUserId`, `409` za zauzet `username` |
 | #64 PROFILE-02 | `/sports`, `/cities`, `/skill-levels` (javne u `SecurityConfig`); `user_sports` pri `PATCH` |
-| #67 PROFILE-05 | fotografija, pohrana i `413` (§3) |
+| #67 PROFILE-05 | ✓ (#77), detalji u [profile-photo.md](../profile-photo.md) |
 | #68 PROFILE-06 | pravila iz §4 i §5, `401`, `403` u registraciji i bez CSRF-a |
 | #69 SHARED-01 | ✓ (V4 – V6) |
 | #71, #72 SHARED | `SecurityConfig` ✓ i zaštita ruta iz §7; E2E scenariji iz §1 |
 
 ## 10. Otvoreno
 
-- `birthDate` u `RegisterRequest` (§4), jer o tome ovisi registracija s frontenda.
-- Nepoznata polja u JSON-u: §3.1 traži `400`, a Spring ih sada prešutno ignorira. Zato greška s `birthDate` nije bila vidljiva. **Prijedlog:** `spring.jackson.deserialization.fail-on-unknown-properties=true`.
+- Uskladiti `dateOfBirth`: `RegistrationIntegrationTest` (šalje `birthDate`) i `UpdateUserRequest` na `feature/users-api`.
+- Nepoznata polja u JSON-u: §3.1 traži `400`, a Spring ih sada prešutno ignorira. Zato greška s nazivom datuma rođenja nije bila vidljiva. **Prijedlog:** `spring.jackson.deserialization.fail-on-unknown-properties=true`.
 - Kako backend provjerava ulogu `ADMIN` (F-021)?
 - Postoji li minimalna dob? Zasad vrijedi raspon od 1900. do danas.

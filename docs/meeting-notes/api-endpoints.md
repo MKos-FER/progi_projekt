@@ -39,7 +39,7 @@ Detaljan tijek, stanja sesije, JSON strukture, kodovi grešaka i pravila sesije 
 | GET    | `/oauth2/authorization/google`  | Pokreće Google prijavu; frontend radi navigaciju cijele stranice, ne `fetch`                                                          | -                                                                                          | Public                     | F-001, F-002        |
 | GET    | `/oauth2/login/code/google`     | OIDC povratni poziv koji obrađuje Spring Security; preusmjerava na `/`, `/register` ili `/login?loginError`; frontend ga ne poziva ručno | Query: `code`, `state` (vraća Google)                                                      | OAuth flow                 | F-001, F-002        |
 | GET    | `/api/v1/auth/csrf`             | Postavlja cookie `XSRF-TOKEN`, čiju vrijednost frontend šalje u zaglavlju `X-XSRF-TOKEN`; vraća `204`                                 | -                                                                                          | Public                     | F-001 – F-004       |
-| POST   | `/api/v1/auth/register`         | Dovršava registraciju: u jednoj transakciji sprema korisnika, sportove i Google identitet; vraća `201 {"id": …}`                   | Body: `name`, `username`, `gender`, `birthDate`, `cityId`, `sports: [{sportId, skillLevelId}]` | Google prijava bez računa | F-001, F-004        |
+| POST   | `/api/v1/auth/register`         | Dovršava registraciju: u jednoj transakciji sprema korisnika, sportove i Google identitet; vraća `201 {"id": …}`                   | Body: `name`, `username`, `gender`, `dateOfBirth`, `cityId`, `sports: [{sportId, skillLevelId}]` | Google prijava bez računa | F-001, F-004        |
 | POST   | `/api/v1/auth/logout`           | Odjavljuje korisnika ili odbacuje registraciju u tijeku; poništava sesiju i vraća `204`                                               | Bez bodyja; zaglavlje `X-XSRF-TOKEN`                                                       | Public (bez sesije `204`)  | F-001, F-003        |
 
 Nakon uspješnog Google logina backend provjerava identitet i traži korisnika samo po Googleovom `sub`. Ako korisnik postoji, prijavljuje ga. Ako ne postoji, ne stvara ga, nego sesija prelazi u stanje registracije u tijeku, a lokalni račun nastaje tek kroz `POST /api/v1/auth/register`. Frontend stanje dohvaća s `GET /api/v1/users/me`: `200` za registriranog korisnika, `401` bez prijave i `403` dok registracija nije dovršena. Profil nema polja o dovršenosti, jer je svaki spremljeni profil potpun. Nema API-ja za lokalno postavljanje lozinke.
@@ -49,7 +49,7 @@ Nakon uspješnog Google logina backend provjerava identitet i traži korisnika s
 | Metoda | Putanja           | Opis                                      | Podaci koji se šalju                                                                                                  | Permission    | Zahtjev |
 | ------ | ----------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------- | ------- |
 | GET    | `/users/me`       | Dohvat vlastitog profila                  | -                                                                                                                     | Authenticated | F-004   |
-| PATCH  | `/users/me`       | Uređivanje postojećeg profila             | Body: `name`, `username`, `gender`, `birthDate`, `cityId`, `sports: [{sportId, skillLevelId}]` (samo mijenjana polja) | Authenticated | F-004   |
+| PATCH  | `/users/me`       | Uređivanje postojećeg profila             | Body: `name`, `username`, `gender`, `dateOfBirth`, `cityId`, `sports: [{sportId, skillLevelId}]` (samo mijenjana polja) | Authenticated | F-004   |
 | PUT    | `/users/me/photo` | Postavljanje/zamjena profilne fotografije | Multipart: `file`                                                                                                     | Authenticated | F-004   |
 | GET    | `/users`          | Pretraga i filtriranje igrača             | Query: `sportId`, `cityId`, `ageMin`, `ageMax`, `skillLevelId`                                                        | Authenticated | F-005   |
 | GET    | `/users/{userId}` | Pregled profila odabranog igrača          | Path: `userId`                                                                                                        | Authenticated | F-005   |
@@ -74,10 +74,10 @@ Primjer: `GET /api/v1/users?cityId=1&sportId=2&skillLevelId=1` vraća igrače iz
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`, `username` | Neprazni tekstovi; username je jedinstven uz razlikovanje velikih i malih slova i služi prikazu.                                                                                  |
 | `gender`           | Obavezna vrijednost `Male`, `Female` ili `Other`; sučelje prikazuje prijevod.                                                                                                     |
-| `birthDate`        | Obavezan datum oblika `YYYY-MM-DD`, od `1900-01-01`; budući datum nije dopušten.                                                                                                  |
+| `dateOfBirth`        | Obavezan datum oblika `YYYY-MM-DD`, od `1900-01-01`; budući datum nije dopušten.                                                                                                  |
 | `cityId`           | Obavezan pozitivan cjelobrojni ID postojećeg grada (1–32767).                                                                                                                     |
 | `sports`           | Neprazan popis `{sportId, skillLevelId}`; oba ID-a moraju postojati i biti cijeli brojevi 1–32767. Svaki element sadrži točno ta dva polja. Svaki sport navodi se najviše jednom. |
-| `profilePhotoUrl`  | Samo u odgovoru; relativna putanja `/api/v1/photos/{fileName}` (javna ruta, vidi [autentifikacija-i-profil.md](autentifikacija-i-profil.md)). Ne prima se kroz `PATCH`.                                                                                         |
+| `profilePhotoUrl`  | Samo u odgovoru; relativna putanja `/api/v1/profile-photos/{name}` (vidi [profile-photo.md](../profile-photo.md)). Ne prima se kroz `PATCH`.                                                                                         |
 
 `GET` i uspješan `PATCH`/`PUT` vraćaju isti flat JSON model:
 
@@ -88,7 +88,7 @@ Primjer: `GET /api/v1/users?cityId=1&sportId=2&skillLevelId=1` vraća igrače iz
   "username": "ana",
   "profilePhotoUrl": null,
   "gender": "Female",
-  "birthDate": "2002-03-14",
+  "dateOfBirth": "2002-03-14",
   "age": 24,
   "cityId": 1,
   "appRoleId": "USER",
