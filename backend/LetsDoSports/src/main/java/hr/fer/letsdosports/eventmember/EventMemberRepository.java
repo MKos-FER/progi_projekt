@@ -39,12 +39,20 @@ public class EventMemberRepository {
     public List<EventMemberResponse> listMembers(Long eventId) {
         return jdbc.sql("""
                 SELECT u.id AS user_id, u.username AS username, u.name AS name,
-                       m.joined_at AS joined_at, (u.id = e.created_by_id) AS organizer
+                       m.joined_at AS joined_at, , u.profile_photo_url,
+                       COALESCE((
+                           SELECT json_agg(json_build_object(
+                                      'sport', us.id,
+                                      'sport_skill_level', us.id))
+                           FROM user_sports us
+                           WHERE us.user_id = u.id
+                       ), '[]'::json) AS sports, (u.id = e.created_by_id) AS organizer
                 FROM event_members m
                 JOIN users u ON u.id = m.user_id
                 JOIN events e ON e.id = m.event_id
                 WHERE m.event_id = :e
-                ORDER BY m.joined_at, m.id""")
+                ORDER BY m.joined_at, m.id
+                """)
                 .param("e", eventId).query(EventMemberResponse.class).list();
     }
 
