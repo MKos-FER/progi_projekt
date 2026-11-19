@@ -1,295 +1,204 @@
 # 4. Arhitektura i oblikovanje
 
-**Cilj:** Definirati arhitekturni stil, dekompoziciju programa na podsustave i module, organizaciju podataka te dinamičko ponašanje tijekom izvođenja. Arhitektura predstavlja temelj za implementaciju i ažurira se pri svakoj važnijoj promjeni projektnih odluka.
+Let's Do Sports je monolitna web-aplikacija: web-klijent (React SPA) poziva jedan poslužiteljski dio (Spring Boot, REST API pod prefiksom `/api/v1`), a on podatke drži u bazi PostgreSQL. Poslužiteljski dio podijeljen je na module po funkcionalnostima (`auth`, `event`, `eventmember`, `profile`, ...), koji se postavljaju zajedno kao jedna aplikacija. Opis odgovara stanju grane `master` na dan 19. 11. 2026.; dijelovi iz otvorenih PR-ova označeni su brojem PR-a, a neizrađeni dijelovi oznakom „planirano”.
 
 | Arhitekturni pogled | Ključno inženjersko pitanje | Primijenjeni model ili dijagram |
 | :--- | :--- | :--- |
 | **Strategija rješenja** | Koji stil i temeljne odluke određuju program? | Tablica odluka (odjeljak 4.1) |
-| **Struktura podsustava** | Koji su glavni dijelovi i kako komuniciraju? | Dijagram komponenata |
-| **Model podataka** | Kako su strukturirani trajni podaci programa? | Relacijski ER dijagram |
-| **Struktura koda** | Kako su dodijeljene odgovornosti i ključne klase? | Reprezentativni dijagram razreda |
-| **Dinamičko ponašanje** | Kako moduli surađuju pri obradi ključnih transakcija? | sekvencijski dijagram |
-| **Stanja sustava** | Kako ključni domenski objekt mijenja svoja stanja? | Dijagram stanja |
-| **Fizički razmještaj** | Na kojim se izvršnim čvorovima program izvodi? | Dijagram razmještaja (poglavlje 6) |
+| **Struktura podsustava** | Koji su glavni dijelovi i kako komuniciraju? | Dijagram komponenata (4.2) |
+| **Model podataka** | Kako su strukturirani trajni podaci programa? | Relacijski ER dijagram (4.3.1) |
+| **Struktura koda** | Kako su dodijeljene odgovornosti i ključni razredi? | Dijagram razreda za događaje i sudjelovanje (4.3.2) |
+| **Dinamičko ponašanje** | Kako moduli surađuju pri obradi ključnih transakcija? | Sekvencijski dijagram prijave na događaj (4.4.1) |
+| **Stanja sustava** | Kako ključni domenski objekt mijenja svoja stanja? | Dijagram stanja događaja (4.4.2) |
+| **Fizički razmještaj** | Na kojim se izvršnim čvorovima program izvodi? | Dijagram razmještaja ([poglavlje 6](./6-Postavljanje-instalacija-i-konfiguracija.md), u izradi) |
 
 ---
 
-Za svaki UML dijagram čuvajte čitljivu sliku i PlantUML izvor, kako je opisano na stranici [Home](./Home.md). U dovršenoj stranici koristite vlastite projektne odluke i modele.
+Svi UML dijagrami izrađeni su u PlantUML-u. Izvori su u `docs/puml/`, a SVG slike u `docs/assets/diagrams/` generira GitHub workflow `generate-puml-diagrams.yaml` nakon spajanja izmjena u `master`.
 
 ## 4.1 Ključne arhitekturne odluke
 
-**Cilj:** Objasniti nekoliko arhitekturnih odluka koje najviše utječu na rješenje i navesti njihove projektno specifične razloge.
-
 | Odluka | Razmatrana alternativa | Projektno specifično obrazloženje i kompromis |
 | --- | --- | --- |
-|  |  |  |
-
-Objasnite glavne arhitekturne odluke bez ponavljanja popisa tehnologija. Ako važna odluka ima ADR, dovoljno je u tablici navesti njegov ID.
-
-<details>
-<summary><strong>Primjer arhitekturnih odluka i kompromisa</strong></summary>
-
-**Primjer — CrisisMap:**
-
-| Odluka | Razmatrana alternativa | Projektno specifično obrazloženje i kompromis |
-| --- | --- | --- |
-| Klijent u pregledniku i jedan poslužiteljski API | Više zasebno postavljenih poslužiteljskih usluga | Klijent prikazuje kartu, dok poslužiteljski sustav provjerava i pohranjuje prijave. Jedan poslužiteljski sustav upravljiv je za ovaj opseg; njegov kvar može privremeno prekinuti rad s prijavama. Obrazloženje je u ADR-01. |
-| Relacijska pohrana prijava | Dokumentno orijentirana pohrana | Prijave imaju prepoznatljive veze s korisnicima i lokacijama. Relacijska shema te veze čini eksplicitnima, ali zahtijeva migracije kada se shema promijeni. |
-
-**Analiza primjera:** Obje odluke navode razlog vezan uz aplikaciju za prijavljivanje kriznih događaja i priznaju kompromis. Odluka o poslužiteljskom sustavu upućuje na ADR-01 umjesto ponavljanja cijele usporedbe. Moduli unutar jedne aplikacije koja se postavlja kao cjelina nisu zasebne mikrousluge. U vlastitoj tablici navedite alternative koje je tim doista razmatrao.
-
-</details>
+| Jedan poslužiteljski dio (Spring Boot) s modulima po funkcionalnostima | Više zasebno postavljenih usluga | Tim od nekoliko ljudi u jednom semestru lakše razvija, postavlja i ispituje jednu aplikaciju. Moduli (`event`, `eventmember`, `auth`, `profile`) imaju odvojene odgovornosti, ali dijele proces i bazu. Kvar aplikacije zahvaća sve funkcionalnosti odjednom. |
+| Prijava isključivo preko Googlea (OAuth 2.0 / OIDC), bez lozinki | Vlastita prijava e-poštom i lozinkom (početni zapis zahtjeva, 23. 10. 2026.) | Aplikacija ne pohranjuje lozinke, a identitet je Googleov `sub`. Svaki korisnik mora imati Google račun i nema povezivanja više računa (C-06). Obrazloženje je u ADR-01. |
+| Poslužiteljska sesija (`JSESSIONID`) i CSRF zaštita | JWT koji čuva web-klijent | Token nije dostupan JavaScriptu, a odjava odmah poništava sesiju. Zahtijeva CSRF zaštitu i isto ishodište (engl. *same-origin*) za klijent i API. Obrazloženje je u ADR-02. |
+| Stanje događaja računa se iz podataka (pogled `events_with_status`) | Stupac `status` koji održava poslužiteljski dio | Stanje se ne može razići s brojem sudionika i terminom. Cijena je izračun s `now()` i `COUNT` pri svakom upitu. Obrazloženje je u ADR-03. |
+| Ručno pisani SQL preko Spring `JdbcClient`, shema u Flyway migracijama | JPA/Hibernate s automatskim stvaranjem sheme | Shemu i pravila (CHECK, UNIQUE, pogledi, okidači) drže SQL migracije u `db/migrations`. Migracije pokreće uloga `lds_admin` u zasebnom spremniku `migrate`, a aplikacija radi kao `lds_app` bez DDL prava. Mapiranje redaka u objekte piše se ručno, a aplikacija pri pokretanju ne provjerava je li shema ažurna. |
+| Zaključavanje događaja (`SELECT ... FOR UPDATE`) pri prijavi i odjavi | Jedan uvjetni `INSERT ... SELECT ... WHERE count < max` | Sve provjere (status, dob, razina iskustva) izvode se nad zaključanim događajem, pa istodobne prijave ne mogu prepuniti događaj. Istodobne prijave na isti događaj čekaju jedna drugu. `UNIQUE(event_id, user_id)` je dodatna zaštita u bazi. |
+| Isto ishodište za klijent i API (Vite proxy u razvoju, Caddy u produkciji) | CORS konfiguracija na poslužiteljskom dijelu | Kolačići sesije i CSRF-a rade bez CORS-a. Poslužiteljski dio u svakom okruženju mora biti iza posrednika. |
 
 ## 4.2 Gradivni blokovi i UML dijagram komponenata
 
-**Cilj:** Prikazati logičku podjelu programa na komponente, njihova sučelja i vanjske integracije. Dijagram komponenata prikazuje logičku organizaciju, dok dijagram razmještaja prikazuje fizičko izvođenje. Ovaj prikaz ažurirajte kako sustav poprima konačan oblik.
+![Dijagram komponenata sustava Let's Do Sports](./assets/diagrams/4-1-lets-do-sports-CMP.svg)
 
-**Dijagram komponenata:** [Ugradite čitljiv UML dijagram komponenata.]  
-**PlantUML izvor:** [Poveznica na odgovarajuću `.puml` datoteku.]
+**Slika 4.1. Dijagram komponenata sustava Let's Do Sports**
+
+**PlantUML izvor:** [4-1-lets-do-sports-CMP.puml](./puml/4-1-lets-do-sports-CMP.puml)
 
 | Komponenta | Odgovornost | Razlog za ovu granicu |
 | --- | --- | --- |
-|  |  |  |
+| Web-klijent (`frontend/src`) | Stranice i usmjeravanje (`App.tsx`, react-router), dohvat i privremena pohrana podataka s poslužitelja (`apiStore/`, TanStack Query), HTTP klijent s CSRF zaglavljem (`api/api_v1.ts`), lokacija iz preglednika (`lib/geolocation.ts`). | Prikaz i interakcija odvojeni su od poslovnih pravila; svi pozivi API-ja prolaze kroz jedan modul. |
+| Obrnuti posrednik (Caddy / Vite proxy) | Prosljeđuje `/api/*` i `/oauth2/*` poslužiteljskom dijelu, a ostale putanje poslužuje kao statičke datoteke klijenta. | Klijent i API dijele ishodište, pa kolačići rade bez CORS-a. U produkciji Caddy, poslužiteljski dio i PostgreSQL rade na jednom poslužitelju; detaljan razmještaj bit će u poglavlju 6. |
+| `config` | `SecurityConfig` (OAuth 2.0 prijava, sesija, CSRF, javne i zaštićene rute) i `ApiPrefixConfig` (prefiks `/api/v1`, registracija `CurrentUserArgumentResolver`). | Sigurnosna pravila i konvencije API-ja definirani su na jednom mjestu za sve module. |
+| `auth` | Registracija (`POST /auth/register`), CSRF token (`GET /auth/csrf`), anotacija `@CurrentUserId` i njezin resolver koji sesiju preslikava u `users.id`. | Kontroleri ostalih modula dobivaju samo `userId` i ne ovise o detaljima OAuth-a. |
+| `event` | Stvaranje, pretraga, uređivanje i otkazivanje događaja, popis vlastitih događaja; globalni `ApiExceptionHandler`. | Pravila događaja (organizator, teren, uvjeti) imaju jedno mjesto. |
+| `eventmember` | Popis sudionika, prijava i odjava s događaja. | Pravila sudjelovanja odvojena su od uređivanja događaja; modul koristi `EventService` za zaključavanje i stanje. |
+| `profile` i `PhotoStorage` | Postavljanje i dohvat profilne fotografije; provjera, ponovno kodiranje i spremanje datoteke na disk. | Rad s datotečnim sustavom izoliran je iza jedne komponente, pa se pohrana može zamijeniti bez izmjene ostatka modula. |
+| `lookup`, `usersport` (PR #84, nije na masteru) | Šifrarnici (`/sports`, `/cities`, `/skill-levels`) i zamjena popisa sportova korisnika. | Šifrarnici su javni i jednostavni. Zamjena cijelog popisa sportova namijenjena je uređivanju profila (`PATCH /users/me`, još nije izrađeno); registracija sportove upisuje zasebno. |
+| PostgreSQL 18 i Flyway `migrate` | Trajna pohrana; shema iz `db/migrations` (V1–V6 na masteru, V7 u PR #84). | Shema i ograničenja definirani su neovisno o aplikaciji; migracije se izvode s drugom ulogom nego aplikacija. |
+| Direktorij fotografija | Datoteke profilnih fotografija (`PROFILE_PHOTO_DIRECTORY`). | U bazi se pohranjuje samo URL. |
 
-Započnite crtanjem granice oko predloženog sustava. Unutar nje prepoznajte dijelove s različitim odgovornostima; planiranu bazu podataka aplikacije smjestite unutar granice, a usluge trećih strana izvan nje. Važne veze označite podatkom ili uslugom koja njima prolazi. Logička komponenta može biti modul unutar jedne poslužiteljske aplikacije: zaseban pravokutnik ne znači zasebno postavljenu uslugu. Tijekom implementacije ažurirajte dijagram kada se promijene odgovornosti ili veze. U završnoj inačici čitatelj treba moći povezati njegove dijelove s kodom. Dijagram razmještaja odgovara na pitanje gdje se ti dijelovi stvarno izvode.
-
-<details>
-<summary><strong>Granica sustava, odgovornosti i vanjske ovisnosti</strong></summary>
-
-**Primjer — CrisisMap:** Predložena arhitektura podržava podnošenje prijava kriznih događaja, prikaz na karti i obavijesti o potvrđenim prijavama.
-
-![Dijagram komponenata sustava CrisisMap](./assets/diagrams/4-1-crisismap-system-CMP.svg)
-
-**Slika 4.1. Dijagram komponenata sustava CrisisMap**
-
-**PlantUML izvor:** [izvor](./puml/4-1-crisismap-system-CMP.puml)
-
-| Dio | Odgovornost | Razlog za ovu granicu |
-| --- | --- | --- |
-| Web-klijent | Prikazuje prijave i prikuplja podatke za novu prijavu. | Korisnička interakcija odvojena je od pravila prijave i trajne pohrane. |
-| API za prijave | Prihvaća zahtjeve za rad s prijavama i vraća odgovore. | Odgovornosti izložene putem HTTP-a odvojene su od obrade prijava. |
-| Usluga za prijave | Primjenjuje pravila prijave i pristupa pohranjenim prijavama. | Pravila provjere valjanosti i pohrane prijava imaju jasno mjesto odgovornosti. |
-| Proces za obavijesti | Određuje korisnike koji trebaju primiti obavijest i traži od vanjskog pružatelja da je pošalje. | Obrada obavijesti odvojena je od odgovaranja na korisnikov zahtjev za prijavu. |
-
-**Analiza primjera:** Vanjska granica odvaja predloženi sustav od pružatelja kartografskih usluga i pružatelja obavijesti. Unutarnja granica grupira API za prijave, uslugu za prijave i proces za obavijesti unutar jedne poslužiteljske aplikacije; njihovi zasebni simboli prikazuju predložene odgovornosti, a ne neovisno postavljene usluge. PostgreSQL pohranjuje podatke aplikacije, dok pružatelj kartografskih usluga osigurava kartografske pločice. Strelice sažimaju ovisnosti, a ne redoslijed transakcije; taj redoslijed prikazuje sekvencijski dijagram. Izostavite proces za obavijesti i Firebase Cloud Messaging ako obavijesti nisu dio odobrenog opsega. Pružatelja prijave u sustav uključite samo ako to zahtijeva odobreni zadatak. Kako implementacija napreduje, ispravite svaku predloženu granicu koja se pokaže netočnom; završni dijagram mora odgovarati onome što je tim izgradio. Jedan koherentan prikaz komponenata korisniji je od nekoliko gotovo jednakih inačica s proturječnim vezama.
-
-</details>
+Izvan granice sustava su Google OIDC (prijava), OpenStreetMap pločice (planirano: karta još nije uvedena, a knjižnica za prikaz još nije odabrana) i vanjske stranice za rezervaciju terena (planirano: aplikacija će prema njima samo voditi poveznicom). Planirani moduli (komentari, tereni, prijave netočnosti, administracija, `GET/PATCH /users/me` i pretraga igrača) još nisu na masteru i nisu prikazani kao komponente. Pretraga igrača razvija se na grani `feature/users-api`.
 
 ## 4.3 Model podataka i oblikovanje razreda
 
-**Cilj:** Objasniti važne informacije koje aplikacija pohranjuje i jedno reprezentativno područje oblikovanja na razini razreda. Model podataka i UML dijagram razreda odgovaraju na različita pitanja; jedno ne zamjenjuje drugo.
-
 ### 4.3.1 ER dijagram i model podataka
 
-**Cilj:** Prikazati važne pohranjene entitete, njihove identifikatore i veze te dovoljno atributa za razumijevanje podataka aplikacije. ER dijagram odvojen je od reprezentativnog UML dijagrama razreda u nastavku.
+**ER dijagram:**
 
-**ER dijagram:** [Ugradite čitljiv dijagram projekta.]  
-**Izvor dijagrama:** [Poveznica na njegov izvor.]  
-**Implementacija:** [Navedite gdje je odgovarajući model podataka definiran u projektu.]
+![ER dijagram sustava Let's Do Sports](./assets/diagrams/Let's%20Do%20Sports%20-%20ERDv6.svg)
 
-<details>
-<summary><strong>Jedna prijava poplave i povezani podaci</strong></summary>
+**Slika 4.2. ER dijagram sustava Let's Do Sports (ERDv6)**
 
-**Primjer — CrisisMap:** Ana putem svojeg korisničkog računa podnosi prijavu poplave `R-104`. Odabire lokaciju na karti i označava razinu ozbiljnosti kao visoku. Građanin može podnijeti više prijava; svaka prijava pripada jednoj kategoriji kriznog događaja, primjerice *Poplava*. Aplikacija pohranjuje prijavu i njezine koordinate. Kartografske pločice dolaze od vanjskog pružatelja i nisu entiteti u modelu podataka aplikacije.
+**Izvor dijagrama:** [Let's Do Sports - ERDv6.puml](./puml/Let's%20Do%20Sports%20-%20ERDv6.puml)
 
-![ER dijagram podataka sustava CrisisMap](./assets/diagrams/4-2-crisismap-data-ERD.svg)
+**Implementacija:** SQL migracije u [`db/migrations`](../db/migrations) (V1–V6 na masteru; V7 u PR #84) i opis baze u [`db/README.md`](../db/README.md).
 
-**Slika 4.2. ER dijagram podataka sustava CrisisMap**
+Implementirane tablice prema migracijama:
 
-**PlantUML izvor:** [izvor](./puml/4-2-crisismap-data-ERD.puml)
+- **V2:** šifrarnici `sif_city`, `sif_skill_level` (s `rank`) i `sports`; `users`, `venues`, `events`, `event_members` (`UNIQUE(event_id, user_id)`) i pogled `events_with_status`.
+- **V3:** `user_sports`, `venue_sports` i dodatni podaci o terenu (plaćanje, rezervacija, vanjski URL).
+- **V4–V6:** `sif_app_role`, `sif_permissions`, `app_role_has_permissions`, `oauth_accounts`; obavezni spol, datum rođenja i grad korisnika; jedan Google račun po korisniku.
+- **V7 (PR #84):** odgođeni okidač `user_sports_last_sport_guard` koji pri `COMMIT`-u odbija brisanje ili premještanje zadnjeg sporta korisnika (unos korisnika bez sportova ne provjerava). Okidač nije prikazan u ERD-u.
 
-**Analiza primjera:** `R-104` ima jednog autora i jednu kategoriju; Ana i kategorija *Poplava* mogu biti povezane s više prijava. Dijagram prikazuje veze bez prepisivanja svih stupaca baze podataka ili pisanja drugog tabličnog opisa za svaki entitet. Ako aplikacija prihvaća i **anonimne** prijave, tu mogućnost prikažite u vezi s entitetom `Citizen`. Ako su kategorije fiksne vrijednosti, a ne pohranjeni zapisi, nemojte izmišljati tablicu kategorija. Završni ER dijagram usporedite s modelom trajne pohrane i objasnite samo razlike važne za razumijevanje projekta.
-
-</details>
+Važne razlike između ERD-a i baze: ERDv6 prikazuje i tablice koje još nemaju migraciju, a nisu označene kao planirane: `messages` (komentari s `reply_to_id` i `deleted_at`), `venue_photos`, `venue_reports`, `sif_report_status`, `advertisements` i stupac `venues.cover_photo_id`. Stanje događaja nije stupac tablice `events`; pohranjuje se samo `cancelled_at`, a ostala stanja računa pogled `events_with_status` (4.4.2).
 
 ### 4.3.2 Reprezentativni UML dijagram razreda
 
-**Cilj:** Prije implementacije reprezentativnog dijela sustava modelirati i prikazati razrede ili sučelja potrebna za dodjelu odgovornosti, operacija i veza. Oblikovanje ažurirajte kada se te odluke promijene.
+Prikazan je modul događaja i sudjelovanja jer sadrži najviše poslovnih pravila (organizator, uvjeti prijave, kapacitet, zaključavanje) i povezuje se s identitetom korisnika iz modula `auth`.
 
-**Dijagram razreda:** [Ugradite čitljiv UML dijagram razreda za reprezentativni dio oblikovanja.]  
-**PlantUML izvor:** [Poveznica na odgovarajuću `.puml` datoteku.]  
-**Referenca na kod pri završnom pregledu:** [Poveznica na odgovarajuću implementaciju.]
+**Dijagram razreda:**
 
-<details>
-<summary><strong>Oblikovanje odgovornosti prijave i dopuštenih promjena</strong></summary>
+![Dijagram razreda za događaje i sudjelovanje](./assets/diagrams/4-3-lets-do-sports-CD.svg)
 
-**Primjer — CrisisMap:** Prijava sadrži pravila za promjenu vlastitog statusa. Razred tijeka rada koordinira podnošenje i pregled, dok sučelje repozitorija opisuje potrebne operacije trajne pohrane. Dijagram predlaže te odgovornosti prije implementacije.
+**Slika 4.3. Dijagram razreda za događaje i sudjelovanje**
 
-![Dijagram razreda za obradu prijava kriznih događaja](./assets/diagrams/4-3-crisismap-domain-CD.svg)
+**PlantUML izvor:** [4-3-lets-do-sports-CD.puml](./puml/4-3-lets-do-sports-CD.puml)
 
-**Slika 4.3. Dijagram razreda za obradu prijava kriznih događaja**
+**Referenca na kod pri završnom pregledu:** [`event`](../backend/LetsDoSports/src/main/java/hr/fer/letsdosports/event), [`eventmember`](../backend/LetsDoSports/src/main/java/hr/fer/letsdosports/eventmember), [`auth/CurrentUserArgumentResolver.java`](../backend/LetsDoSports/src/main/java/hr/fer/letsdosports/auth/CurrentUserArgumentResolver.java)
 
-**PlantUML izvor:** [izvor](./puml/4-3-crisismap-domain-CD.puml)
-
-**Analiza primjera:** `DisasterReport` sadrži dopuštena pravila promjene stanja pa tijek rada ne može prešutno odobriti već odbijenu prijavu. `ReportWorkflow` koordinira operaciju bez preuzimanja pravila prijelaza stanja same prijave; `ReportRepository` definira potrebne operacije pohrane. Kompozicija `Location` i odabrani tipovi prikazuju veze korisne za oblikovanje. Dijagram namjerno izostavlja stupce baze podataka i nepovezane razrede: ER model objašnjava pohranjene podatke, dok ovaj dijagram dodjeljuje programske odgovornosti i operacije. Ti su razredi odluka oblikovanja, a ne obavezni slojevi za svaki tim. Završnu implementaciju usporedite s početnim oblikovanjem i ažurirajte dijagram tamo gdje su se odluke promijenile; generiranje dijagrama iz koda tek na kraju ne može zamijeniti ovo početno modeliranje.
-
-</details>
+Kontroleri primaju HTTP zahtjev, provjeravaju tijelo (`@Valid`) i dobivaju `userId` preko `@CurrentUserId`; frontend nikad ne šalje `userId`. Servisi (`EventService`, `EventMemberService`) provode pravila u transakciji, a repozitoriji izvode SQL preko `JdbcClient` i rezultat mapiraju u `Event` ili u zapise (`record`) poput `EventResponse` i `EventMemberResponse`. `EventMemberService` koristi `EventService.lockEvent`, `statusOf`, `findById` i `conflict`, a `EventService` koristi `EventMemberRepository` za upis organizatora i provjeru broja sudionika, pa moduli `event` i `eventmember` ovise jedan o drugome (4.7). Odstupanje od slojeva: `EventService` i `RegistrationService` dio upita (provjere referenci, zaključavanje) izvode izravno preko `JdbcClient`, bez repozitorija.
 
 ## 4.4 Ponašanje tijekom izvođenja
 
-**Cilj:** Objasniti jednu važnu interakciju među dijelovima koji se izvode i životni ciklus jednog smislenog objekta. Odaberite primjere koji otkrivaju odluke ili neuspješne putove umjesto izrade dijagrama za svaku CRUD radnju.
-
 ### 4.4.1 Reprezentativni UML sekvencijski dijagram
 
-**Cilj:** Prikazati redoslijed poruka za jedan reprezentativni scenarij i odgovore na važnu alternativu.
+**Scenarij:** Prijava registriranog korisnika na događaj (UC-010), `POST /api/v1/events/{eventId}/members`, uz neuspješne putove i istodobnu prijavu za zadnje mjesto.
 
-**Scenarij:** [Naziv interakcije; dodajte UC ID ako postoji.]  
-**sekvencijski dijagram:** [Ugradite čitljiv UML sekvencijski dijagram.]  
-**PlantUML izvor:** [Poveznica na odgovarajuću `.puml` datoteku.]
+**Sekvencijski dijagram:**
 
-<details>
-<summary><strong>Odabir lokacije, provjera valjanosti i podnošenje prijave</strong></summary>
+![Sekvencijski dijagram prijave na događaj](./assets/diagrams/4-4-lets-do-sports-SD.svg)
 
-**Primjer — CrisisMap:** Građanin podnosi prijavu kriznog događaja nakon što ručno odabere lokaciju ili zatraži položaj uređaja. Interakcija prikazuje i što se događa kada je pristup lokaciji odbijen, podaci prijave nisu valjani ili pohrana ne uspije.
+**Slika 4.4. Sekvencijski dijagram prijave na događaj (UC-010)**
 
-![Sekvencijski dijagram podnošenja prijave kriznog događaja](./assets/diagrams/4-4-crisismap-report-submission-SD.svg)
+**PlantUML izvor:** [4-4-lets-do-sports-SD.puml](./puml/4-4-lets-do-sports-SD.puml)
 
-**Slika 4.4. Sekvencijski dijagram podnošenja prijave kriznog događaja**
-
-**PlantUML izvor:** [izvor](./puml/4-4-crisismap-report-submission-SD.puml)
-
-**Analiza primjera:** Dva načina odabira lokacije te alternative provjere i pohrane imaju različite posljedice za korisnika; usporedite ih s odgovarajućim obrascem uporabe i njegovim alternativnim tijekovima. API preglednika za lokaciju mogućnost je preglednika; web-klijent, API, usluga i pohrana odgovaraju prikazu komponenata. Odaberite grane koje pomažu objasniti scenarij vašeg projekta i završni dijagram uskladite s implementiranom interakcijom.
-
-</details>
+Zahtjev prvo prolazi Spring Security. CSRF provjera dolazi prije provjere prijave: bez valjanog tokena odgovor je 403, a `api_v1.ts` tada dohvaća novi token preko `GET /api/v1/auth/csrf` i ponavlja zahtjev jednom (to radi nakon svakog 403). Bez sesije odgovor je 401 bez tijela, a klijent prikazuje pogrešku. Resolver zatim vraća 403 „Registracija nije dovršena.” ako Google račun nije povezan s korisnikom. `EventMemberService.join` u jednoj transakciji zaključava događaj (404 ako ne postoji) i redom provjerava je li korisnik već prijavljen, stanje događaja (`full`, `cancelled`, `in_progress`/`finished`) te dob i razinu iskustva (409 s objašnjenjem). Tek tada upisuje `event_members` i vraća 201. Druga istodobna prijava čeka na zaključavanje i nakon `COMMIT`-a prve vidi novi broj sudionika.
 
 ### 4.4.2 Reprezentativni UML dijagram stanja
 
-**Cilj:** Prikazati važna stanja jednog domenskog objekta ili eksplicitno upravljanog načina rada sustava te događaje ili uvjete koji ih mijenjaju.
+**Vlasnik stanja i razlog odabira:** Sportski događaj. Njegovo stanje određuje koje su radnje dopuštene (prijava, odjava, uređivanje, otkazivanje). Stanje se ne pohranjuje: pogled `events_with_status` (V2) računa ga ovim redoslijedom: `cancelled` (postoji `cancelled_at`), `finished` (`scheduled_at + expected_duration_min < now()`), `in_progress` (`scheduled_at <= now()`), `full` (broj sudionika `>= max_participants`), inače `open`. Organizator se upisuje kao sudionik i ulazi u kapacitet.
 
-**Vlasnik stanja i razlog odabira:** [Navedite objekt ili način rada sustava, kako se njegovo stanje prepoznaje i zašto su prijelazi važni.]  
-**Dijagram stanja:** [Ugradite čitljiv UML dijagram stanja.]  
-**PlantUML izvor:** [Poveznica na odgovarajuću `.puml` datoteku.]
+**Dijagram stanja:**
 
-<details>
-<summary><strong>Složeno stanje sustava: koordinacija događaja i dostupnost usluge</strong></summary>
+![Dijagram stanja sportskog događaja](./assets/diagrams/4-5-lets-do-sports-SM.svg)
 
-**Primjer — CrisisMap:** Ovaj primjer ne prikazuje životni ciklus jednog domenskog objekta, nego dva neovisna aspekta stanja cijelog sustava CrisisMap. Jedna regija opisuje način koordinacije kriznog događaja, a druga opaženu dostupnost usluge. Budući da se ta dva aspekta mogu mijenjati neovisno jedan o drugome, prikazani su kao ortogonalne regije istog složenog stanja sustava.
+**Slika 4.5. Dijagram stanja sportskog događaja**
 
-![Dijagram stanja prijave kriznog događaja](./assets/diagrams/4-5-crisismap-system-SM.svg)
+**PlantUML izvor:** [4-5-lets-do-sports-SM.puml](./puml/4-5-lets-do-sports-SM.puml)
 
-**Slika 4.5. Dijagram stanja sustava s ortogonalnim regijama**
-
-**PlantUML izvor:** [izvor](./puml/4-5-crisismap-system-SM.puml)
-
-**Analiza primjera:** Vlasnik stanja u ovom je primjeru sustav CrisisMap, a ne pojedinačna prijava kriznog događaja. Dvije ortogonalne regije opisuju stanja koja vrijede istodobno: način koordinacije kriznog događaja i dostupnost usluge. Promjena stanja u jednoj regiji ne mora promijeniti stanje u drugoj; primjerice, aktivni krizni događaj može postojati dok je usluga potpuno ili djelomično dostupna.
-
-Prijelazi imaju imenovane događaje ili uvjete, a grane nakon oporavka poslužiteljskog sustava uzimaju u obzir da pružatelj kartografskih usluga može i dalje biti nedostupan. Time primjer pokazuje situaciju u kojoj ortogonalne regije imaju stvarnu semantičku svrhu, a nisu samo način vizualnog grupiranja elemenata.
-
-Ovo je napredniji primjer dijagrama stanja. Koristite takav oblik samo ako sustav stvarno održava dva ili više međusobno neovisnih aspekata stanja koji se mogu mijenjati istodobno. Za projekt u kojem je važan životni ciklus jednog objekta, primjerice prijave, rezervacije ili narudžbe, jednostavniji dijagram stanja tog objekta obično je prikladniji. Složenost dijagrama nije kriterij vrednovanja.
-
-Pri završnom pregledu svaki prikazani prijelaz i uvjet usporedite s ponašanjem koje implementirana aplikacija stvarno podržava.
-
-</details>
+Prijava je moguća samo u stanju `open`, a odjava u stanjima `open` i `full`; organizator se ne može odjaviti nego otkazuje događaj. Uređivanje i otkazivanje dopušteni su i dok je događaj `in_progress`, a za `cancelled` i `finished` vraćaju 409. Smanjenje kapaciteta ispod trenutačnog broja sudionika odbija se s 400. Ako trajanje nije zadano, događaj iz `open`/`full` prelazi izravno u `finished` čim prođe `scheduled_at`. Organizator može događaj u stanju `in_progress` urediti i pomaknuti termin u budućnost, pa se on vraća u `open` ili `full`.
 
 ## 4.5 Zapisi arhitekturnih odluka
 
-**Cilj:** Sačuvati razloge i obrazložiti odabrane važne arhitekturne odluke kada tablica u odjelku 4.1 nije dovoljna za očuvanje konteksta, razmatranih alternativa i prihvaćenih kompromisa.
-
-Napišite nekoliko ADR-a za važne odluke čije obrazloženje, alternative i kompromis treba sačuvati. Ostale arhitekturne odluke dovoljno je zabilježiti u tablici.
-
-**Detaljni zapis arhitekturne odluke (engl. Architecture Decision Record, ADR), kada odluka zahtijeva dodatno objašnjenje:**
-
-### ADR-[ID]: [Naslov odluke]
-
-| Polje | Zapis odluke |
-| --- | --- |
-| Kontekst i cilj | [Koji je arhitekturni problem učinio ovu odluku potrebnom?] |
-| Kriteriji odluke | [Što je timu stvarno bilo važno?] |
-| Razmatrane alternative | [Realne mogućnosti koje je tim razmotrio, ukratko.] |
-| Odluka i obrazloženje | [Odabrana mogućnost, zašto je odabrana i čega se tim odrekao.] |
-| Status | [Predloženo, prihvaćeno ili zamijenjeno; ako je primjenjivo, poveznica na novu odluku.] |
-
-ADR pišite samo za odluku čije će obrazloženje ostati važno i nakon promjene implementacije. Značajna promjena odluke može se zabilježiti novim ADR-om koji zamjenjuje stari; rutinski odabiri alata ne trebaju detaljne zapise. Promjene dogovorenog opsega pripadaju zahtjevima i njihovoj povijesti promjena; povratna informacija o zadatku ostaje uz odgovarajući zadatak.
-
-<details>
-<summary><strong>Odabir jednog poslužiteljskog sustava umjesto zasebno postavljenih usluga</strong></summary>
-
-**Primjer — CrisisMap, ADR-01:**
-
 | ID | Datum | Odluka | Razmatrana alternativa | Obrazloženje i kompromis | Status |
 | --- | --- | --- | --- | --- | --- |
-| ADR-01 | [Datum odluke] | Jedan poslužiteljski API za obradu prijava | Zasebno postavljene usluge za prijave i resurse | Manji napor postavljanja i integracije za odobreni opseg; kvar poslužiteljskog sustava može utjecati na obje funkcionalnosti. | Prihvaćeno |
+| ADR-01 | 23. 10. 2026., dopuna 11. 11. 2026. | Prijava samo preko Googlea (OIDC) | Vlastita prijava e-poštom i lozinkom | Nema pohrane lozinki; ovisnost o Googleu i jedan račun po korisniku. | Prihvaćeno |
+| ADR-02 | 14.–18. 11. 2026. | Poslužiteljska sesija, CSRF i identitet iz `oauth_accounts` | JWT u web-klijentu; `userId` iz zahtjeva klijenta | Token nije dostupan JavaScriptu i odjava je trenutna; aplikacija čuva stanje sesije. | Prihvaćeno (implementirano); ugovor u PR #75 |
+| ADR-03 | 29. 10. 2026. | Stanje događaja računa pogled `events_with_status` | Pohranjeni stupac `status` | Stanje se ne može razići s podacima; izračun pri svakom upitu. | Prihvaćeno |
 
-### ADR-01: Jedan poslužiteljski API za obradu prijava
+### ADR-01: Prijava samo preko Googlea (OIDC)
 
 | Polje | Zapis odluke |
 | --- | --- |
-| Kontekst i cilj | Tim tijekom jednog semestra mora izraditi i javno postaviti prijavljivanje kriznih događaja i prikaz usmjeren na kartu. |
-| Kriteriji odluke | Tim može izraditi, integrirati, postaviti i objasniti rješenje; komponente i dalje imaju prepoznatljive odgovornosti. |
-| Razmatrane alternative | **Jedan poslužiteljski sustav:** moduli dijele aplikaciju koja se postavlja kao cjelina. **Zasebne usluge:** svaka se može izvoditi neovisno, ali zahtijeva dodatni rad na integraciji i postavljanju. |
-| Odluka i obrazloženje | Odabrati jedan poslužiteljski sustav s jasno odvojenim odgovornostima vezanim uz prijave. Time se smanjuje rad na postavljanju, uz prihvaćanje da kvar tog sustava može istodobno utjecati na rad s prijavama. |
-| Status | Prihvaćeno. |
+| Kontekst i cilj | Korisnici se moraju prijaviti prije stvaranja događaja i prijave na njih. Tim ne želi održavati pohranu lozinki, oporavak lozinke ni potvrdu e-pošte. |
+| Kriteriji odluke | Sigurnost bez vlastitog upravljanja lozinkama, podrška u Spring Securityju (`oauth2Login`), jednostavan tijek za korisnika. |
+| Razmatrane alternative | **Vlastita prijava e-poštom i lozinkom** (početni zapis zahtjeva 23. 10. 2026.): potpuna kontrola, ali hashiranje, oporavak i potvrda e-pošte. **Google OIDC:** gotov pružatelj identiteta. |
+| Odluka i obrazloženje | Prijava samo preko Googlea (C-06). Identitet je Googleov `sub` u `oauth_accounts`; e-pošta je samo informativna i ne spaja račune. Prijava sama ne stvara korisnika: lokalni račun nastaje tek nakon registracije (`POST /api/v1/auth/register`). Odričemo se korisnika bez Google računa i povezivanja više računa. Ograničenja u bazi uvodi V6 (`provider IN ('google')`, `UNIQUE(user_id, provider)`). |
+| Status | Prihvaćeno; implementirano (`SecurityConfig`, `RegistrationService`, V4–V6). |
 
-**Analiza primjera:** Strategija rješenja navodi trenutačni pristup; ADR-01 čuva alternative i kriterije koji su do njega doveli. Dijagrami komponenata i razmještaja trebaju odražavati odabrani pristup kako se sustav razvija. Zaseban ADR koristan je za važnu odluku, a ne za svaki odabir alata.
+### ADR-02: Poslužiteljska sesija i CSRF umjesto tokena u web-klijentu
 
-</details>
+| Polje | Zapis odluke |
+| --- | --- |
+| Kontekst i cilj | Nakon Google prijave web-klijent mora slati autentificirane zahtjeve API-ju, a poslužiteljski dio mora pouzdano znati koji je lokalni korisnik u pitanju. |
+| Kriteriji odluke | Token ne smije biti dostupan JavaScriptu (`localStorage`), odjava mora odmah vrijediti, rješenje mora biti izvorno podržano u Spring Securityju, a klijent ne smije sam birati `userId`. |
+| Razmatrane alternative | **JWT u web-klijentu:** poslužitelj ne čuva stanje, ali token je izložen skriptama i teško ga je opozvati. **`userId` ili zaglavlje `X-User-Id` iz klijenta:** korišteno samo privremeno u razvoju i napušteno. **Sesija s kolačićem `JSESSIONID` (HttpOnly):** zahtijeva CSRF zaštitu. |
+| Odluka i obrazloženje | Sesija (`JSESSIONID`) i CSRF u SPA obliku (`csrf.spa()`: kolačić `XSRF-TOKEN`, zaglavlje `X-XSRF-TOKEN`). `CurrentUserArgumentResolver` pri svakom zahtjevu traži korisnika u `oauth_accounts` po (`provider`, `sub`), pa se sesija nakon registracije ne mijenja. Neprijavljeni dobivaju 401 bez preusmjeravanja, a prijavljeni bez registracije 403. Kompromis: aplikacija čuva stanje sesije (jedna instanca) i zahtijeva isto ishodište za klijent i API. |
+| Status | Prihvaćeno; implementirano. Ugovor autentifikacije opisan je u PR #75 (`docs/meeting-notes/autentifikacija-i-profil.md`, nije na masteru). |
+
+### ADR-03: Izvedeno stanje događaja
+
+| Polje | Zapis odluke |
+| --- | --- |
+| Kontekst i cilj | Događaj može biti otvoren, popunjen, u tijeku, završen ili otkazan. Stanje ovisi o broju sudionika i protoku vremena, a mora biti točno pri prijavi, odjavi i filtriranju. |
+| Kriteriji odluke | Stanje se ne smije razići sa stvarnim podacima; ne želimo zakazane poslove koji mijenjaju stanje. |
+| Razmatrane alternative | **Stupac `status` koji održava poslužiteljski dio:** jednostavno čitanje, ali svaka prijava, odjava, izmjena kapaciteta i protok vremena moraju ga ažurirati. **Izračun u pogledu baze.** |
+| Odluka i obrazloženje | Pohranjuje se samo `cancelled_at`, a pogled `events_with_status` računa stanje iz `scheduled_at`, `expected_duration_min`, `max_participants` i broja redaka u `event_members`. Odluka je donesena na sastanku 29. 10. 2026. (`docs/meeting-notes/baza-dogadaji-2026-10-29.md`). Kompromis: izračun s `now()` i `COUNT` pri svakom upitu i bez indeksa za filtriranje po stanju, što je prihvatljivo za opseg projekta. |
+| Status | Prihvaćeno; implementirano (V2, `EventService.statusOf`, `EventRepository`). |
 
 ## 4.6 Zajednička pravila oblikovanja (engl. Cross-cutting concerns)
 
-**Cilj:** Prepoznati i opisati globalna pravila i mehanizme oblikovanja koji se primjenjujuju u više dijelova aplikacije, navesti gdje se planira primijeniti i ažurirati objašnjenje kako implementacija poprima konačan oblik. Uključite samo pravila koja su važna za ovaj projekt.
-
-**Implementirani mehanizmi:**
-
 | Aspekt | Mehanizam | Pravilo | Mjesto primjene |
 | --- | --- | --- | --- |
-| [Npr. Sigurnost] | [Npr. Autorizacija korisnika] | [Npr. Ovlasti se provjeravaju na poslužiteljskoj strani za svaki zaštićeni zahtjev; skrivanje elemenata korisničkog sučelja nije dovoljna zaštita.] | [Npr. Middleware za autorizaciju / zaštita API usmjernika.] |
-| [Npr. Validacija podataka] | [Npr. Provjera ulaznih podataka] | [Npr. Geoprostorni podaci, uključujući koordinate, provjeravaju se prije pohrane.] | [Npr. Sloj za obradu zahtjeva / odgovarajuća usluga.] |
-
-<details>
-<summary><strong>Primjer zajedničkih pravila i mehanizama</strong></summary>
-
-**Primjer — CrisisMap:**
-
-| Aspekt | Mehanizam | Pravilo | Mjesto primjene |
-| --- | --- | --- | --- |
-| Sigurnost | Autorizacija moderiranja prijava | Ovlasti moderatora provjeravaju se na poslužiteljskoj strani prije odobravanja ili odbijanja prijave; skrivanje gumba u korisničkom sučelju nije dovoljna zaštita. | Poslužiteljski dio funkcionalnosti za moderiranje prijava. |
-| Validacija podataka | Provjera lokacije prijave | Nedostajuće ili nevaljane koordinate odbijaju se prije pohrane prijave. | Obrada podnošenja prijave. |
-| Aspekt | Mehanizam | Pravilo | Mjesto primjene |
-| Upravljanje ovisnostima | Injektiranje ovisnosti | Objekt koji provodi poslovnu logiku ne stvara sam konkretnu implementaciju repozitorija, nego potrebnu ovisnost prima izvana. | `ReportWorkflow` prima implementaciju sučelja `ReportRepository` pri stvaranju objekta. |
-
-**Analiza primjera:** Prvi redak pokazuje sigurnosno pravilo koje se provodi neovisno o korisničkom sučelju, a drugi pravilo provjere podataka prije pohrane. U vlastitoj dokumentaciji navedite samo aspekte koji se stvarno primjenjuju u projektu te konkretno mjesto njihove primjene.
-
-Obrasci poput injektiranja ovisnosti (engl. Dependency Injection) ili repozitorija (engl. Repository) pripadaju ovdje samo kada ih kod stvarno koristi i kada objašnjavaju zajedničko pravilo oblikovanja. Tvrdnja „sustav koristi autentikaciju” sama po sebi ne govori čitatelju gdje se provjera provodi niti što štiti. Sigurnost, bilježenje događaja i obrada pogrešaka ne trebaju svaki zaseban pododjeljak po zadanom pravilu.
-
-</details>
+| Autentifikacija | Spring Security `oauth2Login` i sesija | Javni su OAuth putanje, `/error` i `GET` za `/api/v1/events`, `/events/{eventId}`, `/events/{eventId}/comments`, `/sports`, `/sports/{sportId}`, `/venues`, `/venues/{venueId}` i `/auth/csrf` (PR #84 dodaje `/cities` i `/skill-levels`). Ostatak `/api/**` traži prijavu, a sve ostalo je zabranjeno (`denyAll`). Neprijavljeni dobivaju 401 bez tijela. Odjava (`POST /api/v1/auth/logout`) poništava sesiju i briše kolačiće. | `config/SecurityConfig.java` |
+| Identitet korisnika | `@CurrentUserId` i `CurrentUserArgumentResolver` | `userId` se uvijek određuje iz sesije preko `oauth_accounts`; nepovezan račun dobiva 403 „Registracija nije dovršena.”. | `auth/CurrentUserArgumentResolver.java`, `config/ApiPrefixConfig.java` |
+| Autorizacija nad zapisom | Provjera u servisu | Samo organizator uređuje i otkazuje događaj (403); organizator se ne može odjaviti (409). Uloga `ADMIN` postoji u bazi, ali se još nigdje ne provjerava. | `EventService.requireOrganizer`, `EventMemberService.leave` |
+| CSRF | `csrf.spa()` | Svaka izmjena šalje `X-XSRF-TOKEN` iz kolačića `XSRF-TOKEN`; klijent pri 403 dohvaća novi token i ponavlja zahtjev jednom. | `SecurityConfig`, `auth/CsrfController.java`, `frontend/src/api/api_v1.ts` |
+| Validacija i format pogrešaka | Bean Validation na zapisima zahtjeva, provjere referenci u servisu, globalni `@RestControllerAdvice` | Pogreške unosa vraćaju 400 `{"errors": {"polje": "poruka"}}`, a ostale pogreške status i `{"message": "..."}` (404, 409, 403). | `event/ApiExceptionHandler.java`, `event/ApiValidationException.java`, `profile/ProfilePhotoExceptionHandler.java` |
+| Transakcije i konkurentnost | `@Transactional` i `SELECT ... FOR UPDATE` | Prijava, odjava, uređivanje i otkazivanje zaključavaju redak događaja. Registracija upisuje `users`, `user_sports` i `oauth_accounts` u jednoj transakciji. Zamjena fotografije zaključava redak korisnika. | `EventService.lockEvent`, `EventMemberService`, `RegistrationService.register`, `ProfilePhotoService` |
+| Ograničenja u bazi | CHECK, UNIQUE, FK, okidač | Baza je zadnja zaštita: `UNIQUE(event_id, user_id)`, `max_participants >= 1`, `min_age <= max_age`, dopušteni spol i datum rođenja, jedan Google račun po korisniku; V7 (PR #84) odbija brisanje zadnjeg sporta korisnika. | `db/migrations/V2`–`V6`, V7 u PR #84 |
+| Pristup bazi | Najmanje ovlasti | Migracije pokreće `lds_admin` (Flyway), a aplikacija se spaja kao `lds_app` sa samo `SELECT/INSERT/UPDATE/DELETE`. | `db/compose.yml`, `db/init-db/01-create-appuser-role.sh`, `V1__app_user_grants.sql` |
+| Pohrana datoteka | `PhotoStorage` | Prihvaća samo JPEG i PNG do 5 MiB i 4096 × 4096 px; slika se ponovno kodira (uklanja metapodatke) i sprema pod UUID imenom. Stara datoteka briše se tek nakon `COMMIT`-a. Pogreška pohrane vraća 503. | `profile/PhotoStorage.java`, `profile/ProfilePhotoService.java` |
+| Konvencije API-ja | Prefiks `/api/v1` | Prefiks se automatski dodaje svim `@RestController` razredima. | `config/ApiPrefixConfig.java` |
+| Konfiguracija i tajne | Varijable okruženja i `.env` | Google `client-id`/`secret`, `BACKEND_URL` i `FRONTEND_URL` čitaju se iz `.env` (nije u repozitoriju; postoji `.env.example`). Podaci za spajanje na bazu dolaze iz `db/.env` preko `Makefile`-a. | `application.properties`, `backend/LetsDoSports/Makefile` |
+| Upravljanje ovisnostima | Injektiranje ovisnosti kroz konstruktor | Servisi i repozitoriji primaju ovisnosti (`JdbcClient`, repozitorije, druge servise) preko konstruktora Spring beanova. | Svi `@Service` i `@Repository` razredi |
 
 ## 4.7 Arhitekturni rizici i tehnički dug
 
-**Cilj:** Navesti stvarne tehničke ili domenske rizike i svjesno prihvaćene kompromise oblikovanja, njihove posljedice i način na koji ih tim obrađuje.
-
 **Tehnički rizici i dug**
-
-| Rizik ili kompromis | Posljedica | Odgovor na rizik  |
-| --- | --- | --- |
-| *Npr. Pohrana slika u lokalni file sustav* | *Pri ponovnom pokretanju kontejnera slike će biti izgubljene.* | *Prihvaćeni tehnički dug za demo verziju. U budućnosti planirana migracija na S3 (AWS).* |
-| *Npr. Nepostojanje paginacije na API-ju* | *Moguće usporenje klijenta pri dohvaćanju velike količine podataka iz baze.* | *Ograničen broj testnih unosa. Dodavanje paginacije ostavljeno za sljedeću iteraciju.* |
-|  |  |  |
-
-**Poslovni ili domenski rizici, ako su značajni**
-
-| Rizik | Posljedica | Odgovor na rizik |
-| --- | --- | --- |
-| **Jedna instanca aplikacije obrađuje prijave** | Kvar poslužitelja (hostinga) privremeno onemogućuje nove prijave. | Prihvaćeno u okviru ograničenja projekta za kolegij; tim ne tvrdi da postoji automatsko prebacivanje na pričuvni sustav (failover). |
-| **Nedostupnost vanjskke kartografske usluge** | Prikaz karte može prestati raditi iako su pohranjene prijave u bazi i dalje dostupne. | Implementirana je korisniku vidljiva poruka o pogrešci uz alternativu pregleda prijava u tekstualnom obliku. |
-|  |  |  |
-
-<details>
-<summary><strong>Primjer tehničkih i domenskih rizika</strong></summary>
-
-**Primjer — CrisisMap, tehnički rizici:**
 
 | Rizik ili kompromis | Posljedica | Odgovor na rizik |
 | --- | --- | --- |
-| Jedna instanca aplikacije obrađuje podnošenje prijava. | Kvar smještaja aplikacije privremeno onemogućuje nove prijave. | Rizik je prihvaćen za opseg projekta; ne uvodi se pričuvna instanca ni automatsko prebacivanje. |
-| Vanjske kartografske usluge nisu dostupne. | Prikaz karte može prestati raditi iako su pohranjene prijave i dalje dostupne. | Karta se ne može prikazati, ali pohranjene prijave ostaju dostupne. | Aplikacija prikazuje poruku o nedostupnosti karte i omogućuje pregled prijava u tekstualnom obliku. |
+| Nema obrade `DataIntegrityViolationException` | Kršenje ograničenja u bazi (utrka na korisničkom imenu, CHECK za spol ili datum rođenja, okidač V7) vraća 500 umjesto 400/409. | Dodati preslikavanje u `ApiExceptionHandler` (prijedlog u PR #75). |
+| Neusklađen naziv polja `dateOfBirth` / `birthDate` | `RegistrationIntegrationTest`, `docs/meeting-notes/api-endpoints.md` i tablica 2.5 u [poglavlju 2](./2-Analiza-zahtjeva.md) koriste `birthDate`, a `RegisterRequest` i web-klijent `dateOfBirth`. Nepoznata polja se prešutno ignoriraju, pa uspješni slučaj testa vraća 400. | Na reviewu PR-a #75 dogovoren je `dateOfBirth`. Uskladiti test, `UpdateUserRequest` na grani `feature/users-api`, `api-endpoints.md` (PR #75) i dodati redak u tablicu 2.5. |
+| Nema automatskog pokretanja testova prije postavljanja | Pad testova ne blokira spajanje ni postavljanje; postavljanje se pokreće pri svakom pushu na `master` i preskače `tsc -b`. | Dodati GitHub Actions workflow za testove poslužiteljskog dijela i provjeru tipova. |
+| Profilne fotografije na lokalnom disku jednog poslužitelja | Nema kopije ni rada s više instanci. U repozitoriju nije vidljivo da je `PROFILE_PHOTO_DIRECTORY` postavljen u produkciji; zadana putanja (`${user.home}/.lets-do-sports`) nije među zapisivim putanjama servisa s `ProtectSystem=strict`, pa upis vjerojatno vraća 503. | Prihvaćeno za opseg projekta. Provjeriti na poslužitelju i postaviti zapisivi direktorij. Pohrana je iza `PhotoStorage` pa se može zamijeniti. |
+| Jedan poslužitelj za klijent, API i bazu | Kvar ili ponovno pokretanje prekida rad cijele aplikacije; nema prebacivanja na pričuvni sustav (failover). | Prihvaćeno u okviru ograničenja kolegija (poglavlje 6). |
+| Ostaci razvojnog identiteta `X-User-Id` | `docs/profile-photo.md`, `ProfilePhoto.tsx` i `ProfilePhotoPersistenceIT` još ga spominju iako ga resolver više ne čita. | Ukloniti ostatke i ažurirati opis. |
+| Djelomično lažni podaci u web-klijentu | Korisnici dolaze iz testnih podataka (`USE_DUMMY_USERS`), a sportovi i gradovi su uvijek ugrađeni testni podaci (`getSports`, `getCities`), pa klijent nije potpuno usklađen s API-jem. | Prebaciti na stvarne krajnje točke nakon spajanja PR #84 i `feature/users-api`. |
+| Javne rute bez kontrolera | `SecurityConfig` unaprijed dopušta `/sports`, `/sports/{sportId}`, `/venues`, `/venues/{venueId}` i `/events/{eventId}/comments`, koje na masteru nemaju kontroler (`/sports` dolazi u PR-u #84). | Uskladiti popis javnih ruta s implementiranim kontrolerima. |
+| Zastarjela dokumentacija i ERD | `validacija_i_specifikacija.md` i `api-endpoints.md` (putanja OAuth povratnog poziva, otkazivanje kao `status`) proturječe kodu; ERDv6 miješa implementirane i planirane tablice. | Ažurirati dokumente i označiti planirane tablice u sljedećoj inačici ERD-a. |
+| Međuovisnost modula `event` i `eventmember` | Promjena u jednom modulu lako zahvaća drugi; modul se ne može izdvojiti ni ispitati zasebno. | Prihvaćeno za sada; pri sljedećem preuređenju izdvojiti zajednički servis za kapacitet i članstvo. |
+| Web-klijent ponavlja svaki 403 | Nakon 403 „Registracija nije dovršena.” klijent nepotrebno dohvaća CSRF token i šalje zahtjev još jednom. | Ponavljati samo kad 403 nema tijela s porukom (CSRF). |
+| `ApiExceptionHandler` u paketu `event` | Globalno pravilo nalazi se u modulu jedne funkcionalnosti, pa ga je teško pronaći. | Premjestiti u zajednički paket. |
+| Brisanje korisnika i terena | `events.created_by_id` i `events.venue_id` nemaju `ON DELETE`, pa se ne može obrisati korisnik koji je organizirao događaj ni teren s događajima. | Odlučiti pri implementaciji administracije (F-021). |
 
-**Primjer — CrisisMap, domenski rizik:** Čitatelji mogu neprovjerenu prijavu građanina zamijeniti za službeno upozorenje. Tim može u sučelju jasno razlikovati status provjere prijave i uputiti korisnike na službene izvore.
+**Poslovni ili domenski rizici**
 
-**Analiza primjera:** Prvi tehnički rizik prihvaća realistično ograničenje projekta kolegija; domenski se rizik odnosi na način na koji čitatelj tumači prijavu. Zabilježite ograničenje i realan odgovor koji pripadaju vašem projektu. Neostvarena obavezna funkcionalnost nije tehnički dug nego nedovršen opseg.
-
-</details>
-
----
-
-
->**Završna provjera:** Usporedite dijagrame komponenata, podataka, razreda, sekvencijski dijagram i dijagram stanja s implementiranim kodom, ponašanjem aplikacije i stvarnim razmještajem. Ažurirajte zastarjele opise oblikovanja i objasnite svaku važnu razliku koja ostaje; poveznice na odgovarajući kod ili ispitivanja korisne su kada odgovaraju na konkretno pitanje.
+| Rizik | Posljedica | Odgovor na rizik |
+| --- | --- | --- |
+| Netočni podaci o terenima koje unose korisnici (AS-03) | Korisnici dolaze na zatvoren ili pogrešno opisan teren. | Planirane su prijave netočnosti i administratorska obrada (F-020, F-021). |
+| Osobni podaci korisnika | Datum rođenja i spol mogu otkriti više nego što je potrebno za sudjelovanje. | API drugim korisnicima ne vraća datum rođenja, spol ni e-poštu (F-005). |
+| Google OAuth u načinu rada *Testing* | Prijaviti se mogu samo dodani testni korisnici. | Prije javnog predstavljanja objaviti aplikaciju u Google Cloud Consoleu ili dodati testne korisnike. |
