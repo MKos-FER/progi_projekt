@@ -1,0 +1,91 @@
+@startuml
+title <back:white>Let's Do Sports - prijava na događaj (UC-010)</back>
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam sequenceMessageAlign left
+autonumber
+
+actor "Registrirani\nkorisnik" as U
+participant "Web-klijent\n(useJoinEvent, api_v1.ts)" as FE
+participant "Spring Security\n(SecurityConfig)" as SEC
+participant "CurrentUserArgumentResolver" as RES
+participant "EventMemberController" as C
+participant "EventMemberService" as S
+participant "EventService" as ES
+participant "EventMemberRepository" as R
+database "PostgreSQL" as DB
+
+U -> FE : odabire "Prijavi se"
+FE -> SEC : POST /api/v1/events/{eventId}/members\n(cookie JSESSIONID, X-XSRF-TOKEN)
+
+opt CSRF token nedostaje ili ne odgovara
+  SEC --> FE : 403
+  FE -> SEC : GET /api/v1/auth/csrf (novi XSRF-TOKEN)
+  FE -> SEC : ponavlja zahtjev jednom
+end
+note right of FE
+  api_v1.ts ponavlja zahtjev nakon svakog 403,
+  pa i nakon 403 "Registracija nije dovršena."
+end note
+
+break nema sesije
+  SEC --> FE : 401 (prazno tijelo)
+  FE --> U : prikazuje pogrešku
+end
+
+SEC -> RES : resolveArgument(@CurrentUserId)
+RES -> DB : SELECT user_id FROM oauth_accounts\nWHERE provider, provider_user_id = sub
+break Google račun nije povezan
+  RES --> FE : 403 {"message": "Registracija nije dovršena."}
+end
+RES --> C : userId
+
+C -> S : join(eventId, userId)
+activate S
+note right of S : @Transactional (jedna transakcija)
+S -> ES : lockEvent(eventId)
+ES -> DB : SELECT id FROM events WHERE id = :id FOR UPDATE
+break događaj ne postoji
+  ES --> FE : 404 {"message": "Događaj X ne postoji."}
+end
+
+S -> R : existsByEventIdAndUserId(eventId, userId)
+break već sudionik
+  S --> FE : 409 "Već si prijavljen na ovaj događaj."
+end
+
+S -> ES : statusOf(eventId)
+ES -> DB : SELECT status FROM events_with_status
+break status != open
+  alt status = full
+    S --> FE : 409 "Događaj je popunjen."
+  else status = cancelled
+    S --> FE : 409 "Događaj je otkazan."
+  else status = in_progress ili finished
+    S --> FE : 409 "Događaj je već počeo ili završio."
+  end
+end
+
+S -> S : requireEligible(eventId, userId)
+S -> R : findAgeYears / findSkillRank / findUserSkillRank
+break dob izvan raspona ili razina iskustva nedostaje / preniska
+  S --> FE : 409 (objašnjenje uvjeta)
+end
+
+S -> R : insert(eventId, userId)
+R -> DB : INSERT INTO event_members
+S -> DB : COMMIT (otpušta zaključavanje)
+deactivate S
+C --> FE : 201 Created
+FE -> FE : invalidira upite ['events'], ['myEvents']
+FE --> U : prikazuje ažurirani broj sudionika
+
+== Istodobna prijava za zadnje mjesto (alternativa 3a) ==
+note over S, DB
+Drugi korisnik koji istodobno pozove join za isti događaj
+čeka na SELECT ... FOR UPDATE dok prva transakcija ne završi.
+Nakon COMMIT-a prve transakcije statusOf vraća "full",
+pa drugi dobiva 409 "Događaj je popunjen."
+UNIQUE(event_id, user_id) dodatno sprječava dvostruki upis istog korisnika.
+end note
+@enduml

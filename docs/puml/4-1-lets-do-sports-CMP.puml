@@ -1,0 +1,67 @@
+@startuml
+title <back:white>Let's Do Sports - dijagram komponenata</back>
+skinparam shadowing false
+skinparam componentStyle uml2
+skinparam defaultFontName SansSerif
+skinparam packageStyle rectangle
+
+actor "Korisnik\n(preglednik)" as user
+
+rectangle "Let's Do Sports" as system {
+
+  package "Web-klijent (React SPA, frontend/src)" as spa {
+    component "Stranice i usmjeravanje\n(App.tsx, react-router)" as pages
+    component "apiStore\n(TanStack Query hookovi)" as store
+    component "API klijent\n(api/api_v1.ts, CSRF zaglavlje)" as apiclient
+    component "Geolokacija\n(lib/geolocation.ts)" as geo
+  }
+
+  component "Obrnuti posrednik\n(Caddy u produkciji,\nVite proxy u razvoju)" as proxy
+
+  package "Poslužiteljski dio (Spring Boot, hr.fer.letsdosports)" as backend {
+    component "config\n(SecurityConfig, ApiPrefixConfig)" as config
+    component "auth\n(registracija, CSRF,\n@CurrentUserId)" as auth
+    component "event\n(događaji, ApiExceptionHandler)" as event
+    component "eventmember\n(sudjelovanje)" as eventmember
+    component "profile\n(profilna fotografija)" as profile
+    component "lookup, usersport\n(PR #84, nije na masteru)" as lookup #EEEEEE
+    component "PhotoStorage" as photostorage
+  }
+
+  database "PostgreSQL 18\n(uloga lds_app)" as db
+  component "Flyway migrate\n(db/migrations, uloga lds_admin)" as flyway
+  folder "Direktorij fotografija\n(PROFILE_PHOTO_DIRECTORY)" as photodir
+}
+
+cloud "Google OIDC" as google
+cloud "OpenStreetMap pločice\n(planirano)" as osm #EEEEEE
+cloud "Vanjska stranica\nza rezervaciju\n(planirano)" as booking #EEEEEE
+
+user --> pages : koristi
+pages --> store
+store --> apiclient
+apiclient --> geo
+apiclient --> proxy : HTTPS /api/v1/**\n(JSESSIONID, X-XSRF-TOKEN)
+user --> proxy : /oauth2/** preusmjeravanja
+proxy --> config : /api/*, /oauth2/*
+
+config --> auth : identitet sesije
+auth --> event : userId
+auth --> eventmember : userId
+auth --> profile : userId
+eventmember --> event : lockEvent, statusOf, findById
+event --> eventmember : EventMemberRepository\n(organizator, broj sudionika)
+profile --> photostorage
+photostorage --> photodir : JPEG/PNG datoteke
+
+auth --> db : JdbcClient (SQL)
+event --> db : JdbcClient (SQL)
+eventmember --> db : JdbcClient (SQL)
+profile --> db : JdbcClient (SQL)
+lookup ..> db : JdbcClient (SQL)
+flyway --> db : DDL migracije
+
+config --> google : OAuth 2.0 kod / ID token
+pages ..> osm : kartografske pločice (planirano)
+pages ..> booking : samo poveznica (planirano)
+@enduml
