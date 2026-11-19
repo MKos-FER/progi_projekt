@@ -1,10 +1,10 @@
 export type AppRole = "GUEST" | "USER" | "MODERATOR";
 
 export interface UserSportDetails {
-  id: number;
   sportId: number;
-  sportName: string;
+  sportName?: string;
   skillLevelId: number;
+  skillLevelName?: number;
 }
 
 export interface UserDetails {

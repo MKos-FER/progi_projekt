@@ -1,4 +1,4 @@
-import { dummyEvents, dummyUsers, currentUserId, preferedUserLocation, dummySports, dummyCities } from "@/dummy_data/simple_dummy_data";
+import { dummyEvents, dummyUsers, currentUserId, preferedUserLocation } from "@/dummy_data/simple_dummy_data";
 import type { EventCardInfo, CreateEventInfo, EventDetails, EventFilters } from "@/types/event";
 import type { PublicUserInfo, UserDetails, UserCreateDetails } from "@/types/user";
 import type { Sport } from "@/types/sport";
@@ -6,11 +6,12 @@ import type { City } from "@/types/city";
 import { ApiError, type RegisterResult } from "@/types/auth";
 import { calculateDistanceKm, getUserLocation, type UserLocation } from "@/lib/geolocation";
 import { getDefaultAvatar } from "@/lib/utils";
+import type { SkillLevel } from "@/types/skill-level";
 
 // const USE_DUMMY_DATA = import.meta.env.APP_USE_DUMMY_DATA === "true";
-const USE_DUMMY_DATA = true;
+const USE_DUMMY_DATA = false;
 
-const USE_DUMMY_USERS = true; // NOTE: Nije implementirano još na backendu, neće raditi
+const USE_DUMMY_USERS = false;
 const USE_DUMMY_EVENTS = false;
 
 const API_PREFIX = `/api/v1`;
@@ -81,11 +82,15 @@ function roundSometimes(x: number) {
  */
 
 export async function getSports(): Promise<Sport[]> {
-  return dummySports
+  return await fetchData<Sport[]>("/sports")
 }
 
 export async function getCities(): Promise<City[]> {
-  return dummyCities
+  return await fetchData<City[]>("/cities")
+}
+
+export async function getSkillLevels(): Promise<SkillLevel[]> {
+  return await fetchData<SkillLevel[]>("/skill-levels")
 }
 
 /*
@@ -117,11 +122,18 @@ export async function getEvents(filters?: EventFilters): Promise<EventCardInfo[]
   let events = await fetchData<EventCardInfo[]>("/events");
   const userLoc = await getUserPreferredLocation();
 
-  events= events.map(event => ({
+  events = events.map(event => ({
     ...event,
     distance_km: roundSometimes(calculateDistanceKm(userLoc.latitude,
       userLoc.longitude, event.latitude, event.longitude)),
   })) satisfies EventCardInfo[];
+
+  const sports = await fetchData<Sport[]>(`/sports`);
+
+  events = events.map(event => ({
+    ...event,
+    sportName: (sports.find(s => s.id === event.sportId)?.name) ?? "Unknown sport",
+  }))
 
   return events;
 }
@@ -140,7 +152,13 @@ export async function getMyEvents(): Promise<EventCardInfo[]> {
       );
   }
 
-  return fetchData<EventCardInfo[]>("/users/me/events");
+  const events = await fetchData<EventCardInfo[]>("/users/me/events");
+  const sports = await fetchData<Sport[]>(`/sports`);
+
+  return events.map(event => ({
+    ...event,
+    sportName: (sports.find(s => s.id === event.sportId)?.name) ?? "Unknown sport",
+  }))
 }
 
 export async function getEventDetails(id: number): Promise<EventDetails> {
@@ -154,7 +172,13 @@ export async function getEventDetails(id: number): Promise<EventDetails> {
     return event;
   }
 
-  return fetchData<EventDetails>(`/events/${id}`);
+  const event = await fetchData<EventDetails>(`/events/${id}`);
+  const sports = await fetchData<Sport[]>(`/sports`);
+
+  return {
+    ...event,
+    sportName: (sports.find(s => s.id === event.sportId)?.name) ?? "Unknown sport",
+  } satisfies EventDetails;
 }
 
 export async function createEvent(data: CreateEventInfo): Promise<EventCardInfo> {
@@ -454,6 +478,9 @@ export async function logoutUser(): Promise<void> {
 
 
 export async function registerUser(user: UserCreateDetails): Promise<void> {
+
+  user.sports = user.sports.map(s => {return {sportId: s.sportId, skillLevelId: s.skillLevelId}});
+
   const res = await send('/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

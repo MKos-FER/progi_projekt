@@ -17,3 +17,10 @@ export function useCities() {
     queryFn: api.getCities,
   });
 }
+
+export function useSkillLevels() {
+  return useQuery({
+    queryKey: ["skillLevels"],
+    queryFn: api.getSkillLevels,
+  });
+}
