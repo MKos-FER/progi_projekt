@@ -1,6 +1,9 @@
 import { BrowserRouter, Route, Routes, NavLink, Link, useNavigate } from "react-router-dom";
 
 import './styles/App.css'
+
+import ProfilePhoto from './profile/ProfilePhoto'
+
 import Home from './HomePage.tsx'
 import Login from './Login.tsx'
 import ReportsPage from './ReportsPage.tsx'
@@ -125,6 +128,9 @@ function NavigationBar() {
               <AvatarFallback className="text-4xl">{user.name[0]}</AvatarFallback>
             </Avatar>
 
+      <ProfilePhoto />
+      <div className="ticks"></div>
+      <section id="spacer-bottom"></section>
             <DropdownMenuItem className="[grid-area:view] mt-2 text-md self-center" onClick={() => void navigate("/profile/edit")}>
               <UserPen />
               Edit user profile
