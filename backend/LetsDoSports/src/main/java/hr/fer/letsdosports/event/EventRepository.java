@@ -14,7 +14,7 @@ public class EventRepository {
     public EventRepository(JdbcClient jdbc) { this.jdbc = jdbc; }
 
     private static final String RESPONSE_SELECT = """
-        SELECT e.id, e.name, e.description, e.sport_id, e.venue_id, e.scheduled_at,
+        SELECT e.id, e.name, e.description, e.sport_id, e.venue_id, v.name as venue_name, v.latitude, v.longitude, e.scheduled_at,
                e.expected_duration_min, e.max_participants, e.min_age, e.max_age,
                e.min_skill_level_id, e.created_at, s.status,
                e.created_by_id AS organizer_id, u.username AS organizer_username,
