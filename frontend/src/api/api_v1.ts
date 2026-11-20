@@ -47,7 +47,7 @@ async function send(url: string, init: RequestInit = {}): Promise<Response> {
 
 async function throwResposneMessage(response: Response): Promise<void> {
   if (!response.ok) {
-    const r = (await response.json()) as {message: string}
+    const r = (await response.json()) as { message: string }
     throw new Error(`${r.message}`);
   }
 }
@@ -119,7 +119,19 @@ export async function getEvents(filters?: EventFilters): Promise<EventCardInfo[]
     )
   }
 
-  let events = await fetchData<EventCardInfo[]>("/events");
+  // http://localhost:8080/api/v1/events?cityIds=9,7&sportIds=6,7
+  let cityIds = "cityIds="
+  let sportIds = "sportIds="
+
+  if (filters?.cityId) {
+    cityIds += filters.cityId.join(",")
+  }
+
+  if (filters?.sportId) {
+    sportIds += filters.sportId.join(",")
+  }
+
+  let events = await fetchData<EventCardInfo[]>(`/events?${cityIds}&${sportIds}`);
   const userLoc = await getUserPreferredLocation();
 
   events = events.map(event => ({
@@ -128,14 +140,18 @@ export async function getEvents(filters?: EventFilters): Promise<EventCardInfo[]
       userLoc.longitude, event.latitude, event.longitude)),
   })) satisfies EventCardInfo[];
 
+  if (filters) {
+    events = events.filter(event =>
+      !filters.distance_km || event.distance_km <= filters.distance_km
+    )
+  }
+
   const sports = await fetchData<Sport[]>(`/sports`);
 
-  events = events.map(event => ({
+  return events.map(event => ({
     ...event,
     sportName: (sports.find(s => s.id === event.sportId)?.name) ?? "Unknown sport",
   }))
-
-  return events;
 }
 
 export async function getMyEvents(): Promise<EventCardInfo[]> {
@@ -479,7 +495,7 @@ export async function logoutUser(): Promise<void> {
 
 export async function registerUser(user: UserCreateDetails): Promise<void> {
 
-  user.sports = user.sports.map(s => {return {sportId: s.sportId, skillLevelId: s.skillLevelId}});
+  user.sports = user.sports.map(s => { return { sportId: s.sportId, skillLevelId: s.skillLevelId } });
 
   const res = await send('/auth/register', {
     method: 'POST',

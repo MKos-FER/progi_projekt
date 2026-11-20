@@ -57,9 +57,9 @@ class EventServiceTest {
 
     @Test
     void search_status_isLowercased() {
-        service.search((short) 1, "Zagreb", null, null, "OPEN");
+        service.search( null, null, null, null, "OPEN");
 
-        verify(events).search((short) 1, "Zagreb", null, null, "open");
+        verify(events).search(null, null, null, null, "open");
     }
 
     @Test

@@ -159,8 +159,8 @@ public class EventService {
 
     private static String norm(String s) { return s == null || s.isBlank() ? null : s.toLowerCase(); }
 
-    public List<EventResponse> search(Short sportId, String city, OffsetDateTime from, OffsetDateTime to, String status) {
-        return events.search(sportId, city, from, to, norm(status));
+    public List<EventResponse> search(Short[] sportIds, Short[] cityIds, OffsetDateTime from, OffsetDateTime to, String status) {
+        return events.search(sportIds, cityIds, from, to, norm(status));
     }
     public Optional<EventResponse> findDetailById(Long id) { return events.findDetailById(id); }
     public List<EventResponse> findJoinedBy(Long userId, String status) { return events.findJoinedBy(userId, norm(status)); }

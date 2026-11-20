@@ -61,12 +61,34 @@ public class EventRepository {
     }
 
 
-    public List<EventResponse> search(Short sportId, String city, OffsetDateTime fromTs,
+    public List<EventResponse> search(Short[] sportIDs, Short[] cityIDs, OffsetDateTime fromTs,
                                       OffsetDateTime toTs, String status) {
         StringBuilder sql = new StringBuilder(RESPONSE_SELECT).append(" WHERE 1=1");
         Map<String, Object> p = new HashMap<>();
-        if (sportId != null) { sql.append(" AND e.sport_id = :sportId");           p.put("sportId", sportId); }
-        if (city != null)    { sql.append(" AND lower(c.name) = lower(:city)");    p.put("city", city); }
+        if (cityIDs != null && cityIDs.length > 0) {
+            sql.append(" AND ( ");
+            for (int i = 0; i < cityIDs.length; i++) {
+                Short cityId = cityIDs[i];
+                if (i > 0) {
+                    sql.append(" OR ");
+                }
+                sql.append("v.city_id = :cityId_" + cityId);
+                p.put("cityId_" + cityId, cityId);
+            }
+            sql.append(" )");
+        }
+        if (sportIDs != null && sportIDs.length > 0) {
+            sql.append(" AND ( ");
+            for (int i = 0; i < sportIDs.length; i++) {
+                Short sportId = sportIDs[i];
+                if (i > 0) {
+                    sql.append(" OR ");
+                }
+                sql.append("e.sport_id = :sportId_" + sportId);
+                p.put("sportId_" + sportId, sportId);
+            }
+            sql.append(" )");
+        }
         if (fromTs != null)  { sql.append(" AND e.scheduled_at >= :fromTs");        p.put("fromTs", fromTs); }
         if (toTs != null)    { sql.append(" AND e.scheduled_at <= :toTs");          p.put("toTs", toTs); }
         if (status != null)  { sql.append(" AND s.status = :status");               p.put("status", status); }

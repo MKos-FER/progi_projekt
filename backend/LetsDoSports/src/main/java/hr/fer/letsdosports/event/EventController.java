@@ -20,12 +20,12 @@ public class EventController {
 
     @GetMapping   // Public
     public List<EventResponse> getAll(
-            @RequestParam(required = false) Short sportId,
-            @RequestParam(required = false) String city,
+            @RequestParam(required = false) Short[] sportIds,
+            @RequestParam(required = false) Short[] cityIds,
             @RequestParam(name = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @RequestParam(name = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
             @RequestParam(required = false) String status) {
-        return service.search(sportId, city, from, to, status);
+        return service.search(sportIds, cityIds, from, to, status);
     }
 
     @GetMapping("/{id}")   // Public
