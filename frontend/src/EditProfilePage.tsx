@@ -40,14 +40,14 @@ export default function EditProfile() {
 
     return (
         <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-lg mx-auto mt-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8 max-w-4xl mx-auto mt-20 px-4 items-start">
 
                 <div className="flex flex-col gap-6">
                     <EditPicture />
                     <UserInfoInput />
                 </div>
 
-                <div>
+                <div className="">
                     <ChooseSport />
                 </div>
             </div>
@@ -495,7 +495,7 @@ export function ChooseSport() {
                     return (
                         <div
                             key={index}
-                            className="flex items-center gap-3 rounded-lg border p-3"
+                            className="flex items-center gap-3 rounded-lg border p-3 w-100"
                         >
                             {/* Ime sporta */}
                             {isEditing && sport.sportId === 0 ? (
@@ -539,7 +539,9 @@ export function ChooseSport() {
                                     }
                                 >
                                     <SelectTrigger className="flex-1">
-                                        <SelectValue placeholder="Razina znanja" />
+                                        <SelectValue placeholder="Razina znanja">
+                                            {skillName}
+                                        </SelectValue>
                                     </SelectTrigger>
 
                                     <SelectContent>
@@ -584,7 +586,7 @@ export function ChooseSport() {
 
             {/* Opcije uređivanja */}
             {isEditing && (
-                <div className="space-y-3">
+                <div className="space-y-3 w-100">
                     <Button
                         type="button"
                         variant="outline"
@@ -602,6 +604,12 @@ export function ChooseSport() {
                     {saveError && (
                         <p className="text-sm text-destructive">
                             {saveError}
+                        </p>
+                    )}
+
+                    {editUser.error && (
+                        <p className="text-sm text-destructive">
+                            Došlo je do greške prilikom spremanja sportova.
                         </p>
                     )}
 
