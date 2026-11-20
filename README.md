@@ -35,38 +35,80 @@ Za potpuni opseg, zahtjeve, oblikovanje i dokaze ispitivanja pogledajte [docs](h
 <a id="deployment"></a>
 ## Postavljanje (engl. deployment)
 
-<!-- UPUTA: Ovaj odjeljak opisuje već postavljenu aplikaciju koju se  može otvoriti i isprobati bez lokalnog pokretanja izvornog koda.
-Za Iteraciju 1 i Završni pregled navedite konkretne podatke. Provjerite vodi li URL na javno dostupnu pokrenutu aplikaciju i radi li navedeni tijek uporabe. Nikada ne objavljujte lozinke ni pristupne tokene. -->
-
 **Javno dostupna aplikacija:** [letsdosports.eu](https://letsdosports.eu/)
 
 **Isprobajte:** Registrirajte se i izradite korisnički profil unosom osnovnih podataka, odabirom sporta i vlastite razine vještine.
 
-**Demonstracija:** Za korištenje aplikacije potrebno je registrirati vlastiti korisnički račun. 
+**Demonstracija:** Za korištenje aplikacije potrebno je registrirati vlastiti korisnički račun.
 
 **Ograničenja:** Aplikacija je u razvojnom stanju te nema sve funkcionalnosti implementirane. Aplikacija je trenutačno dostupna u demonstracijskoj verziji, stoga se očekuje manji broj registriranih korisnika i objavljenih sportskih aktivnosti. Zbog toga mogućnosti pronalaska igrača i sudjelovanja u sportskim aktivnostima mogu biti ograničene.
 
 [Vodič za postavljanje i pokretanje](docs/6-Postavljanje-instalacija-i-konfiguracija.md) opisuje smještaj aplikacije (engl. hosting) koji tim stvarno koristi. Tim može koristiti Render ili drugu platformu koju ste dogovorili s asistentom/demonstratorom.
 
 <a id="quick-start"></a>
+
 ## Brzi početak / instalacija
 
-<!-- Obavezno od Demo 1 nadalje. Zamijenite mjesta za unos naredbama koje je drugi član tima uspješno provjerio nakon čistog kloniranja repozitorija. Detaljne upute za administraciju držite u projektnoj dokumentaciji u direktoriju docs/. -->
+**Preduvjeti:**
 
-**Preduvjeti:** [Navedite potrebno izvršno okruženje (engl. runtime) i verzija, upravitelj paketa (engl. package manager), baza podataka ili vanjska usluga ako je nužna.]
+Aplikacija je postavljena na Linux poslužitelju (VPS). Za posluživanje aplikacije koristi se Caddy web poslužitelj, koji upravlja HTTPS vezom, poslužuje frontend aplikaciju i prosljeđuje zahtjeve prema backendu. Backend aplikacija pokreće se kao systemd servis, dok se podaci pohranjuju u PostgreSQL bazu podataka.
+
+
+
+Frontend aplikacija poslužuje se kao statički sadržaj iz direktorija `/var/www/lets-do-sports`, dok backend prihvaća zahtjeve na portu `8080`. GitHub webhook servis sluša na portu `5999` i zadužen je za pokretanje automatskog deploymenta.
+
+
+
+Za lokalno pokretanje aplikacije potrebno je instalirati:
+
+* **Java JDK 23** – za pokretanje backend aplikacije.
+* **Bun** – za instalaciju ovisnosti i pokretanje frontend aplikacije.
+* **PostgreSQL** – za pohranu podataka.
+* **Git** – za preuzimanje projektnog repozitorija.
+
+
+
+1. Preuzimanje projekta
 
 ```bash
-git clone [repository URL]
-cd [repository directory]
-[install dependencies]
-[run the application]
+git clone https://github.com/MKos-FER/progi\_projekt.gitcd progi\_projekt
 ```
 
-**Adresa:** [Stvarna adresa koju aplikacija ispiše nakon pokretanja.]
+2. Konfiguracija baze podataka
 
-**Konfiguracija:** [Navedite potrebne varijable okruženja (engl. environment variables) ili uputite na sigurnu datoteku `.env.example`; objasnite gdje se dobivaju vrijednosti. Nikada ne stavljajte stvarne pristupne podatke u ovu datoteku, primjer konfiguracije, snimke zaslona, zapise ni zapise promjena (engl. commits).]
+Potrebno je pokrenuti PostgreSQL poslužitelj i kreirati bazu podataka za projekt.
 
-[Dodajte kratak korak provjere, primjerice koja se stranica treba otvoriti ili koja naredba pokreće osnovnu provjeru.] Za detaljno postavljanje pogledajte [projektnu dokumentaciju](docs/Home.md).
+Kreirati bazu podataka i korisnika s odgovarajućim ovlastima. Podatke za povezivanje s bazom potrebno je uskladiti s konfiguracijom backend aplikacije.
+
+3. Konfiguracija backenda
+
+Potrebno je konfigurirati varijable okruženja za povezivanje s bazom podataka i OAuth2 autentifikaciju. Primjer možete pronaći [ovdje](https://github.com/MKos-FER/progi_projekt/blob/master/db/.env.example)
+
+Za OAuth2 prijavu potrebno je konfigurirati odgovarajuće pristupne podatke pružatelja autentifikacije te adresu lokalnog preusmjeravanja (`http://localhost:8080`).
+
+Nakon konfiguracije pokrenuti backend aplikaciju na portu `8080`.
+
+4. Pokretanje frontenda
+
+U novom terminalu:
+
+```bash
+cd frontendbun installbun run dev
+```
+
+Frontend razvojni poslužitelj pokreće se na adresi `http://localhost:5173`.
+
+5. Korištenje aplikacije
+
+Otvoriti preglednik i posjetiti:
+
+`http://localhost:5173`
+
+Frontend automatski prosljeđuje API zahtjeve (`/api`) i OAuth2 zahtjeve (`/oauth2`) na backend koji sluša na portu `8080`.
+
+Za ispravan rad aplikacije potrebno je da PostgreSQL i backend budu pokrenuti prije korištenja funkcionalnosti koje zahtijevaju pristup podacima.
+
+Za detaljno postavljanje pogledajte [projektnu dokumentaciju](docs/Home.md).
 
 ## Tehnologije
 
