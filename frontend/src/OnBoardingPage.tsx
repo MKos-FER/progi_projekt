@@ -12,7 +12,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -111,6 +113,8 @@ export default function RegistrationForm() {
       !["Male", "Female", "Other"].includes(user.gender)
     ) {
       newErrors.gender = "Spoj nije dobro unesen.";
+    } else if (!user.gender) {
+      newErrors.gender = "Spoj je obavezan.";
     }
 
     if (!user.dateOfBirth) {
@@ -126,11 +130,11 @@ export default function RegistrationForm() {
       }
     }
 
-    if (
-      user.cityId !== null &&
-      (!Number.isInteger(user.cityId) || user.cityId <= 0)
+    if (user.cityId !== null && (!Number.isInteger(user.cityId) || user.cityId <= 0)
     ) {
-      newErrors.cityId = "Grad nije ispravan.";
+      newErrors.cityId = "Odabrani grad nije ispravan.";
+    } else if (!user.cityId) {
+      newErrors.cityId = "Grad je obavezan.";
     }
 
     if (!user.sports.length) {
@@ -186,6 +190,12 @@ export default function RegistrationForm() {
   const { data: SPORTS, isLoading: sportsIsLoading, error: sportsError } = useSports();
   const { data: SKILL_LEVELS, isLoading: skillsIsLoading, error: skillsError } = useSkillLevels();
   const { data: CITIES, isLoading: citiesIsLoading, error: citiesError } = useCities();
+  const GENDERS: Record<string, string> = {
+    "NONE": "",
+    "Male": "Muško",
+    "Female": "Žensko",
+    "Other": "Ne želim reći",
+  }
 
   if (sportsIsLoading || skillsIsLoading || citiesIsLoading) {
     return (
@@ -246,19 +256,21 @@ export default function RegistrationForm() {
       <div className="space-y-1">
         <Label>Spol</Label>
         <Select
-          value={user.gender ?? "NONE"}
+          value={GENDERS[user.gender ?? "NONE"]}
           onValueChange={(value) =>
             update("gender", value === "NONE" ? null : value)
           }
         >
-          <SelectTrigger>
+          <SelectTrigger aria-invalid={errors.gender && !user.gender}>
             <SelectValue placeholder="Odaberi spol" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="NONE">Odaberi spol</SelectItem>
-            <SelectItem value="Male">Muško</SelectItem>
-            <SelectItem value="Female">Žensko</SelectItem>
-            <SelectItem value="Other">Ne želim reći</SelectItem>
+            <SelectGroup>
+              <SelectLabel>Odaberi spol</SelectLabel>
+              <SelectItem value="Male">{GENDERS["Male"]}</SelectItem>
+              <SelectItem value="Female">{GENDERS["Female"]}</SelectItem>
+              <SelectItem value="Other">{GENDERS["Other"]}</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
         {errors.gender && (
@@ -303,7 +315,6 @@ export default function RegistrationForm() {
         <Select
           id="cityId"
           value={user.cityId > 0 ? CITIES.find(c => user.cityId == c.id).name : ""}
-          aria-invalid={!!errors.cityId}
           onValueChange={(value) => {
             const selectedCity = CITIES.find(
               (c) => c.id === Number(value)
@@ -312,8 +323,8 @@ export default function RegistrationForm() {
             update("cityId", !selectedCity ? null : selectedCity.id)
           }}
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Odaberi sport" />
+          <SelectTrigger aria-invalid={!!errors.cityId}>
+            <SelectValue placeholder="Odaberi grad" />
           </SelectTrigger>
           <SelectContent>
             {CITIES.map((c) => (
@@ -352,7 +363,10 @@ export default function RegistrationForm() {
                 update("sports", updated);
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger aria-invalid={
+                errors.sports === "Odaberi ispravan sport."
+                && !sport.sportId
+              }>
                 <SelectValue placeholder="Odaberi sport" />
               </SelectTrigger>
               <SelectContent>
@@ -381,7 +395,10 @@ export default function RegistrationForm() {
                 update("sports", updated);
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger aria-invalid={
+                errors.sports === "Odredi razinu iskustva za svaki sport."
+                && !sport.skillLevelId
+              }>
                 <SelectValue placeholder="Odredi razinu iskustva" />
               </SelectTrigger>
               <SelectContent>
@@ -415,6 +432,7 @@ export default function RegistrationForm() {
         <Button
           type="button"
           variant="outline"
+          aria-invalid={errors.sports === "Odaberi barem jedan sport."}
           disabled={user.sports.length >= SPORTS.length}
           onClick={() =>
             update("sports", [...user.sports, createEmptySport()])
