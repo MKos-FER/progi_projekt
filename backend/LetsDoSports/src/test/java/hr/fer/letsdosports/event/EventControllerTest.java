@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -85,15 +86,42 @@ class EventControllerTest {
 
     @Test
     void getAll_passesFiltersToService() throws Exception {
-        when(service.search(any(), any(), any(), any(), any())).thenReturn(List.of());
+        when(service.search(any(), any(), any(), any(), any()))
+                .thenReturn(List.of());
 
         mvc.perform(get("/api/v1/events")
-                        .param("sportId", "1")
-                        .param("city", "Zagreb")
+                        .param("sportIds", "5")
+                        .param("cityIds", "5")
                         .param("status", "open"))
                 .andExpect(status().isOk());
 
-        verify(service).search(eq((short) 1), eq("Zagreb"), isNull(), isNull(), eq("open"));
+        verify(service).search(
+                aryEq(new Short[]{5}),
+                aryEq(new Short[]{5}),
+                isNull(),
+                isNull(),
+                eq("open")
+        );
+    }
+
+    @Test
+    void getAll_passesMultipleFiltersToService() throws Exception {
+        when(service.search(any(), any(), any(), any(), any()))
+                .thenReturn(List.of());
+
+        mvc.perform(get("/api/v1/events")
+                        .param("sportIds", "5,6")
+                        .param("cityIds", "5,6,7")
+                        .param("status", "open"))
+                .andExpect(status().isOk());
+
+        verify(service).search(
+                aryEq(new Short[]{5,6}),
+                aryEq(new Short[]{5,6,7}),
+                isNull(),
+                isNull(),
+                eq("open")
+        );
     }
 
     @Test
