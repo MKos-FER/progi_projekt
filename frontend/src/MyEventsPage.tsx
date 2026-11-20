@@ -467,7 +467,6 @@ export function EventCard({ eventId }: { eventId: number }) {
     eventStatusText = "otkazan";
   }
 
-  console.log(event)
 
   return (
     // <Link to={`/events/${eventId}`} className="select-auto">
