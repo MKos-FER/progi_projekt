@@ -112,7 +112,6 @@ Za detaljno postavljanje pogledajte [projektnu dokumentaciju](docs/Home.md).
 
 ## Tehnologije
 
-Navedite nekoliko tehnologija i vanjskih usluga koje bitno određuju kako vaša aplikacija radi. Za svaku navedite njezinu konkretnu ulogu i jedan razlog ili ograničenje važno za projekt. Alat za razvoj ili ispitivanje uključite samo ako je njegova uloga važna za razumijevanje načina na koji je projekt izrađen ili provjeren. Nemojte prepisivati popis ovisnosti (engl. dependencies), statistiku programskih jezika ni popis razvojnih okruženja i komunikacijskih alata. Tablicu provjerite prema stvarnom repozitoriju i pokrenutoj aplikaciji; potrebne verzije i konfiguraciju dokumentirajte u vodiču za instalaciju.
 
 | Tehnologija ili alat | Uloga u ovom projektu | Razlog uporabe ili važno ograničenje |
 | --- | --- | --- |
@@ -154,11 +153,11 @@ Kod trećih strana, skupovi podataka, slike, ikone i drugi sadržaji zadržavaju
 
 Ovaj projekt slijedi FER-ova [pravila o primjerenoj uporabi umjetne inteligencije](https://www.fer.unizg.hr/_download/repository/Policy%20on%20the%20appropriate%20use%20of%20artificial%20intelligence%20at%20the%20faculty%20of%20electrical%20engineering%20and%20computing%5B1%5D.pdf).
 
-**Izjava:** Tijekom izrade projekta korišten je alat Claude (Anthropic) kao pomoć pri razvoju koda. Korišten je za pomoć pri implementaciji pojedinih funkcionalnosti i analizu programskog koda.
+**Izjava:** Tijekom izrade projekta korišten je alat Claude (Anthropic) i Codex (OpenAI) kao pomoć pri razvoju. Korišten je za pomoć pri implementaciji pojedinih funkcionalnosti, analizu programskog koda, za formatiranje dijelova dokumentacije, te generalan debugging pri razvoju.
 
 Prijedlozi generirani pomoću alata kritički su pregledani i provjereni od strane članova tima. Članovi tima samostalno su donosili odluke o prihvaćanju i prilagodbi predloženih rješenja te su odgovorni za ispravnost i funkcionalnost konačne implementacije. Tim razumije implementirana rješenja i sposoban je objasniti vlastiti doprinos razvoju projekta.
 
-[Ako je za ovaj projekt potreban detaljniji zapis uporabe umjetne inteligencije, postavite poveznicu na njegovo jedinstveno mjerodavno mjesto u dokumentaciji.]
+
 
 <a id="code-of-conduct-and-support"></a>
 ## Kodeks ponašanja i podrška [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
