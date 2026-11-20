@@ -235,7 +235,7 @@ export function UserInfoInput() {
                 <Label>Datum rođenja</Label>
 
                 <Popover>
-                    <PopoverTrigger asChild>
+                    <PopoverTrigger>
                         <Button variant="outline" type="button">
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {parseDate(dateOfBirth)?.toLocaleDateString() ??
