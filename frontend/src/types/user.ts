@@ -30,6 +30,5 @@ export interface PublicUserInfo {
     name: string;
     profilePhotoUrl: string | null;
     sports: UserSportDetails[];
-    appRoleId: AppRole;
     joinedAt: string
 }

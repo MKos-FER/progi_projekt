@@ -368,25 +368,10 @@ export async function editUserProfile(newUserInfo: UserCreateDetails): Promise<v
   // await throwResposneMessage(response)
 }
 
-export async function uploadUserProfilePhoto(url: string): Promise<void> {
-  if (USE_DUMMY_DATA && USE_DUMMY_USERS) {
-    const userIdx = dummyUsers.findIndex(u => u.userId === currentUserId);
-
-    if (userIdx === -1) {
-      throw new Error("User profile not found!")
-    }
-
-    dummyUsers[userIdx].profilePhotoUrl = getDefaultAvatar(url);
-
-    return;
-  }
-
+export async function uploadUserProfilePhoto(file: FormData): Promise<void> {
   const response = await send(`/users/me/photo`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "Multipart: file", // Otkriti kako ovo treba izgledati
-    },
-    body: "TODO: image data"
+    body: file
   });
 
   await throwResposneMessage(response)

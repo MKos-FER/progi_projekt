@@ -66,39 +66,17 @@ export function useIsAuth() {
   });
 }
 
-export function useJoinEvent() {
+export function useUploadUserProfilePhoto() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (eventId: number) => api.joinEvent(eventId),
+    mutationFn: (data: FormData) => api.uploadUserProfilePhoto(data),
 
     onSuccess: () => {
       return Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["events"] }),
-        queryClient.invalidateQueries({ queryKey: ["myEvents"] }),
+        queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
+        queryClient.invalidateQueries({ queryKey: ["users"] }),
       ]);
     },
-  });
-}
-
-export function useCancelEvent() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (eventId: number) => api.cancelEvent(eventId),
-
-    onSuccess: () => {
-      return Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["events"] }),
-        queryClient.invalidateQueries({ queryKey: ["myEvents"] }),
-      ]);
-    },
-  });
-}
-
-export function useEventMembers(eventId: number) {
-  return useQuery({
-    queryKey: ["events", eventId, "members"],
-    queryFn: () => api.getEventMembers(eventId),
   });
 }

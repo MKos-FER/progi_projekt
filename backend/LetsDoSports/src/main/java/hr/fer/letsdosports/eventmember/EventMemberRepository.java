@@ -2,14 +2,22 @@ package hr.fer.letsdosports.eventmember;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public class EventMemberRepository {
     private final JdbcClient jdbc;
-    public EventMemberRepository(JdbcClient jdbc) { this.jdbc = jdbc; }
+    private final ObjectMapper objectMapper;
+
+    public EventMemberRepository(JdbcClient jdbc, ObjectMapper objectMapper) {
+        this.jdbc = jdbc;
+        this.objectMapper = objectMapper;
+    }
 
     public boolean existsByEventIdAndUserId(Long eventId, Long userId) {
         return jdbc.sql("SELECT EXISTS(SELECT 1 FROM event_members WHERE event_id = :e AND user_id = :u)")
@@ -38,22 +46,36 @@ public class EventMemberRepository {
 
     public List<EventMemberResponse> listMembers(Long eventId) {
         return jdbc.sql("""
-                SELECT u.id AS user_id, u.username AS username, u.name AS name,
-                       m.joined_at AS joined_at, , u.profile_photo_url,
-                       COALESCE((
-                           SELECT json_agg(json_build_object(
-                                      'sport', us.id,
-                                      'sport_skill_level', us.id))
-                           FROM user_sports us
-                           WHERE us.user_id = u.id
-                       ), '[]'::json) AS sports, (u.id = e.created_by_id) AS organizer
-                FROM event_members m
-                JOIN users u ON u.id = m.user_id
-                JOIN events e ON e.id = m.event_id
-                WHERE m.event_id = :e
-                ORDER BY m.joined_at, m.id
-                """)
-                .param("e", eventId).query(EventMemberResponse.class).list();
+            SELECT u.id AS user_id, u.username AS username, u.name AS name,
+                   m.joined_at AS joined_at, u.profile_photo_url,
+                   COALESCE((
+                       SELECT json_agg(json_build_object(
+                                  'sportId', us.sport_id,
+                                  'skillLevelId', us.skill_level_id))
+                       FROM user_sports us
+                       WHERE us.user_id = u.id
+                   ), '[]'::json) AS sports,
+                   (u.id = e.created_by_id) AS organizer
+            FROM event_members m
+            JOIN users u ON u.id = m.user_id
+            JOIN events e ON e.id = m.event_id
+            WHERE m.event_id = :e
+            ORDER BY m.joined_at, m.id
+            """)
+                .param("e", eventId)
+                .query((rs, rowNum) -> new EventMemberResponse(
+                        rs.getLong("user_id"),
+                        rs.getString("username"),
+                        rs.getString("name"),
+                        rs.getObject("joined_at", OffsetDateTime.class),
+                        rs.getString("profile_photo_url"),
+                        objectMapper.readValue(
+                                rs.getString("sports"),
+                                new TypeReference<List<EventMemberResponse.MemberSport>>() {}
+                        ),
+                        rs.getBoolean("organizer")
+                ))
+                .list();
     }
 
     public Optional<Integer> findAgeYears(Long userId) {
