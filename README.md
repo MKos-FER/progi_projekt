@@ -1,4 +1,3 @@
-v
 
 # Let's do sports
 
@@ -71,7 +70,7 @@ Za lokalno pokretanje aplikacije potrebno je instalirati:
 1. Preuzimanje projekta
 
 ```bash
-git clone https://github.com/MKos-FER/progi\_projekt.gitcd progi\_projekt
+git clone https://github.com/MKos-FER/progi_projekt.git
 ```
 
 2. Konfiguracija baze podataka
@@ -80,20 +79,38 @@ Potrebno je pokrenuti PostgreSQL poslužitelj i kreirati bazu podataka za projek
 
 Kreirati bazu podataka i korisnika s odgovarajućim ovlastima. Podatke za povezivanje s bazom potrebno je uskladiti s konfiguracijom backend aplikacije.
 
+Prije pokretanja backenda potrebno je u /db direktoriju pokrenuti:
+
+```
+docker compose up
+```
+
 3. Konfiguracija backenda
 
 Potrebno je konfigurirati varijable okruženja za povezivanje s bazom podataka i OAuth2 autentifikaciju. Primjer možete pronaći [ovdje](https://github.com/MKos-FER/progi_projekt/blob/master/db/.env.example)
 
 Za OAuth2 prijavu potrebno je konfigurirati odgovarajuće pristupne podatke pružatelja autentifikacije te adresu lokalnog preusmjeravanja (`http://localhost:8080`).
 
-Nakon konfiguracije pokrenuti backend aplikaciju na portu `8080`.
+Nakon konfiguracije pokrenuti backend aplikaciju na portu `8080`
+ 
+U slučaju da java 23 nije default treba pokrenuti naredbu:
+
+```
+JAVA_HOME=/lib/jvm/java-23-openjdk make run  # Putanju je potrebno promijeniti ako je instalacija jave 23 na drugom 
+```
+
+mjestu
 
 4. Pokretanje frontenda
 
 U novom terminalu:
 
-```bash
-cd frontendbun installbun run dev
+```
+cd frontend/
+&&
+bun install
+&&
+bun dev
 ```
 
 Frontend razvojni poslužitelj pokreće se na adresi `http://localhost:5173`.
