@@ -1,0 +1,144 @@
+@startuml
+title <back:white>Let's Do Sports - dijagram razreda: događaji i sudjelovanje</back>
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName SansSerif
+hide empty members
+
+package "auth" {
+  annotation CurrentUserId <<parametar>>
+  class CurrentUserArgumentResolver {
+    +supportsParameter(p: MethodParameter): boolean
+    +resolveArgument(...): Object
+  }
+  class RegistrationService <<Service>> {
+    +findLinkedUserId(token: OAuth2AuthenticationToken): Optional<Long>
+    +register(token: OAuth2AuthenticationToken, req: RegisterRequest): long
+  }
+}
+
+package "event" {
+  class EventController <<RestController>> {
+    +getAll(sportId, city, from, to, status): List<EventResponse>
+    +getOne(id: Long): ResponseEntity<EventResponse>
+    +create(userId: Long, req: CreateEventRequest): ResponseEntity<EventResponse>
+    +update(eventId, userId, req: UpdateEventRequest): EventResponse
+    +cancel(eventId, userId): EventResponse
+  }
+  class MyEventsController <<RestController>> {
+    +mine(userId: Long, status: String): List<EventResponse>
+  }
+  class EventService <<Service>> {
+    +create(req: CreateEventRequest, currentUserId: Long): Event
+    +update(eventId, req: UpdateEventRequest, currentUserId): Event
+    +cancel(eventId, currentUserId): void
+    +search(sportId, city, from, to, status): List<EventResponse>
+    +findDetailById(id: Long): Optional<EventResponse>
+    +findJoinedBy(userId, status): List<EventResponse>
+    +findById(id: Long): Optional<Event>
+    +lockEvent(eventId: Long): void
+    +statusOf(eventId: Long): String
+    +requireOrganizer(eventId, userId): void
+    +conflict(msg: String): ResponseStatusException
+    -validateReferences(sportId, venueId, minAge, maxAge, minSkillLevelId): void
+  }
+  class EventRepository <<Repository>> {
+    +insert(e: Event): Event
+    +update(e: Event): Event
+    +cancel(id: Long): void
+    +findById(id: Long): Optional<Event>
+    +findCreatedById(id: Long): Long
+    +search(...): List<EventResponse>
+    +findDetailById(id: Long): Optional<EventResponse>
+    +findJoinedBy(userId, status): List<EventResponse>
+  }
+  class Event {
+    id: Long
+    sportId: Short
+    venueId: Long
+    createdById: Long
+    name: String
+    description: String
+    scheduledAt: OffsetDateTime
+    expectedDurationMin: Integer
+    maxParticipants: Integer
+    minAge, maxAge: Short
+    minSkillLevelId: Short
+    cancelledAt: OffsetDateTime
+    createdAt: OffsetDateTime
+  }
+  class CreateEventRequest <<record>>
+  class UpdateEventRequest <<record>>
+  class EventResponse <<record>> {
+    status: String
+    participantCount: Long
+    organizerUsername: String
+    venueName: String
+    latitude, longitude: Double
+  }
+  class ApiExceptionHandler <<RestControllerAdvice>>
+  class ApiValidationException {
+    errors: Map<String, String>
+  }
+}
+
+package "eventmember" {
+  class EventMemberController <<RestController>> {
+    +getMembers(eventId, userId): List<EventMemberResponse>
+    +join(eventId, userId): void
+    +leave(eventId, userId): void
+  }
+  class EventMemberService <<Service>> {
+    +listMembers(eventId: Long): List<EventMemberResponse>
+    +join(eventId: Long, userId: Long): void
+    +leave(eventId: Long, userId: Long): void
+    -requireEligible(eventId, userId): void
+  }
+  class EventMemberRepository <<Repository>> {
+    +existsByEventIdAndUserId(eventId, userId): boolean
+    +countByEventId(eventId): long
+    +insert(eventId, userId): void
+    +deleteByEventIdAndUserId(eventId, userId): int
+    +listMembers(eventId): List<EventMemberResponse>
+    +findAgeYears(userId): Optional<Integer>
+    +findUserSkillRank(userId, sportId): Optional<Integer>
+    +findSkillRank(skillLevelId): Optional<Integer>
+  }
+  class EventMemberResponse <<record>> {
+    userId: Long
+    username: String
+    name: String
+    joinedAt: OffsetDateTime
+    organizer: boolean
+  }
+}
+
+class JdbcClient <<Spring>>
+note "Prikazan je izbor metoda važnih za pravila sudjelovanja." as N1
+
+EventController --> EventService
+MyEventsController --> EventService
+EventMemberController --> EventMemberService
+EventMemberService --> EventService : lockEvent, statusOf, conflict
+EventMemberService --> EventRepository
+EventMemberService --> EventMemberRepository
+EventService --> EventRepository
+EventService --> EventMemberRepository
+EventService --> JdbcClient : provjere referenci, FOR UPDATE
+EventRepository --> JdbcClient
+EventMemberRepository --> JdbcClient
+EventRepository ..> Event
+EventRepository ..> EventResponse
+EventController ..> CreateEventRequest
+EventController ..> UpdateEventRequest
+EventMemberRepository ..> EventMemberResponse
+EventService ..> ApiValidationException : baca
+ApiExceptionHandler ..> ApiValidationException : 400 {errors}
+
+CurrentUserArgumentResolver --> RegistrationService : findLinkedUserId
+RegistrationService --> JdbcClient : oauth_accounts, users
+CurrentUserArgumentResolver ..> CurrentUserId : razrješava
+EventController ..> CurrentUserId
+EventMemberController ..> CurrentUserId
+MyEventsController ..> CurrentUserId
+@enduml

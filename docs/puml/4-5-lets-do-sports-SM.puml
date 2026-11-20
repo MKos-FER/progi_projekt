@@ -1,0 +1,46 @@
+@startuml
+title <back:white>Let's Do Sports - stanja sportskog događaja</back>
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+hide empty description
+
+state "open\n(otvoren)" as open
+state "full\n(popunjen)" as full
+state "in_progress\n(u tijeku)" as in_progress
+state "finished\n(završen)" as finished
+state "cancelled\n(otkazan)" as cancelled
+
+[*] --> open : POST /events\n[max_participants > 1]
+[*] --> full : POST /events\n[max_participants = 1]
+
+open --> full : join / PATCH smanjuje kapacitet\n[broj sudionika >= max_participants]
+full --> open : leave / PATCH povećava kapacitet\n[broj sudionika < max_participants]
+
+open --> in_progress : vrijeme [scheduled_at <= now()]
+full --> in_progress : vrijeme [scheduled_at <= now()]
+in_progress --> finished : vrijeme\n[scheduled_at + expected_duration_min < now()]
+open --> finished : vrijeme [expected_duration_min IS NULL\ni scheduled_at < now()]
+full --> finished : vrijeme [expected_duration_min IS NULL\ni scheduled_at < now()]
+
+open --> cancelled : POST /events/{id}/cancel\n(organizator)
+full --> cancelled : POST /events/{id}/cancel\n(organizator)
+in_progress --> cancelled : POST /events/{id}/cancel\n(organizator)
+in_progress --> open : PATCH scheduledAt u budućnost\n(organizator)
+in_progress --> full : PATCH scheduledAt u budućnost\n[broj sudionika >= max_participants]
+
+finished --> [*]
+cancelled --> [*]
+
+note right of open
+  join dopušten samo ovdje;
+  leave dopušten u open i full
+end note
+note right of in_progress
+  join i leave odbijeni (409);
+  uređivanje i otkazivanje dopušteni
+end note
+note bottom of cancelled
+  pohranjuje se samo cancelled_at;
+  ostala stanja računa pogled events_with_status
+end note
+@enduml
