@@ -1,5 +1,5 @@
-import { useEditUserProfile, useUserProfile, useIsAuth } from "@/apiStore/useUsers"
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { useEditUserProfile, useUploadUserProfilePhoto, useIsAuth, useUserProfile } from "@/apiStore/useUsers"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getDefaultAvatar } from "./lib/utils.ts";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -16,12 +16,14 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, Plus, Trash2 } from "lucide-react";
+import { CalendarIcon, CircleX, Plus, Trash2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 
 import { useCities, useSports, useSkillLevels } from "@/apiStore/useSif";
 import { Label } from "@/components/ui/label"
 import type { UserSportDetails } from "./types/user.ts";
+import { Alert, AlertDescription, AlertTitle } from "./components/ui/alert.tsx";
+import { Separator } from "@base-ui/react";
 
 export default function EditProfile() {
     const { data, isLoading, error } = useIsAuth();
@@ -56,27 +58,59 @@ export default function EditProfile() {
 }
 
 export function EditPicture() {
-    const { mutate: editUserProfile, isPending, error: editError } = useEditUserProfile();
+    const { mutate: uploadPhoto, isPending, error: uploadError } = useUploadUserProfilePhoto();
+    const [file, setFile] = useState<File | null>(null);
 
     const { data: user, isLoading, error } = useUserProfile();
 
-    if (isLoading) {
-        return <p>Loading profile...</p>;
+    function handleUpload() {
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        uploadPhoto(formData)
+    };
+
+    if (isPending || isLoading) {
+        return (
+            <div>Loading...</div>
+        )
     }
 
     if (error) {
-        return <p>Error loading profile</p>;
+        return (
+            <div>ERROR: {error.message}</div>
+        )
     }
+
 
     return (
         <>
-            <div className="flex flex-col md:h-70 md:w-70 items-center">
-                <Avatar className="md:h-60 md:w-60">
+            <div className="flex flex-col w-60 h-60 items-center mb-20">
+                <Avatar className="h-60 w-60">
                     <AvatarImage
                         src={getDefaultAvatar(user.profilePhotoUrl) ?? ""}
                     />
                 </Avatar>
-                <Button className="mt-4 w-45">Uredi sliku</Button>
+                <Button onClick={handleUpload} disabled={!file} className="mt-4 w-45">
+                    Uredi sliku
+                </Button>
+                <Input
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    aria-label="Odaberite profilnu fotografiju"
+                    onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                />
+                {!!uploadError &&
+                <Alert key="alert" className="text-destructive *:[svg]:text-current bg-destructive-foreground">
+                    <CircleX />
+                    <AlertTitle>Dogodila se greška prilikom dohvata profilne fotografije</AlertTitle>
+                    <AlertDescription>
+                        Error info: {uploadError.message}
+                    </AlertDescription>
+                </Alert>
+                }
             </div>
         </>
     );

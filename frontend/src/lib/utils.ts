@@ -19,7 +19,7 @@ export function getDefaultAvatar(filename: string | null): string | null {
   const photo = avatars[`/src/assets/default-avatar/${filename}.svg`];
 
   if (!photo) {
-    return null;
+    return filename;
   }
 
   return photo;

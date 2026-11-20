@@ -3,7 +3,6 @@ package hr.fer.letsdosports.profile;
 import hr.fer.letsdosports.auth.CurrentUserId;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.*;
-import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,12 +18,12 @@ public class ProfilePhotoController {
 
     @GetMapping("/users/me/photo")
     public ResponseEntity<PhotoResponse> current(@CurrentUserId Long userId, HttpServletRequest request) {
-        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(response(service.current(userId), request));
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(response(service.current(userId)));
     }
 
     @PutMapping(value = "/users/me/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public PhotoResponse replace(@CurrentUserId Long userId, @RequestPart("file") MultipartFile file, HttpServletRequest request) {
-        return response(service.replace(userId, file), request);
+        return response(service.replace(userId, file));
     }
 
     @GetMapping("/profile-photos/{name}")
@@ -37,10 +36,9 @@ public class ProfilePhotoController {
                 .body(content);
     }
 
-    private PhotoResponse response(String url, HttpServletRequest request) {
-        CsrfToken csrf = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
-        return new PhotoResponse(url, csrf == null ? null : csrf.getToken(), csrf == null ? null : csrf.getHeaderName());
+    private PhotoResponse response(String url) {
+        return new PhotoResponse(url);
     }
 
-    public record PhotoResponse(String profilePhotoUrl, String csrfToken, String csrfHeaderName) {}
+    public record PhotoResponse(String profilePhotoUrl) {}
 }

@@ -4,8 +4,6 @@ import './ProfilePhoto.css'
 
 type PhotoResponse = {
   profilePhotoUrl: string | null
-  csrfToken: string | null
-  csrfHeaderName: string | null
 }
 
 const MAX_BYTES = 5 * 1024 * 1024
@@ -36,9 +34,7 @@ async function readResponse(response: Response): Promise<PhotoResponse> {
   }
   return {
     profilePhotoUrl: body.profilePhotoUrl,
-    csrfToken: 'csrfToken' in body && typeof body.csrfToken === 'string' ? body.csrfToken : null,
-    csrfHeaderName: 'csrfHeaderName' in body && typeof body.csrfHeaderName === 'string' ? body.csrfHeaderName : null,
-  }
+  } satisfies PhotoResponse
 }
 
 export default function ProfilePhoto() {
@@ -86,7 +82,6 @@ export default function ProfilePhoto() {
     const data = new FormData()
     data.append('file', file)
     const headers = requestHeaders()
-    if (photo.csrfHeaderName && photo.csrfToken) headers.set(photo.csrfHeaderName, photo.csrfToken)
     setSaving(true)
     try {
       const response = await fetch('/api/v1/users/me/photo', {
