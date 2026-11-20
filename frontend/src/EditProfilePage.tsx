@@ -86,16 +86,13 @@ export function EditPicture() {
 
 
     return (
-        <>
-            <div className="flex flex-col w-60 h-60 items-center mb-20">
+        <div>
+            <div className="flex flex-col items-center mb-2 gap-2">
                 <Avatar className="h-60 w-60">
                     <AvatarImage
                         src={getDefaultAvatar(user.profilePhotoUrl) ?? ""}
                     />
                 </Avatar>
-                <Button onClick={handleUpload} disabled={!file} className="mt-4 w-45">
-                    Uredi sliku
-                </Button>
                 <Input
                     type="file"
                     accept="image/jpeg,image/png"
@@ -105,14 +102,17 @@ export function EditPicture() {
                 {!!uploadError &&
                 <Alert key="alert" className="text-destructive *:[svg]:text-current bg-destructive-foreground">
                     <CircleX />
-                    <AlertTitle>Dogodila se greška prilikom dohvata profilne fotografije</AlertTitle>
+                    <AlertTitle>Dogodila se greška prilikom postavljanja profilne fotografije</AlertTitle>
                     <AlertDescription>
                         Error info: {uploadError.message}
                     </AlertDescription>
                 </Alert>
                 }
+                <Button onClick={handleUpload} disabled={!file} className="mt-4 w-45">
+                    Prenesi sliku
+                </Button>
             </div>
-        </>
+        </div>
     );
 
 }

@@ -128,12 +128,12 @@ function NavigationBar() {
 
             <DropdownMenuItem className="[grid-area:view] mt-2 text-md self-center" onClick={() => void navigate("/profile/edit")}>
               <UserPen />
-              Edit user profile
+              Uredi korisnički profil
             </DropdownMenuItem>
 
             <DropdownMenuItem className="[grid-area:logout] text-md border-transparent focus:border-b focus:border-t focus:border-b-destructive text-destructive" onClick={() => doLogout()}>
               <DoorOpen />
-              <p>Logout</p>
+              <p>Odjavi se</p>
             </DropdownMenuItem>
           </div>
         </DropdownMenuContent>
