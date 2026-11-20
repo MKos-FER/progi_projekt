@@ -1,5 +1,5 @@
 ---
-date_modified: 2026-11-12T09:48:55+01:00
+date_modified: 2026-11-18T12:00:00+01:00
 ---
 # Let's Do Sports - REST API ugovor
 
@@ -32,22 +32,24 @@ date_modified: 2026-11-12T09:48:55+01:00
 
 ## 2. Autentifikacija (F-001 do F-003)
 
-Sljedeće dvije rute su primjer **standardnih Spring Security ruta**, a nisu dio aplikacijskog `/api/v1` API-ja. Stvarne rute ovise o konfiguraciji.
+Detaljan tijek, stanja sesije, JSON strukture, kodovi grešaka i pravila sesije (cookie, CSRF, odjava) nalaze se u dokumentu [Autentifikacija, registracija i profil](autentifikacija-i-profil.md). Prve dvije rute su **standardne Spring Security rute** i nisu dio aplikacijskog `/api/v1` API-ja. `registrationId` je `google`, jednako kao `oauth_accounts.provider`.
 
-| Metoda | Putanja                                  | Opis                                                                                 | Podaci koji se šalju                              | Permission    | Zahtjev      |
-| ------ | ---------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------- | ------------- | ------------ |
-| GET    | `/oauth2/authorization/{registrationId}` | Pokreće vanjsku prijavu, npr. putem Googlea                                          | Path: `registrationId`                            | Public        | F-001, F-002 |
-| GET    | `/login/oauth2/code/{registrationId}`    | OAuth/OIDC povratni poziv koji obrađuje Spring Security; frontend ga ne poziva ručno | Query: `code`, `state` (vraća pružatelj prijave)  | OAuth flow    | F-001, F-002 |
-| POST   | `/api/v1/auth/logout`                    | Odjavljuje korisnika iz aplikacije                                                   | Bez bodyja; sesijski cookie ako se koristi sesija | Authenticated | F-003        |
+| Metoda | Putanja                         | Opis                                                                                                                                  | Podaci koji se šalju                                                                       | Permission                 | Zahtjev             |
+| ------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------- | ------------------- |
+| GET    | `/oauth2/authorization/google`  | Pokreće Google prijavu; frontend radi navigaciju cijele stranice, ne `fetch`                                                          | -                                                                                          | Public                     | F-001, F-002        |
+| GET    | `/oauth2/login/code/google`     | OIDC povratni poziv koji obrađuje Spring Security; preusmjerava na `/`, `/register` ili `/login?loginError`; frontend ga ne poziva ručno | Query: `code`, `state` (vraća Google)                                                      | OAuth flow                 | F-001, F-002        |
+| GET    | `/api/v1/auth/csrf`             | Postavlja cookie `XSRF-TOKEN`, čiju vrijednost frontend šalje u zaglavlju `X-XSRF-TOKEN`; vraća `204`                                 | -                                                                                          | Public                     | F-001 – F-004       |
+| POST   | `/api/v1/auth/register`         | Dovršava registraciju: u jednoj transakciji sprema korisnika, sportove i Google identitet; vraća `201 {"id": …}`                   | Body: `name`, `username`, `gender`, `dateOfBirth`, `cityId`, `sports: [{sportId, skillLevelId}]` | Google prijava bez računa | F-001, F-004        |
+| POST   | `/api/v1/auth/logout`           | Odjavljuje korisnika ili odbacuje registraciju u tijeku; poništava sesiju i vraća `204`                                               | Bez bodyja; zaglavlje `X-XSRF-TOKEN`                                                       | Public (bez sesije `204`)  | F-001, F-003        |
 
-Nakon uspješnog vanjskog logina backend mora provjeriti identitet, dohvatiti postojećeg korisnika ili stvoriti novog, a frontend može koristiti `GET /api/v1/users/me` kako bi dohvatio profil i podatak je li profil dovršen. Nema API-ja za lokalno postavljanje lozinke.
+Nakon uspješnog Google logina backend provjerava identitet i traži korisnika samo po Googleovom `sub`. Ako korisnik postoji, prijavljuje ga. Ako ne postoji, ne stvara ga, nego sesija prelazi u stanje registracije u tijeku, a lokalni račun nastaje tek kroz `POST /api/v1/auth/register`. Frontend stanje dohvaća s `GET /api/v1/users/me`: `200` za registriranog korisnika, `401` bez prijave i `403` dok registracija nije dovršena. Profil nema polja o dovršenosti, jer je svaki spremljeni profil potpun. Nema API-ja za lokalno postavljanje lozinke.
 
 ## 3. Korisnici i profili (F-004, F-005)
 
 | Metoda | Putanja           | Opis                                      | Podaci koji se šalju                                                                                                  | Permission    | Zahtjev |
 | ------ | ----------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------- | ------- |
 | GET    | `/users/me`       | Dohvat vlastitog profila                  | -                                                                                                                     | Authenticated | F-004   |
-| PATCH  | `/users/me`       | Uređivanje postojećeg profila             | Body: `name`, `username`, `gender`, `birthDate`, `cityId`, `sports: [{sportId, skillLevelId}]` (samo mijenjana polja) | Authenticated | F-004   |
+| PATCH  | `/users/me`       | Uređivanje postojećeg profila             | Body: `name`, `username`, `gender`, `dateOfBirth`, `cityId`, `sports: [{sportId, skillLevelId}]` (samo mijenjana polja) | Authenticated | F-004   |
 | PUT    | `/users/me/photo` | Postavljanje/zamjena profilne fotografije | Multipart: `file`                                                                                                     | Authenticated | F-004   |
 | GET    | `/users`          | Pretraga i filtriranje igrača             | Query: `sportId`, `cityId`, `ageMin`, `ageMax`, `skillLevelId`                                                        | Authenticated | F-005   |
 | GET    | `/users/{userId}` | Pregled profila odabranog igrača          | Path: `userId`                                                                                                        | Authenticated | F-005   |
@@ -71,11 +73,11 @@ Primjer: `GET /api/v1/users?cityId=1&sportId=2&skillLevelId=1` vraća igrače iz
 | Polje              | Tip i značenje                                                                                                                                                                    |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`, `username` | Neprazni tekstovi; username je jedinstven uz razlikovanje velikih i malih slova i služi prikazu.                                                                                  |
-| `gender`           | Obavezan neprazan tekst.                                                                                                                                                          |
-| `birthDate`        | Obavezan datum oblika `YYYY-MM-DD`; budući datum nije dopušten.                                                                                                                   |
+| `gender`           | Obavezna vrijednost `Male`, `Female` ili `Other`; sučelje prikazuje prijevod.                                                                                                     |
+| `dateOfBirth`        | Obavezan datum oblika `YYYY-MM-DD`, od `1900-01-01`; budući datum nije dopušten.                                                                                                  |
 | `cityId`           | Obavezan pozitivan cjelobrojni ID postojećeg grada (1–32767).                                                                                                                     |
 | `sports`           | Neprazan popis `{sportId, skillLevelId}`; oba ID-a moraju postojati i biti cijeli brojevi 1–32767. Svaki element sadrži točno ta dva polja. Svaki sport navodi se najviše jednom. |
-| `profilePhotoUrl`  | Samo u odgovoru; URL koji vraća adapter za pohranu fotografije. Ne prima se kroz `PATCH`.                                                                                         |
+| `profilePhotoUrl`  | Samo u odgovoru; relativna putanja `/api/v1/profile-photos/{name}` (vidi [profile-photo.md](../profile-photo.md)). Ne prima se kroz `PATCH`.                                                                                         |
 
 `GET` i uspješan `PATCH`/`PUT` vraćaju isti flat JSON model:
 
@@ -85,8 +87,8 @@ Primjer: `GET /api/v1/users?cityId=1&sportId=2&skillLevelId=1` vraća igrače iz
   "name": "Ana Horvat",
   "username": "ana",
   "profilePhotoUrl": null,
-  "gender": "žensko",
-  "birthDate": "2002-03-14",
+  "gender": "Female",
+  "dateOfBirth": "2002-03-14",
   "age": 24,
   "cityId": 1,
   "appRoleId": "USER",
@@ -98,7 +100,7 @@ Vrijednosti su ilustrativne. `age` se računa prema trenutačnom datumu u zoni `
 
 **Svaki spremljeni profil** ima ime, username, neprazan spol, datum rođenja, grad i barem jedan sport s iskustvom. Fotografija je opcionalna. Nepotpun profil se ne sprema; `sports: []` vraća `400`.
 
-`PATCH` mijenja samo poslana polja; izostavljena ostaju nepromijenjena. `null` za obavezna polja, prazan spol i prazan ili `null` popis sportova vraćaju `400`. Ako je `sports` naveden, zamjenjuje cijeli popis. Nepoznata polja, uključujući `userId` i `appRoleId`, odbijaju se s `400`. Spajanje i spremanje izvršavaju se u jednoj transakciji. Početna registracija nije `PATCH /users/me`; OAuth sloj prvo dovršava obrazac i poziva `createWithOAuth`. Ta registracijska integracija još nije implementirana.
+`PATCH` mijenja samo poslana polja; izostavljena ostaju nepromijenjena. `null` za obavezna polja, spol izvan `Male`/`Female`/`Other` i prazan ili `null` popis sportova vraćaju `400`. Ako je `sports` naveden, zamjenjuje cijeli popis. Nepoznata polja, uključujući `userId` i `appRoleId`, odbijaju se s `400`. Spajanje i spremanje izvršavaju se u jednoj transakciji. Početna registracija nije `PATCH /users/me`, nego `POST /api/v1/auth/register` (§2), koji prima ista polja kao obavezna.
 
 ### 3.2 Odgovor za pregled igrača (F-005)
 
@@ -141,8 +143,10 @@ Odgovori za pregled drugih igrača ne sadrže datum rođenja, spol, e-poštu, OA
 
 | Metoda | Putanja             | Opis                                                                           | Podaci koji se šalju | Permission | Zahtjev             |
 | ------ | ------------------- | ------------------------------------------------------------------------------ | -------------------- | ---------- | ------------------- |
-| GET    | `/sports`           | Popis sportova za filtre i obrasce                                             | -                    | Public     | F-004, F-007, F-017 |
+| GET    | `/sports`           | Popis sportova za filtre i obrasce; vraća `[{id, name}]` sortirano po `name`   | -                    | Public     | F-004, F-007, F-017 |
 | GET    | `/sports/{sportId}` | Detalji pojedinog sporta; **opcionalno** ako popis sadrži sve potrebne podatke | Path: `sportId`      | Public     | Pomoćni             |
+| GET    | `/cities`           | Popis gradova za obrasce profila; vraća `[{id, name}]` sortirano po `name`     | -                    | Public     | F-004, F-005        |
+| GET    | `/skill-levels`     | Popis razina iskustva; vraća `[{id, name, rank}]` sortirano po `rank`          | -                    | Public     | F-004               |
 
 ## 5. Događaji (F-006 do F-009)
 

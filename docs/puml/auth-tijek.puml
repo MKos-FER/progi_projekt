@@ -1,0 +1,76 @@
+@startuml
+title Let's Do Sports - Google prijava, registracija i odjava (SHARED-02)
+
+autonumber
+actor Korisnik
+participant "Frontend (React)" as FE
+participant "Backend (Spring)" as BE
+participant Google
+database Baza
+
+== Pokretanje aplikacije ==
+Korisnik -> FE : otvara aplikaciju
+FE -> BE : GET /api/v1/auth/csrf
+BE --> FE : 204 + cookie XSRF-TOKEN
+FE -> BE : GET /api/v1/users/me
+BE --> FE : 401 (neprijavljen)
+
+== Google prijava ==
+Korisnik -> FE : "Prijava s Googleom"
+FE -> BE : navigacija: GET /oauth2/authorization/google
+BE --> Korisnik : 302 na Google (state spremljen u sesiji)
+Korisnik -> Google : prijava i odobrenje
+alt odustajanje ili neuspjeh
+  Google --> BE : GET /oauth2/login/code/google?error=access_denied
+  BE --> FE : 302 FRONTEND_URL/login?loginError
+  FE --> Korisnik : "Prijava nije uspjela ili je otkazana."
+else uspjeh
+  Google --> BE : GET /oauth2/login/code/google?code&state
+  BE -> Google : zamjena code za tokene
+  Google --> BE : ID token (sub, email, name)
+  BE -> BE : provjera state, potpisa i roka tokena;\nnovi ID sesije
+  BE -> Baza : SELECT user_id FROM oauth_accounts\nWHERE provider='google' AND provider_user_id=:sub
+  alt prva prijava (nema retka)
+    Baza --> BE : nema rezultata
+    BE --> FE : 302 FRONTEND_URL/register\n(ništa se ne upisuje u bazu)
+    FE -> BE : GET /api/v1/users/me
+    BE --> FE : 403 "Registracija nije dovršena."
+    FE -> BE : GET /api/v1/sports, /cities, /skill-levels
+    BE -> Baza : čitanje šifrarnika
+    BE --> FE : 200 popisi
+    Korisnik -> FE : ispunjava obrazac
+    alt odustajanje od obrasca
+      FE -> BE : POST /api/v1/auth/logout (X-XSRF-TOKEN)
+      BE -> BE : poništi sesiju, obriši JSESSIONID i XSRF-TOKEN
+      BE --> FE : 204
+    else slanje obrasca
+      FE -> BE : POST /api/v1/auth/register (X-XSRF-TOKEN)
+      alt neispravan unos
+        BE --> FE : 400 {errors} ili 409 {message}
+        FE --> Korisnik : greške uz polja
+      else valjan unos
+        BE -> Baza : BEGIN; INSERT users; INSERT user_sports;\nINSERT oauth_accounts('google', sub, email); COMMIT
+        Baza --> BE : novi users.id
+        BE --> FE : 201 {id}
+        FE -> BE : GET /api/v1/users/me (invalidate ['me'])
+        BE -> Baza : oauth_accounts sada ima redak
+        BE --> FE : 200 profil
+        FE --> Korisnik : početna stranica (prijavljen)
+      end
+    end
+  else ponovna prijava (redak postoji)
+    Baza --> BE : user_id
+    BE --> FE : 302 FRONTEND_URL/
+    FE -> BE : GET /api/v1/users/me
+    BE --> FE : 200 profil
+    FE --> Korisnik : početna stranica (prijavljen)
+  end
+end
+
+== Odjava ==
+Korisnik -> FE : "Odjava"
+FE -> BE : POST /api/v1/auth/logout (X-XSRF-TOKEN)
+BE -> BE : poništi sesiju, obriši JSESSIONID i XSRF-TOKEN
+BE --> FE : 204
+FE --> Korisnik : neprijavljeno stanje
+@enduml
