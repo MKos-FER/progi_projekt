@@ -1,125 +1,180 @@
-<!--
-PREDLOŽAK — README završnog projekta na kolegiju Programsko inženjerstvo FER-a.
-Kopirajte ovu datoteku u README.md u repozitoriju svojeg projekta. Zamijenite
-svaku uputu u uglatim zagradama činjenicama o svojem projektu, uklonite sve
-komentare s uputama i ogledne <details> blokove te prije predaje izbrišite ovu
-napomenu. Nemojte kopirati nastavni primjer kao rezultat svojeg projekta.
--->
 
-# [Naziv aplikacije]
+# Let's do sports
 
-<details>
-<summary>Zašto je ovaj odjeljak važan</summary>
 
-Započnite README nazivom svojeg projekta i sažetim opisom njegove svrhe. Naziv projekta ne mora sam po sebi objašnjavati čemu projekt služi, ali opis uz naziv treba novom čitatelju omogućiti da brzo razumije što aplikacija radi.
-
-</details>
-
-[U jednoj rečenici navedite što aplikacija omogućuje svojim korisnicima.]
+Aplikaicja korisnicima omogućuje pronalazak ljudi na sličnoj razini vještine za igranje sporta u dogovorenom terminu.
 
 **Projekt na kolegiju:** Ovu je aplikaciju razvio studentski tim u sklopu kolegija [Programsko inženjerstvo](https://www.fer.unizg.hr/predmet/proinz) na Fakultetu elektrotehnike i računarstva Sveučilišta u Zagrebu (FER).
 
 ## Opis aplikacije
 
-[U dvije ili tri rečenice objasnite problem, ciljane korisnike i glavnu korist svoje aplikacije. Trenutačne funkcionalnosti navedite odvojeno od planiranih; opišite stvarni opseg umjesto obećanih mogućnosti.]
+
+Aplikacija rješava problem pronalaska ljudi za bavljenje sportom, posebno osoba koje imaju sličnu razinu vještine, interese i dostupno vrijeme. Namijenjena osobama koji žele jednostavno pronaći odgovarajuće osobe za zajedničko igranje, bez obzira na prethodno poznanstvo. Glavna korist aplikacije je lakše organiziranje sportskih aktivnosti i kvalitetnija igra kroz povezivanje korisnika slične razine znanja.
+
+Trenutačne funkcionalnosti:
+- Prijava pomoću OAuth2
+- Kreacija te uređivanje korisničkog profila
+- Priključivanje, izlazak te odgađanje događaja
+- Filtriranje događaja 
+
+Buduće funkcionalnosti:
+- Dodavanje te uređivanje vlastitih terena
+- Komentiranje pod događajima te odgovaranje na komentare
+
+
 
 **Ključne funkcionalnosti**
 
-- [Reprezentativna funkcionalnost koju korisnici mogu isprobati]
-- [Druga reprezentativna funkcionalnost]
-- [Po želji dodatna funkcionalnost; nemojte kopirati cijeli popis zahtjeva]
+-   Kreiranje korisničkog profila s odabirom sportova i određivanjem vlastite razine vještine.
+-   Organiziranje zajedničkih sportskih aktivnosti kroz dogovaranje termina i povezivanje s drugim zainteresiranim igračima.
+-   Pretraživanje i pronalazak drugih korisnika koji se bave istim sportom i imaju sličnu razinu vještine.
 
-Za potpuni opseg, zahtjeve, oblikovanje i dokaze ispitivanja pogledajte [docs](docs/Home.md).
+Za potpuni opseg, zahtjeve, oblikovanje i dokaze ispitivanja pogledajte [docs](https://github.com/MKos-FER/progi_projekt/tree/master/docs).
 
 <a id="deployment"></a>
 ## Postavljanje (engl. deployment)
 
-<!-- UPUTA: Ovaj odjeljak opisuje već postavljenu aplikaciju koju se  može otvoriti i isprobati bez lokalnog pokretanja izvornog koda.
-Za Iteraciju 1 i Završni pregled navedite konkretne podatke. Provjerite vodi li URL na javno dostupnu pokrenutu aplikaciju i radi li navedeni tijek uporabe. Nikada ne objavljujte lozinke ni pristupne tokene. -->
+**Javno dostupna aplikacija:** [letsdosports.eu](https://letsdosports.eu/)
 
-**Javno dostupna aplikacija:** [Javni URL]
+**Isprobajte:** Registrirajte se i izradite korisnički profil unosom osnovnih podataka, odabirom sporta i vlastite razine vještine.
 
-**Isprobajte:** [Jedna ili dvije kratke radnje koje pokazuju funkcionalan korisnički tijek.]
+**Demonstracija:** Za korištenje aplikacije potrebno je registrirati vlastiti korisnički račun.
 
-**Demonstracija:** [Objasnite kako dobiti potreban ograničeni pristup ako je prijava obavezna; u suprotnom napišite „Korisnički račun nije potreban.” Ovdje ne objavljujte lozinke ni pristupne tokene.]
-
-**Ograničenja:** [Kratko navedite ograničenja postavljene inačice ili postavite poveznicu na jedinstveno mjerodavno mjesto u dokumentaciji s poznatim problemima.]
+**Ograničenja:** Aplikacija je u razvojnom stanju te nema sve funkcionalnosti implementirane. Aplikacija je trenutačno dostupna u demonstracijskoj verziji, stoga se očekuje manji broj registriranih korisnika i objavljenih sportskih aktivnosti. Zbog toga mogućnosti pronalaska igrača i sudjelovanja u sportskim aktivnostima mogu biti ograničene.
 
 [Vodič za postavljanje i pokretanje](docs/6-Postavljanje-instalacija-i-konfiguracija.md) opisuje smještaj aplikacije (engl. hosting) koji tim stvarno koristi. Tim može koristiti Render ili drugu platformu koju ste dogovorili s asistentom/demonstratorom.
 
 <a id="quick-start"></a>
+
 ## Brzi početak / instalacija
 
-<!-- Obavezno od Demo 1 nadalje. Zamijenite mjesta za unos naredbama koje je drugi član tima uspješno provjerio nakon čistog kloniranja repozitorija. Detaljne upute za administraciju držite u projektnoj dokumentaciji u direktoriju docs/. -->
+**Preduvjeti:**
 
-**Preduvjeti:** [Navedite potrebno izvršno okruženje (engl. runtime) i verzija, upravitelj paketa (engl. package manager), baza podataka ili vanjska usluga ako je nužna.]
+Aplikacija je postavljena na Linux poslužitelju (VPS). Za posluživanje aplikacije koristi se Caddy web poslužitelj, koji upravlja HTTPS vezom, poslužuje frontend aplikaciju i prosljeđuje zahtjeve prema backendu. Backend aplikacija pokreće se kao systemd servis, dok se podaci pohranjuju u PostgreSQL bazu podataka.
+
+
+
+Frontend aplikacija poslužuje se kao statički sadržaj iz direktorija `/var/www/lets-do-sports`, dok backend prihvaća zahtjeve na portu `8080`. GitHub webhook servis sluša na portu `5999` i zadužen je za pokretanje automatskog deploymenta.
+
+
+
+Za lokalno pokretanje aplikacije potrebno je instalirati:
+
+* **Java JDK 23** – za pokretanje backend aplikacije.
+* **Bun** – za instalaciju ovisnosti i pokretanje frontend aplikacije.
+* **PostgreSQL** – za pohranu podataka.
+* **Git** – za preuzimanje projektnog repozitorija.
+
+
+
+1. Preuzimanje projekta
 
 ```bash
-git clone [repository URL]
-cd [repository directory]
-[install dependencies]
-[run the application]
+git clone https://github.com/MKos-FER/progi_projekt.git
 ```
 
-**Adresa:** [Stvarna adresa koju aplikacija ispiše nakon pokretanja.]
+2. Konfiguracija baze podataka
 
-**Konfiguracija:** [Navedite potrebne varijable okruženja (engl. environment variables) ili uputite na sigurnu datoteku `.env.example`; objasnite gdje se dobivaju vrijednosti. Nikada ne stavljajte stvarne pristupne podatke u ovu datoteku, primjer konfiguracije, snimke zaslona, zapise ni zapise promjena (engl. commits).]
+Potrebno je pokrenuti PostgreSQL poslužitelj i kreirati bazu podataka za projekt.
 
-[Dodajte kratak korak provjere, primjerice koja se stranica treba otvoriti ili koja naredba pokreće osnovnu provjeru.] Za detaljno postavljanje pogledajte [projektnu dokumentaciju](docs/Home.md).
+Kreirati bazu podataka i korisnika s odgovarajućim ovlastima. Podatke za povezivanje s bazom potrebno je uskladiti s konfiguracijom backend aplikacije.
+
+Prije pokretanja backenda potrebno je u /db direktoriju pokrenuti:
+
+```
+docker compose up
+```
+
+3. Konfiguracija backenda
+
+Potrebno je konfigurirati varijable okruženja za povezivanje s bazom podataka i OAuth2 autentifikaciju. Primjer možete pronaći [ovdje](https://github.com/MKos-FER/progi_projekt/blob/master/db/.env.example)
+
+Za OAuth2 prijavu potrebno je konfigurirati odgovarajuće pristupne podatke pružatelja autentifikacije te adresu lokalnog preusmjeravanja (`http://localhost:8080`).
+
+Nakon konfiguracije pokrenuti backend aplikaciju na portu `8080`
+ 
+U slučaju da java 23 nije default treba pokrenuti naredbu:
+
+```
+JAVA_HOME=/lib/jvm/java-23-openjdk make run  # Putanju je potrebno promijeniti ako je instalacija jave 23 na drugom 
+```
+
+mjestu
+
+4. Pokretanje frontenda
+
+U novom terminalu:
+
+```
+cd frontend/
+&&
+bun install
+&&
+bun dev
+```
+
+Frontend razvojni poslužitelj pokreće se na adresi `http://localhost:5173`.
+
+5. Korištenje aplikacije
+
+Otvoriti preglednik i posjetiti:
+
+`http://localhost:5173`
+
+Frontend automatski prosljeđuje API zahtjeve (`/api`) i OAuth2 zahtjeve (`/oauth2`) na backend koji sluša na portu `8080`.
+
+Za ispravan rad aplikacije potrebno je da PostgreSQL i backend budu pokrenuti prije korištenja funkcionalnosti koje zahtijevaju pristup podacima.
+
+Za detaljno postavljanje pogledajte [projektnu dokumentaciju](docs/Home.md).
 
 ## Tehnologije
 
-Navedite nekoliko tehnologija i vanjskih usluga koje bitno određuju kako vaša aplikacija radi. Za svaku navedite njezinu konkretnu ulogu i jedan razlog ili ograničenje važno za projekt. Alat za razvoj ili ispitivanje uključite samo ako je njegova uloga važna za razumijevanje načina na koji je projekt izrađen ili provjeren. Nemojte prepisivati popis ovisnosti (engl. dependencies), statistiku programskih jezika ni popis razvojnih okruženja i komunikacijskih alata. Tablicu provjerite prema stvarnom repozitoriju i pokrenutoj aplikaciji; potrebne verzije i konfiguraciju dokumentirajte u vodiču za instalaciju.
 
 | Tehnologija ili alat | Uloga u ovom projektu | Razlog uporabe ili važno ograničenje |
 | --- | --- | --- |
-| [Naziv] | [Što radi u ovoj aplikaciji] | [Razlog ili ograničenje specifično za projekt] |
-
-<details>
-<summary><strong>Primjer: objašnjenje ključnih tehnoloških odluka</strong></summary>
-
-**Primjer — CrisisMap:**
-
-| Tehnologija ili alat | Uloga u ovom projektu | Razlog uporabe ili važno ograničenje |
-| --- | --- | --- |
-| React | Prikazuje obrazac za prijavu i kartu kriznih događaja u pregledniku. | Karta i poslane prijave mogu se ažurirati bez ponovnog učitavanja cijele stranice. |
-| PostgreSQL | Pohranjuje prijave, lokacije i njihove odnose. | Zapisi o prijavama moraju ostati povezani s autorima i lokacijama; promjene sheme zahtijevaju migracije baze podataka (engl. database migrations). |
-| Usluga kartografskih pločica (engl. map tile service) | Omogućuje prikaz karte u pregledniku. | Karta ovisi o vanjskoj usluzi; aplikacija mora imati definirano ponašanje i kada kartografske pločice nisu dostupne. |
-
-**Analiza primjera:** Svaki redak opisuje ulogu ili posljedicu konkretne tehnologije u ovoj aplikaciji. Verzije paketa pripadaju datotekama s ovisnostima projekta; verzije izvršnog okruženja i konfiguracija važna za postavljanje pripadaju vodiču za instalaciju. Važne kompromise u oblikovanju (engl. design trade-offs) objasnite na stranici arhitekture u direktoriju `docs/` umjesto da ovdje ponavljate cijeli zapis odluke. Navodite samo usluge koje vaš tim stvarno integrira.
-
-</details>
+|Java | Glavni programski jezik za razvoj backend dijela aplikacije. | Omogućuje objektno orijentirani razvoj, dobru organizaciju koda i integraciju sa Spring Boot okvirom. |
+| Spring Boot | Backend framework za razvoj REST API-ja i poslovne logike aplikacije. |Pojednostavljuje razvoj backend sustava i povezivanje s bazom podataka. |
+| PostgreSQL | Sustav za upravljanje relacijskom bazom podataka. | Koristi se za pohranu korisničkih profila, sportova, razina vještina i podataka o sportskim aktivnostima. |
+| React | JavaScript biblioteka za razvoj korisničkog sučelja (frontend). | Omogućuje izradu dinamičkog i interaktivnog sučelja te komunikaciju s backend dijelom aplikacije. |
+| JavaScript | Programski jezik koji se koristi za razvoj frontend dijela aplikacije. | Omogućuje implementaciju interaktivnosti i upravljanje podacima u React komponentama. |
+| Docker | Alat za kontejnerizaciju aplikacije i njezinih servisa. | Olakšava pokretanje i konfiguraciju aplikacije u različitim okruženjima. Koristi se ako je projekt konfiguriran za rad putem Docker kontejnera. | 
+|Git | Sustav za kontrolu verzija izvornog koda. | Omogućuje praćenje promjena, povratak na prethodne verzije i suradnju članova razvojnog tima. |
+| Maven | Alat za upravljanje ovisnostima i izgradnju Java aplikacije. | Olakšava upravljanje bibliotekama i automatizira izgradnju Spring Boot projekta. Koristi se ako projekt koristi Maven. |
 
 <a id="team-members"></a>
 ## Članovi tima
 
 | Član | Glavna uloga ili doprinos |
 | --- | --- |
-| [Ime] | [Uloga ili doprinos] |
-| [Ime] | [Uloga ili doprinos] |
-
-Uloge se tijekom projekta mogu mijenjati. Repozitorij i dogovoreni alat za praćenje zadataka (engl. task tracker) služe kao dodatni dokazi timskog rada.
+| Nikša Šutej | Voditelj tima |
+| Leonarda Ćuro | Frontend razvoj i dizajn sučelja |
+| Mateo Kos | Full-stack i dev-ops |
+| Luka Bajto | Baza podataka |
+| Roko Butorac | Baza podataka |
+| Filip Žužić | Backend razvoj |
+| Dominik Lovrić | Backend razboj |
 
 ## Doprinos projektu
 
-[Ako je primjenjivo, ukratko opišite kako se evidentiraju zadaci i nedostaci te kako se pregledavaju promjene koda i gdje se nalazi aktualna evidencija zadataka. Ako tim održava `CONTRIBUTING.md`, ovdje postavite poveznicu umjesto ponavljanja pravila. Nemojte stvarati tu datoteku samo zato da biste popunili ovaj odjeljak.]
+Rad na projektu i obavljene promjene evidentiraju se putem Git commitova, koji omogućuju praćenje razvoja i pregled povijesti promjena u kodu. Za organizaciju, dodjelu i praćenje zadataka te evidentiranje potencijalnih nedostataka koristiti se GitHub Issues. Pregled promjena koda obavlja se kroz pregled commitova i promjena na GitHub repozitoriju. Aktualna evidencija zadataka dostupna je u odjeljku [GitHub Issues](https://github.com/MKos-FER/progi_projekt/issues).
 
 <a id="license"></a>
 
-**Status licence:** [Navedite licencu i postavite poveznicu na projektnu datoteku `LICENSE` ili izričito navedite da nije dodijeljena licenca koja dopušta javnu ponovnu uporabu. Namjeravani opseg provjerite s timom; nemojte prepisivati licencu predloška ove dokumentacije kao licencu svoje aplikacije.]
+**Status licence:** Projekt je objavljen pod MIT licencom, čiji je puni tekst dostupan u dokumentu [LICENCE](https://github.com/MKos-FER/progi_projekt/blob/master/LICENSE)
 
 Dokumentacijski predložak kolegija sadrži otvorene obrazovne sadržaje (engl. Open Educational Resources, OER) i licenciran je licencom Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International. Ta licenca **ne određuje automatski licencu studentske aplikacije**; tim treba jasno navesti licencu svojeg projekta u prethodnom retku i datoteci `LICENSE`, ako je primjenjivo.
 
-Kod trećih strana, skupovi podataka, slike, ikone i drugi sadržaji zadržavaju vlastite licence i uvjete uporabe. [Po potrebi postavite poveznicu na zahvale i izvore.]
-
+Kod trećih strana, skupovi podataka, slike, ikone i drugi sadržaji zadržavaju vlastite licence i uvjete uporabe. 
 <a id="ai-usage"></a>
 ## Uporaba umjetne inteligencije [![AI Usage: Disclosed](https://img.shields.io/badge/AI%20Usage-Disclosed-blue.svg)](https://www.fer.unizg.hr/_download/repository/Policy%20on%20the%20appropriate%20use%20of%20artificial%20intelligence%20at%20the%20faculty%20of%20electrical%20engineering%20and%20computing%5B1%5D.pdf)
 
 Ovaj projekt slijedi FER-ova [pravila o primjerenoj uporabi umjetne inteligencije](https://www.fer.unizg.hr/_download/repository/Policy%20on%20the%20appropriate%20use%20of%20artificial%20intelligence%20at%20the%20faculty%20of%20electrical%20engineering%20and%20computing%5B1%5D.pdf).
 
-**Izjava:** [Navedite jesu li korišteni alati umjetne inteligencije. Ako jesu, navedite alate i njihove glavne namjene te objasnite kako je tim pregledao nastali kod ili tekst i kako može objasniti vlastiti doprinos. Ako nisu korišteni, to jasno navedite. U alate umjetne inteligencije nemojte unositi privatne podatke, pristupne podatke ni tuđe zaštićene materijale.]
+**Izjava:** Tijekom izrade projekta korišten je alat Claude (Anthropic) i Codex (OpenAI) kao pomoć pri razvoju. Korišten je za pomoć pri implementaciji pojedinih funkcionalnosti, analizu programskog koda, za formatiranje dijelova dokumentacije, te generalan debugging pri razvoju.
 
-[Ako je za ovaj projekt potreban detaljniji zapis uporabe umjetne inteligencije, postavite poveznicu na njegovo jedinstveno mjerodavno mjesto u dokumentaciji.]
+Prijedlozi generirani pomoću alata kritički su pregledani i provjereni od strane članova tima. Članovi tima samostalno su donosili odluke o prihvaćanju i prilagodbi predloženih rješenja te su odgovorni za ispravnost i funkcionalnost konačne implementacije. Tim razumije implementirana rješenja i sposoban je objasniti vlastiti doprinos razvoju projekta.
+
+
 
 <a id="code-of-conduct-and-support"></a>
 ## Kodeks ponašanja i podrška [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
@@ -129,3 +184,4 @@ Od članova tima očekuje se pridržavanje **Kodeksa ponašanja studenata** Faku
 ---
 
 Struktura dokumentacije prilagođena je predlošku kolegija Programsko inženjerstvo FER-a autora [Vlade Sruka](https://www.fer.unizg.hr/vlado.sruk), licenciranom pod [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). Aplikaciju i njezin sadržaj izradio je gore navedeni studentski tim.
+
