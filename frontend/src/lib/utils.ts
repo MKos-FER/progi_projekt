@@ -24,3 +24,11 @@ export function getDefaultAvatar(filename: string | null): string | null {
 
   return photo;
 }
+
+export function interpolateColor(
+  start: string,
+  end: string,
+  factor: number
+) {
+  return `color-mix(in oklch, ${start} ${((1 - factor) * 100).toFixed(2)}%, ${end})`;
+}

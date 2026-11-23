@@ -4,7 +4,7 @@ export interface UserSportDetails {
   sportId: number;
   sportName?: string;
   skillLevelId: number;
-  skillLevelName?: number;
+  skillLevelName?: string;
 }
 
 export interface UserDetails {

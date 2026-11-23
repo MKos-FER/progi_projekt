@@ -5,7 +5,6 @@ import type { Sport } from "@/types/sport";
 import type { City } from "@/types/city";
 import { ApiError, type RegisterResult } from "@/types/auth";
 import { calculateDistanceKm, getUserLocation, type UserLocation } from "@/lib/geolocation";
-import { getDefaultAvatar } from "@/lib/utils";
 import type { SkillLevel } from "@/types/skill-level";
 
 // const USE_DUMMY_DATA = import.meta.env.APP_USE_DUMMY_DATA === "true";
@@ -327,7 +326,19 @@ export async function getEventMembers(eventId: number): Promise<PublicUserInfo[]
     }) as PublicUserInfo[];
   }
 
-  return fetchData<PublicUserInfo[]>(`/events/${eventId}/members`);
+  const members = await fetchData<PublicUserInfo[]>(`/events/${eventId}/members`);
+
+  const sports = await fetchData<Sport[]>(`/sports`);
+  const skills = await fetchData<SkillLevel[]>(`/skill-levels`);
+
+  return members.map(m => ({
+    ...m,
+    sports: m.sports.map(sport => ({
+      ...sport,
+      sportName: (sports.find(s => s.id === sport.sportId)?.name) ?? "Unknown sport",
+      skillLevelName: (skills.find(s => s.id === sport.skillLevelId)?.name) ?? "Unknown skill level",
+    }))
+  }))
 }
 
 
@@ -349,7 +360,18 @@ export async function getUserProfile(): Promise<UserDetails> {
     return user;
   }
 
-  return fetchData<UserDetails>(`/users/me`);
+  const user = await fetchData<UserDetails>(`/users/me`);
+
+  const sports = await fetchData<Sport[]>(`/sports`);
+  const skills = await fetchData<SkillLevel[]>(`/skill-levels`);
+
+  user.sports = user.sports.map(sport => ({
+    ...sport,
+    sportName: (sports.find(s => s.id === sport.sportId)?.name) ?? "Unknown sport",
+    skillLevelName: (skills.find(s => s.id === sport.skillLevelId)?.name) ?? "Unknown skill level",
+  }))
+
+  return user
 }
 
 
@@ -452,7 +474,19 @@ export async function getUsers(sportId: number | null, cityId: number | null, ag
     filter = ""
   }
 
-  return fetchData<PublicUserInfo[]>(`/users${filter}`);
+  const users = await fetchData<PublicUserInfo[]>(`/users${filter}`);
+
+  const sports = await fetchData<Sport[]>(`/sports`);
+  const skills = await fetchData<SkillLevel[]>(`/skill-levels`);
+
+  return users.map(u => ({
+    ...u,
+    sports: u.sports.map(sport => ({
+      ...sport,
+      sportName: (sports.find(s => s.id === sport.sportId)?.name) ?? "Unknown sport",
+      skillLevelName: (skills.find(s => s.id === sport.skillLevelId)?.name) ?? "Unknown skill level",
+    }))
+  }))
 }
 
 
@@ -467,7 +501,18 @@ export async function getUserInfo(userId: number): Promise<UserDetails> {
     return user;
   }
 
-  return fetchData<UserDetails>(`/users/${userId}`);
+  const user = await fetchData<UserDetails>(`/users/${userId}`);
+
+  const sports = await fetchData<Sport[]>(`/sports`);
+  const skills = await fetchData<SkillLevel[]>(`/skill-levels`);
+
+  user.sports = user.sports.map(sport => ({
+    ...sport,
+    sportName: (sports.find(s => s.id === sport.sportId)?.name) ?? "Unknown sport",
+    skillLevelName: (skills.find(s => s.id === sport.skillLevelId)?.name) ?? "Unknown skill level",
+  }))
+
+  return user
 }
 
 // TODO: Error checking

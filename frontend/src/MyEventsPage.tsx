@@ -465,6 +465,10 @@ export function EventCard({ eventId }: { eventId: number }) {
     eventStatusText = "završio";
   } else if (event.status === "cancelled") {
     eventStatusText = "otkazan";
+  } else if (event.status === "full") {
+    eventStatusText = "popunjen";
+  } else if (event.status !== "open") {
+    eventStatusText = "stanje nije poznato";
   }
 
 
