@@ -1,9 +1,11 @@
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { useEventDetails, useEventMembers } from "@/apiStore/useEvents.ts";
+import { useSkillLevels } from "@/apiStore/useSif.ts";
 import { MessageScrollerGroupChat } from "./ChatTest.tsx";
 import type { EventDetails } from "@/types/event";
 import { useState } from "react";
+import { cn, interpolateColor } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, ChevronLeft, ChevronDown, ChevronUp } from "lucide-react";
@@ -62,7 +64,7 @@ export default function EventPage() {
       <div className="mt-3 flex flex-col min-h-0 h-full">
         <EventDescription event={event} />
         <PeopleInfo event={event} />
-        <ChatBox event={event}/>
+        <ChatBox event={event} />
       </div>
     )
   }
@@ -228,12 +230,9 @@ function ShowMembersButton({ event }: { event: EventDetails }) {
                     </div>
                   </div>
 
-                  Skills:
+                  <p className="mb-2">Sudionikovi sportovi:</p>
                   {clickedMember.sports?.map((sport) =>
-                    <div key={sport.id} className="flex justify-between mb-2">
-                      {sport.sportName}
-                      <Progress value={sport.skillLevelId / 2 * 100} className="w-[50%] inline-block self-center" />
-                    </div>
+                    <SkillLevelBar key={sport.sportId} level={sport.skillLevelId} name={sport.sportName} />
                   )}
                 </div>
               )}
@@ -247,11 +246,77 @@ function ShowMembersButton({ event }: { event: EventDetails }) {
           <DrawerClose render={<Button variant="outline"><ChevronLeft /> Natrag na stranicu događaja</Button>} />
         </DrawerFooter>
       </DrawerContent>
-    </Drawer>
+    </Drawer >
   )
 }
 
-function ChatBox({event}: {event: EventDetails}) {
+export function SkillLevelBar({ name: sportName, level }: {name: string, level: number }) {
+  // TODO: Promijeniti u primary i secondary / boje teme kada budu dodane
+  const startColor = "oklch(0.8468 0.1532 133.28)";
+  const endColor = "oklch(0.721 0.1359 150.47)";
+
+  const { data: skillLevels, isLoading, error } = useSkillLevels();
+
+  if (isLoading || error) {
+    return;
+  }
+
+  const levelExists = skillLevels.find(
+    (skill) => skill.id === level
+  );
+
+  if (!levelExists) {
+    return
+  }
+
+  return (
+    <div className="w-full space-y-2 mb-4 rounded-2xl shadow-sm p-2">
+      <div className="flex items-center justify-center mb-2">
+        <span className="text-sm font-medium">
+          {sportName}
+        </span>
+      </div>
+
+      {/* Prazni pravokutnici koji predstavljaju bar */}
+      <div className="flex gap-1.5 my-0">
+        {skillLevels.map((skill, index) => (
+          <div
+            key={skill.id}
+            className={cn(
+              "h-2 flex-1 rounded-full transition-colors",
+              skill.id > level && "bg-muted"
+            )}
+            style={
+              skill.id <= level
+                ? { backgroundColor: interpolateColor(startColor, endColor, index/(skillLevels.length - 1)) }
+                : undefined
+            }
+          />
+        ))}
+      </div>
+
+      {/* Imena skilova spod bara */}
+      <div className="flex gap-1.5">
+        {skillLevels.map((skill) => (
+          <div key={skill.id} className="flex-1 text-center">
+            <span
+              className={cn(
+                "text-[10px] leading-tight",
+                skill.id === level
+                  ? "font-semibold text-foreground"
+                  : "text-muted-foreground opacity-30"
+              )}
+            >
+              {skill.name}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ChatBox({ event }: { event: EventDetails }) {
   // TODO: Napraviti da se ChatBox ne može kompresirati
   return (
     <div className="flex grow min-h-50 max-h-155 w-full overflow-y-auto rounded-xl bg-gray-100">
